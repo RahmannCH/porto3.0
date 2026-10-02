@@ -1,118 +1,779 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f4f3ee">
-  <meta name="description" content="Kenali Kabinet Rahman 25, HIMAKOM FMIPA Universitas Lambung Mangkurat. Profil, ruang kolaborasi, dan agenda mahasiswa.">
-  <meta property="og:title" content="Kabinet Rahman 25 | HIMAKOM ULM">
-  <meta property="og:description" content="Ruang kolaborasi mahasiswa Ilmu Komputer Universitas Lambung Mangkurat.">
-  <meta property="og:image" content="assets/Logo-Kabinet.jpg">
-  <title>Kabinet Rahman 25 | HIMAKOM ULM</title>
-  <link rel="icon" href="assets/Logo-Kabinet.jpg" type="image/jpeg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
-  <script src="js/main.js" defer></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Portal Resmi Kabinet Rahman 25 - Himpunan Mahasiswa Ilmu Komputer (HIMAKOM) FMIPA Universitas Lambung Mangkurat." />
+  <meta property="og:title" content="Kabinet Rahman 25 | HIMAKOM FMIPA ULM" />
+  <meta property="og:description" content="Sinergi Nyata, Inovasi Tanpa Batas — Membawa HIMAKOM FMIPA ULM Menuju Transformasi Berkelanjutan." />
+  <meta property="og:image" content="assets/Logo-Kabinet.jpg" />
+  <title>Kabinet Rahman 25 | HIMAKOM FMIPA ULM</title>
+  
+  <link rel="icon" href="assets/Logo-Kabinet.jpg" type="image/jpeg" />
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+  
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <a class="skip-link" href="#main">Lewati ke konten</a>
-  <header class="site-header">
-    <a class="identity" href="#beranda" aria-label="Kabinet Rahman 25, beranda">
-      <img src="assets/Logo-Kabinet.jpg" alt="Logo Kabinet Rahman 25">
-      <span><strong>Kabinet Rahman 25</strong><small>HIMAKOM · FMIPA ULM</small></span>
-    </a>
-    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Buka menu navigasi"><span></span><span></span></button>
-    <nav id="primary-nav" class="primary-nav" aria-label="Navigasi utama">
-      <a href="#tentang">Tentang</a>
-      <a href="#divisi">Divisi</a>
-      <a href="#program">Program</a>
-      <a class="nav-cta" href="#aspirasi">Hubungi kami <span aria-hidden="true">↗</span></a>
-    </nav>
+  <!-- Ambient Ambient Background Elements -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+  <div class="ambient-glow glow-3"></div>
+
+  <!-- Header / Navigation -->
+  <header class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="#beranda" class="brand">
+        <div class="brand-avatar">
+          <img src="assets/Logo-Kabinet.jpg" alt="Logo Kabinet Rahman 25" />
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">Rahman 25</span>
+          <span class="brand-sub">HIMAKOM ULM</span>
+        </div>
+      </a>
+
+      <nav class="nav-links" id="navLinks">
+        <a href="#beranda" class="nav-item active">Beranda</a>
+        <a href="#tentang" class="nav-item">Tentang</a>
+        <a href="#pimpinan" class="nav-item">Pimpinan</a>
+        <a href="#divisi" class="nav-item">Divisi</a>
+        <a href="#proker" class="nav-item">Program</a>
+        <a href="#aspirasi" class="btn-nav-action"><i class="fas fa-paper-plane"></i> Kotak Aspirasi</a>
+      </nav>
+
+      <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
   </header>
 
-  <main id="main">
-    <section class="hero" id="beranda" aria-labelledby="hero-title">
-      <div class="hero-copy">
-        <p class="overline"><span class="status-dot"></span> Himpunan Mahasiswa Ilmu Komputer · ULM</p>
-        <h1 id="hero-title">Tumbuh bersama.<br><em>Bergerak nyata.</em></h1>
-        <p class="hero-description">Kabinet Rahman 25 menjadi ruang mahasiswa HIMAKOM untuk berkolaborasi, mengembangkan gagasan, dan mengambil peran.</p>
-        <div class="hero-actions"><a class="button-primary" href="#tentang">Kenali kabinet <span aria-hidden="true">↓</span></a><a class="text-link" href="#divisi">Jelajahi divisi</a></div>
-        <p class="period-note">HIMAKOM ULM <span>·</span> KABINET RAHMAN 25</p>
-      </div>
-      <div class="hero-art">
-        <div class="hero-image"><img src="assets/ProfileRahman.jpeg" alt="Muhammad Nur Rahman, Ketua Umum HIMAKOM" fetchpriority="high"></div>
-        <div class="hero-stamp"><img src="assets/Logo-Kabinet.jpg" alt=""><span>Kabinet<br><strong>Rahman 25</strong></span></div>
-        <span class="art-index" aria-hidden="true">HIMAKOM / 25</span>
-      </div>
-      <a class="scroll-cue" href="#tentang" aria-label="Gulir ke bagian tentang">↓</a>
-    </section>
-
-    <section class="intro section-wrap" id="tentang" aria-labelledby="about-title">
-      <div class="section-marker"><span>01</span><span>Tentang kabinet</span></div>
-      <div class="intro-content">
-        <h2 id="about-title">Wadah kolaborasi mahasiswa Ilmu Komputer Universitas Lambung Mangkurat.</h2>
-        <div class="intro-bottom">
-          <p>Kabinet Rahman 25 menjalankan kepengurusan HIMAKOM FMIPA ULM. Kami ingin menghadirkan ruang untuk mahasiswa saling terhubung, belajar, dan berkarya.</p>
-          <img class="campus-mark" src="assets/logo-ulm.png" alt="Lambang Universitas Lambung Mangkurat" loading="lazy">
-        </div>
-      </div>
-    </section>
-
-    <section class="direction" aria-labelledby="direction-title">
-      <div class="direction-inner">
-        <div class="section-marker section-marker-light"><span>02</span><span>Arah gerak</span></div>
-        <div class="direction-main">
-          <h2 id="direction-title">Ruang organisasi dibangun lewat keterlibatan.</h2>
-          <div class="principles">
-            <article class="principle"><span class="principle-number">01</span><div><h3>Terbuka untuk gagasan</h3><p>Mahasiswa dapat membawa pertanyaan, masukan, dan ide untuk dibahas bersama.</p></div><span class="principle-arrow" aria-hidden="true">↗</span></article>
-            <article class="principle"><span class="principle-number">02</span><div><h3>Belajar melalui kolaborasi</h3><p>Ruang kerja lintas minat membantu anggota saling berbagi pengetahuan dan pengalaman.</p></div><span class="principle-arrow" aria-hidden="true">↗</span></article>
-            <article class="principle"><span class="principle-number">03</span><div><h3>Berkarya untuk komunitas</h3><p>Gagasan mahasiswa diwujudkan menjadi kegiatan yang bermanfaat bagi lingkungan HIMAKOM.</p></div><span class="principle-arrow" aria-hidden="true">↗</span></article>
+  <main>
+    <!-- Hero Section -->
+    <section class="hero-section" id="beranda">
+      <div class="container hero-container">
+        <div class="hero-text-col">
+          <div class="hero-badge">
+            <span class="pulse-dot"></span>
+            <span>HIMAKOM FMIPA ULM • Periode 2025/2026</span>
           </div>
-          <p class="content-note">Narasi pengantar. Visi dan misi resmi kabinet belum tersedia pada sumber konten.</p>
+
+          <h1 class="hero-title">
+            Sinergi Nyata,<br />
+            <span class="gradient-text">Inovasi Berkelanjutan.</span>
+          </h1>
+
+          <p class="hero-lead">
+            Selamat datang di gerbang resmi <strong>Kabinet Rahman 25</strong>. Wadah terintegrasi untuk mengawal aspirasi, memperkuat riset teknologi, dan menggerakkan potensi mahasiswa Ilmu Komputer Universitas Lambung Mangkurat.
+          </p>
+
+          <div class="hero-cta-group">
+            <a href="#proker" class="btn btn-primary">
+              <span>Jelajahi Program</span>
+              <i class="fas fa-arrow-right"></i>
+            </a>
+            <a href="#divisi" class="btn btn-glass">
+              <i class="fas fa-layer-group"></i>
+              <span>Struktur Divisi</span>
+            </a>
+          </div>
+
+          <div class="logo-strip">
+            <span class="strip-label">Sinergi Institusi:</span>
+            <div class="strip-logos">
+              <img src="assets/logo-ulm.png" alt="Universitas Lambung Mangkurat" title="Universitas Lambung Mangkurat" />
+              <img src="assets/logo-himakom.jpg" alt="HIMAKOM ULM" title="HIMAKOM ULM" />
+              <img src="assets/Logo-Kabinet.jpg" alt="Kabinet Rahman 25" title="Kabinet Rahman 25" />
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-visual-col">
+          <div class="hero-card-frame glass-panel">
+            <div class="hero-photo-wrap">
+              <img src="assets/ProfileRahman.jpeg" alt="Muhammad Nur Rahman - Ketua Umum HIMAKOM" />
+              <div class="photo-overlay"></div>
+            </div>
+            <div class="hero-card-meta">
+              <div class="meta-avatar">
+                <img src="assets/Logo-Kabinet.jpg" alt="Logo Kabinet" />
+              </div>
+              <div class="meta-info">
+                <h3>Muhammad Nur Rahman</h3>
+                <p>Ketua Umum HIMAKOM FMIPA ULM 2025/2026</p>
+              </div>
+            </div>
+            <div class="floating-badge badge-top">
+              <i class="fas fa-shield-halved text-cyan"></i>
+              <span>Kepemimpinan Visioner</span>
+            </div>
+            <div class="floating-badge badge-bottom">
+              <i class="fas fa-code-branch text-amber"></i>
+              <span>Transformasi Digital</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
-    <section class="divisions section-wrap" id="divisi" aria-labelledby="division-title">
-      <div class="section-marker"><span>03</span><span>Organisasi</span></div>
-      <div class="division-content">
-        <div class="division-heading"><h2 id="division-title">Banyak peran.<br><em>Satu ruang kerja.</em></h2><p>Nama divisi berikut tercantum dalam dashboard sumber. Susunan final dan uraian tugas perlu dikonfirmasi.</p></div>
-        <ul class="division-list">
-          <li><span>01</span><strong>Badan Pengurus Harian</strong><small>BPH</small></li>
-          <li><span>02</span><strong>Hubungan Masyarakat</strong><small>Humas</small></li>
-          <li><span>03</span><strong>Pengembangan Sumber Daya Mahasiswa</strong><small>PSDM</small></li>
-          <li><span>04</span><strong>Riset</strong><small>Riset</small></li>
-          <li><span>05</span><strong>Media</strong><small>Media</small></li>
-          <li><span>06</span><strong>Kewirausahaan</strong><small>KWU</small></li>
-          <li><span>07</span><strong>Acara</strong><small>Acara</small></li>
-        </ul>
+    <!-- Stats Section (Inspired by BEM FKUB) -->
+    <section class="stats-section">
+      <div class="container">
+        <div class="stats-grid">
+          <div class="stat-card glass-panel">
+            <div class="stat-icon"><i class="fas fa-sitemap"></i></div>
+            <div class="stat-content">
+              <h2 class="counter" data-target="7">0</h2>
+              <span class="stat-plus">+</span>
+              <p>Divisi Strategis</p>
+            </div>
+          </div>
+
+          <div class="stat-card glass-panel">
+            <div class="stat-icon"><i class="fas fa-users-gear"></i></div>
+            <div class="stat-content">
+              <h2 class="counter" data-target="17">0</h2>
+              <span class="stat-plus">+</span>
+              <p>Pengurus Inti</p>
+            </div>
+          </div>
+
+          <div class="stat-card glass-panel">
+            <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+            <div class="stat-content">
+              <h2 class="counter" data-target="15">0</h2>
+              <span class="stat-plus">+</span>
+              <p>Program Kerja</p>
+            </div>
+          </div>
+
+          <div class="stat-card glass-panel">
+            <div class="stat-icon"><i class="fas fa-graduation-cap"></i></div>
+            <div class="stat-content">
+              <h2 class="counter" data-target="250">0</h2>
+              <span class="stat-plus">+</span>
+              <p>Mahasiswa Ilkom</p>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
-    <section class="program section-wrap" id="program" aria-labelledby="program-title">
-      <div class="section-marker"><span>04</span><span>Agenda kabinet</span></div>
-      <div class="program-content">
-        <div class="program-heading"><h2 id="program-title">Gagasan jadi<br><em>ruang bersama.</em></h2><p>Temukan kegiatan, karya, dan agenda HIMAKOM di sini. Daftar program resmi belum tersedia untuk dipublikasikan.</p></div>
-        <div class="program-empty"><span class="empty-index">AGENDA / KABINET RAHMAN 25</span><p>Program kerja akan diumumkan setelah jadwal resmi ditetapkan.</p><span class="empty-line" aria-hidden="true"></span></div>
+    <!-- Tentang & Visi Misi (Inspired by BEM Polmed & BEM UAG) -->
+    <section class="about-section" id="tentang">
+      <div class="container">
+        <div class="section-header text-center">
+          <span class="section-tag">Identitas & Orientasi</span>
+          <h2 class="section-title">Mengenal Kabinet Rahman 25</h2>
+          <p class="section-desc">Membangun ekosistem kemahasiswaan yang progresif, inklusif, dan berorientasi karya nyata bagi almamater dan masyarakat.</p>
+        </div>
+
+        <div class="about-grid">
+          <div class="about-card glass-panel">
+            <div class="card-icon-header">
+              <i class="fas fa-compass"></i>
+              <h3>Visi Utama</h3>
+            </div>
+            <p class="vision-statement">
+              "Terwujudnya HIMAKOM FMIPA ULM sebagai episentrum pergerakan mahasiswa yang <strong>adaptif, kolaboratif, solutif</strong>, dan unggul dalam inovasi teknologi serta berintegritas tinggi."
+            </p>
+          </div>
+
+          <div class="about-card glass-panel">
+            <div class="card-icon-header">
+              <i class="fas fa-bullseye"></i>
+              <h3>Misi Strategis</h3>
+            </div>
+            <ul class="mission-list">
+              <li>
+                <span class="num-bullet">01</span>
+                <div>
+                  <strong>Internal Solid & Profesional</strong>
+                  <p>Membangun tata kelola organisasi yang transparan, harmonis, dan akuntabel di seluruh jajaran kepengurusan.</p>
+                </div>
+              </li>
+              <li>
+                <span class="num-bullet">02</span>
+                <div>
+                  <strong>Pengembangan Riset & Skill IT</strong>
+                  <p>Memfasilitasi peningkatan kompetensi teknis, coding, kepenulisan ilmiah, dan partisipasi kompetisi nasional.</p>
+                </div>
+              </li>
+              <li>
+                <span class="num-bullet">03</span>
+                <div>
+                  <strong>Kanal Advokasi & Aspirasi Aktif</strong>
+                  <p>Menjadi jembatan komunikasi responsif antara mahasiswa, dosen, fakultas, dan birokrasi kampus.</p>
+                </div>
+              </li>
+              <li>
+                <span class="num-bullet">04</span>
+                <div>
+                  <strong>Karya Inovatif & Kewirausahaan</strong>
+                  <p>Mendorong kemandirian ekonomi kreatif dan kolaborasi proyek teknologi berdampak sosial.</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 3 Pillars (Inspired by BEM UAG) -->
+        <div class="pillars-row">
+          <div class="pillar-box glass-panel">
+            <i class="fas fa-hand-holding-heart"></i>
+            <h4>Advokasi & Kesejahteraan</h4>
+            <p>Mengawal hak dan kenyamanan akademik mahasiswa secara tanggap dan terbuka.</p>
+          </div>
+          <div class="pillar-box glass-panel">
+            <i class="fas fa-microchip"></i>
+            <h4>Eksplorasi Teknologi</h4>
+            <p>Mendorong ekosistem riset software, data, dan AI yang aplikatif dan kompetitif.</p>
+          </div>
+          <div class="pillar-box glass-panel">
+            <i class="fas fa-network-wired"></i>
+            <h4>Sinergi Kolaboratif</h4>
+            <p>Menghubungkan mahasiswa dengan alumni, industri, dan komunitas IT nasional.</p>
+          </div>
+        </div>
       </div>
     </section>
 
-    <section class="voice" id="aspirasi" aria-labelledby="voice-title">
-      <div class="voice-inner">
-        <div class="section-marker"><span>05</span><span>Terhubung</span></div>
-        <div class="voice-copy"><h2 id="voice-title">Punya ide?<br><em>Mulai dari sini.</em></h2><p>Kami ingin mendengar masukan dan gagasan mahasiswa. Kanal aspirasi resmi akan dicantumkan setelah alamatnya dikonfirmasi.</p><span class="contact-note">Kontak publik belum tersedia. Tidak ada pesan yang dikirim atau disimpan dari halaman ini.</span></div>
-        <div class="voice-aside"><span aria-hidden="true">“</span><p>Organisasi yang baik memberi ruang bagi anggotanya untuk ikut menentukan arah.</p></div>
+    <!-- Leadership Section -->
+    <section class="leadership-section" id="pimpinan">
+      <div class="container">
+        <div class="section-header text-center">
+          <span class="section-tag">Struktur Pimpinan</span>
+          <h2 class="section-title">Pimpinan Kabinet</h2>
+          <p class="section-desc">Nahkoda pergerakan Kabinet Rahman 25 HIMAKOM FMIPA Universitas Lambung Mangkurat.</p>
+        </div>
+
+        <div class="leaders-grid">
+          <!-- Ketua Umum -->
+          <div class="leader-card glass-panel">
+            <div class="leader-img-box">
+              <img src="assets/ProfileRahman.jpeg" alt="Muhammad Nur Rahman" />
+              <div class="leader-badge">Ketua Umum</div>
+            </div>
+            <div class="leader-details">
+              <h3>Muhammad Nur Rahman</h3>
+              <p class="nim">NIM. 21415000</p>
+              <p class="bio">
+                "Kepemimpinan adalah tentang mendengar dengan empati dan melayani dengan aksi. Mari jadikan HIMAKOM sebagai rumah bersama untuk bertumbuh dan berprestasi."
+              </p>
+              <div class="leader-socials">
+                <a href="https://github.com/RahmannCH" target="_blank" rel="noreferrer"><i class="fab fa-github"></i></a>
+                <a href="mailto:rahmanilkom@ulm.ac.id"><i class="fas fa-envelope"></i></a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Wakil Ketua Umum -->
+          <div class="leader-card glass-panel">
+            <div class="leader-img-box">
+              <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=80" alt="Siti Aulia" />
+              <div class="leader-badge">Wakil Ketua Umum</div>
+            </div>
+            <div class="leader-details">
+              <h3>Siti Aulia</h3>
+              <p class="nim">NIM. 21415016</p>
+              <p class="bio">
+                "Mengintegrasikan setiap divisi untuk menciptakan harmoni kerja yang dinamis, efisien, dan berdampak nyata bagi seluruh civitas akademika."
+              </p>
+              <div class="leader-socials">
+                <a href="#"><i class="fab fa-linkedin"></i></a>
+                <a href="#"><i class="fas fa-envelope"></i></a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Divisions Section (Interactive Tabs & Cards) -->
+    <section class="divisions-section" id="divisi">
+      <div class="container">
+        <div class="section-header text-center">
+          <span class="section-tag">Departemen & Divisi</span>
+          <h2 class="section-title">7 Divisi Kerja Strategis</h2>
+          <p class="section-desc">Pilih divisi untuk melihat fokus kerja, koordinator, dan perannya di HIMAKOM ULM.</p>
+        </div>
+
+        <div class="division-tabs" id="divisiTabs">
+          <button class="tab-btn active" data-div="semua">Semua Divisi</button>
+          <button class="tab-btn" data-div="BPH">BPH</button>
+          <button class="tab-btn" data-div="Humas">Humas</button>
+          <button class="tab-btn" data-div="PSDM">PSDM</button>
+          <button class="tab-btn" data-div="Riset">Riset</button>
+          <button class="tab-btn" data-div="Media">Media</button>
+          <button class="tab-btn" data-div="Kewirausahaan">Kewirausahaan</button>
+          <button class="tab-btn" data-div="Acara">Acara</button>
+        </div>
+
+        <div class="division-cards-grid" id="divisionGrid">
+          <!-- BPH -->
+          <div class="div-card glass-panel" data-division="BPH">
+            <div class="div-icon"><i class="fas fa-landmark"></i></div>
+            <div class="div-header">
+              <span class="badge">Inti Manajemen</span>
+              <h3>Badan Pengurus Harian (BPH)</h3>
+            </div>
+            <p class="div-desc">Mengatur sirkulasi administrasi, keuangan, pengawasan kebijakan, dan koordinasi internal seluruh divisi kabinet.</p>
+            <div class="div-team">
+              <div class="team-member">
+                <i class="fas fa-user-tie"></i>
+                <div><strong>M. Nur Rahman</strong><span>Ketua Umum</span></div>
+              </div>
+              <div class="team-member">
+                <i class="fas fa-user-gear"></i>
+                <div><strong>Siti Aulia</strong><span>Wakil Ketua Umum</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Humas -->
+          <div class="div-card glass-panel" data-division="Humas">
+            <div class="div-icon"><i class="fas fa-bullhorn"></i></div>
+            <div class="div-header">
+              <span class="badge">Relasi & Kemitraan</span>
+              <h3>Hubungan Masyarakat (Humas)</h3>
+            </div>
+            <p class="div-desc">Membangun jejaring eksternal dengan alumni, instansi kampus, sponsor, universitas lain, serta komunitas IT.</p>
+            <div class="div-team">
+              <div class="team-member">
+                <i class="fas fa-user-check"></i>
+                <div><strong>Alya Pratiwi</strong><span>Ketua Divisi</span></div>
+              </div>
+              <div class="team-member">
+                <i class="fas fa-user-group"></i>
+                <div><strong>Rizal Nugraha</strong><span>Wakil Divisi</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PSDM -->
+          <div class="div-card glass-panel" data-division="PSDM">
+            <div class="div-icon"><i class="fas fa-users-rays"></i></div>
+            <div class="div-header">
+              <span class="badge">Kaderisasi & Karir</span>
+              <h3>Pengembangan SDM (PSDM)</h3>
+            </div>
+            <p class="div-desc">Merawat potensi kader, menyelenggarakan pelatihan kepemimpinan, upgrading anggota, dan pendampingan mahasiswa baru.</p>
+            <div class="div-team">
+              <div class="team-member">
+                <i class="fas fa-user-check"></i>
+                <div><strong>Bagas Dirgantara</strong><span>Ketua Divisi</span></div>
+              </div>
+              <div class="team-member">
+                <i class="fas fa-user-group"></i>
+                <div><strong>Nina Ramadhani</strong><span>Wakil Divisi</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Riset -->
+          <div class="div-card glass-panel" data-division="Riset">
+            <div class="div-icon"><i class="fas fa-laptop-code"></i></div>
+            <div class="div-header">
+              <span class="badge">Teknologi & R&D</span>
+              <h3>Riset & Keilmuan (Riset)</h3>
+            </div>
+            <p class="div-desc">Pusat pengembangan coding, studi kelompok software engineering, AI, cyber security, dan kompetisi ilmiah/Gemastik.</p>
+            <div class="div-team">
+              <div class="team-member">
+                <i class="fas fa-user-check"></i>
+                <div><strong>Davin Surya</strong><span>Ketua Divisi</span></div>
+              </div>
+              <div class="team-member">
+                <i class="fas fa-user-group"></i>
+                <div><strong>Yuliana Dewi</strong><span>Wakil Divisi</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Media -->
+          <div class="div-card glass-panel" data-division="Media">
+            <div class="div-icon"><i class="fas fa-photo-film"></i></div>
+            <div class="div-header">
+              <span class="badge">Kreatif & Informasi</span>
+              <h3>Media & Komunikasi (Media)</h3>
+            </div>
+            <p class="div-desc">Mengelola branding visual, konten media sosial resmi, publikasi dokumentasi, podcast, dan video kreatif HIMAKOM.</p>
+            <div class="div-team">
+              <div class="team-member">
+                <i class="fas fa-user-check"></i>
+                <div><strong>Citra Lestari</strong><span>Ketua Divisi</span></div>
+              </div>
+              <div class="team-member">
+                <i class="fas fa-user-group"></i>
+                <div><strong>Yoga Satria</strong><span>Wakil Divisi</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Kewirausahaan -->
+          <div class="div-card glass-panel" data-division="Kewirausahaan">
+            <div class="div-icon"><i class="fas fa-store"></i></div>
+            <div class="div-header">
+              <span class="badge">Ekonomi Kreatif</span>
+              <h3>Kewirausahaan (KWU)</h3>
+            </div>
+            <p class="div-desc">Mengembangkan unit bisnis mandiri, merchandise resmi HIMAKOM, dan pelatihan entrepreneurship bidang digital.</p>
+            <div class="div-team">
+              <div class="team-member">
+                <i class="fas fa-user-check"></i>
+                <div><strong>Farah Rahma</strong><span>Ketua Divisi</span></div>
+              </div>
+              <div class="team-member">
+                <i class="fas fa-user-group"></i>
+                <div><strong>Andra Putra</strong><span>Wakil Divisi</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Acara -->
+          <div class="div-card glass-panel" data-division="Acara">
+            <div class="div-icon"><i class="fas fa-champagne-glasses"></i></div>
+            <div class="div-header">
+              <span class="badge">Event Organizing</span>
+              <h3>Divisi Acara</h3>
+            </div>
+            <p class="div-desc">Merancang konsep, manajemen panggung, dan eksekusi event besar HIMAKOM seperti seminar, gathering, dan dies natalis.</p>
+            <div class="div-team">
+              <div class="team-member">
+                <i class="fas fa-user-check"></i>
+                <div><strong>Eka Wibowo</strong><span>Ketua Divisi</span></div>
+              </div>
+              <div class="team-member">
+                <i class="fas fa-user-group"></i>
+                <div><strong>Rara Ayuning</strong><span>Wakil Divisi</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Carousel Spotlight Section -->
+    <section class="carousel-section">
+      <div class="container">
+        <div class="carousel-header-box">
+          <div>
+            <span class="section-tag">Kader Unggulan</span>
+            <h2 class="section-title">Sorotan Anggota Kabinet</h2>
+          </div>
+          <div class="carousel-controls">
+            <button class="carousel-btn" id="prevSlide" aria-label="Slide sebelumnya"><i class="fas fa-chevron-left"></i></button>
+            <button class="carousel-btn" id="nextSlide" aria-label="Slide selanjutnya"><i class="fas fa-chevron-right"></i></button>
+          </div>
+        </div>
+
+        <div class="carousel-viewport">
+          <div class="carousel-track" id="carouselTrack">
+            <!-- Member Cards -->
+            <div class="carousel-card glass-panel">
+              <div class="member-img" style="background-image: url('assets/ProfileRahman.jpeg');"></div>
+              <div class="member-body">
+                <h4>Muhammad Nur Rahman</h4>
+                <p class="role">Ketua Umum</p>
+                <span class="badge">BPH</span>
+                <p class="nim">NIM: 21415000</p>
+              </div>
+            </div>
+
+            <div class="carousel-card glass-panel">
+              <div class="member-img" style="background-image: url('https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=60');"></div>
+              <div class="member-body">
+                <h4>Siti Aulia</h4>
+                <p class="role">Wakil Ketua Umum</p>
+                <span class="badge">BPH</span>
+                <p class="nim">NIM: 21415016</p>
+              </div>
+            </div>
+
+            <div class="carousel-card glass-panel">
+              <div class="member-img" style="background-image: url('https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=400&q=60');"></div>
+              <div class="member-body">
+                <h4>Alya Pratiwi</h4>
+                <p class="role">Ketua Divisi</p>
+                <span class="badge">Humas</span>
+                <p class="nim">NIM: 21415001</p>
+              </div>
+            </div>
+
+            <div class="carousel-card glass-panel">
+              <div class="member-img" style="background-image: url('https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=400&q=60');"></div>
+              <div class="member-body">
+                <h4>Bagas Dirgantara</h4>
+                <p class="role">Ketua Divisi</p>
+                <span class="badge">PSDM</span>
+                <p class="nim">NIM: 21415002</p>
+              </div>
+            </div>
+
+            <div class="carousel-card glass-panel">
+              <div class="member-img" style="background-image: url('https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=400&q=60');"></div>
+              <div class="member-body">
+                <h4>Davin Surya</h4>
+                <p class="role">Ketua Divisi</p>
+                <span class="badge">Riset</span>
+                <p class="nim">NIM: 21415004</p>
+              </div>
+            </div>
+
+            <div class="carousel-card glass-panel">
+              <div class="member-img" style="background-image: url('https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=60');"></div>
+              <div class="member-body">
+                <h4>Citra Lestari</h4>
+                <p class="role">Ketua Divisi</p>
+                <span class="badge">Media</span>
+                <p class="nim">NIM: 21415003</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Program Kerja Unggulan (Inspired by BEM UAG & FKUB) -->
+    <section class="proker-section" id="proker">
+      <div class="container">
+        <div class="section-header text-center">
+          <span class="section-tag">Agenda & Inovasi</span>
+          <h2 class="section-title">Program Kerja Unggulan</h2>
+          <p class="section-desc">Karya nyata yang dirancang untuk memberikan dampak positif berkelanjutan bagi seluruh mahasiswa.</p>
+        </div>
+
+        <div class="proker-grid">
+          <div class="proker-card glass-panel">
+            <div class="proker-tag">Riset & Keilmuan</div>
+            <h3>HIMAKOM Tech Expo & Hackathon</h3>
+            <p>Ajang kompetisi coding, pameran karya aplikasi mahasiswa, dan workshop industri IT berskala regional.</p>
+            <div class="proker-meta">
+              <span><i class="fas fa-clock"></i> Semester Ganjil</span>
+              <span><i class="fas fa-location-dot"></i> FMIPA ULM</span>
+            </div>
+          </div>
+
+          <div class="proker-card glass-panel">
+            <div class="proker-tag">PSDM</div>
+            <h3>Ilkom Bootcamp & Career Mentorship</h3>
+            <p>Program intensif upgrading software engineering, persiapan magang MBKM, dan bimbingan karir bersama alumni.</p>
+            <div class="proker-meta">
+              <span><i class="fas fa-clock"></i> Berkala / Bulanan</span>
+              <span><i class="fas fa-video"></i> Hybrid</span>
+            </div>
+          </div>
+
+          <div class="proker-card glass-panel">
+            <div class="proker-tag">Humas</div>
+            <h3>IT Goes to School & Village</h3>
+            <p>Pengabdian masyarakat dan literasi teknologi informasi untuk sekolah serta UMKM di Kalimantan Selatan.</p>
+            <div class="proker-meta">
+              <span><i class="fas fa-clock"></i> Semester Genap</span>
+              <span><i class="fas fa-hand-holding-heart"></i> Pengabdian</span>
+            </div>
+          </div>
+
+          <div class="proker-card glass-panel">
+            <div class="proker-tag">Media & Publikasi</div>
+            <h3>Podcast Ilkom & Tech Newsroom</h3>
+            <p>Ruang bincang santai seputar isu teknologi, perkuliahan, dan tips riset yang disiarkan di Spotify & YouTube.</p>
+            <div class="proker-meta">
+              <span><i class="fas fa-clock"></i> Dwi-Mingguan</span>
+              <span><i class="fab fa-youtube"></i> Online</span>
+            </div>
+          </div>
+
+          <div class="proker-card glass-panel">
+            <div class="proker-tag">Kewirausahaan</div>
+            <h3>TechPreneur Merch & Digital Store</h3>
+            <p>Pemberdayaan ekonomi mahasiswa melalui desain apparel eksklusif Ilmu Komputer dan jasa digital kreatif.</p>
+            <div class="proker-meta">
+              <span><i class="fas fa-clock"></i> Sepanjang Tahun</span>
+              <span><i class="fas fa-cart-shopping"></i> E-Commerce</span>
+            </div>
+          </div>
+
+          <div class="proker-card glass-panel">
+            <div class="proker-tag">Acara & BPH</div>
+            <h3>Computer Science Grand Gathering</h3>
+            <p>Malam keakraban, inaugurasi mahasiswa baru, dan perayaan Dies Natalis HIMAKOM untuk mempererat kekeluargaan.</p>
+            <div class="proker-meta">
+              <span><i class="fas fa-clock"></i> Puncak Periode</span>
+              <span><i class="fas fa-fire"></i> Grand Event</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Kotak Aspirasi Interaktif (Inspired by BEM UAG) -->
+    <section class="aspiration-section" id="aspirasi">
+      <div class="container">
+        <div class="aspiration-wrapper glass-panel">
+          <div class="aspiration-info">
+            <span class="section-tag">Kanal Partisipatif</span>
+            <h2>Suarakan Aspirasimu</h2>
+            <p>
+              Punya ide perbaikan fasilitas lab, masukan kegiatan, usulan akademik, atau kritik konstruktif untuk pengurus? Setiap suara Anda sangat berharga bagi kemajuan bersama.
+            </p>
+            <div class="aspiration-features">
+              <div class="feat-item">
+                <i class="fas fa-user-secret"></i>
+                <div>
+                  <strong>Bisa Anonim</strong>
+                  <p>Identitas Anda aman jika memilih opsi pengiriman rahasia.</p>
+                </div>
+              </div>
+              <div class="feat-item">
+                <i class="fas fa-bolt"></i>
+                <div>
+                  <strong>Tindak Lanjut Cepat</strong>
+                  <p>Aspirasi otomatis diteruskan ke divisi terkait untuk didiskusikan.</p>
+                </div>
+              </div>
+              <div class="feat-item">
+                <i class="fab fa-whatsapp"></i>
+                <div>
+                  <strong>Integrasi WhatsApp Langsung</strong>
+                  <p>Bisa kirim otomatis lewat form atau langsung via bot WhatsApp.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="aspiration-form-box">
+            <form id="publicAspirasiForm" class="styled-form">
+              <div class="form-group">
+                <label for="namaInput">Nama Lengkap (Opsional)</label>
+                <div class="input-icon-wrap">
+                  <i class="fas fa-user"></i>
+                  <input type="text" id="namaInput" placeholder="Contoh: Anonim / Nama Anda" />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="nimInput">NIM / Angkatan (Opsional)</label>
+                  <div class="input-icon-wrap">
+                    <i class="fas fa-id-card"></i>
+                    <input type="text" id="nimInput" placeholder="214150..." />
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="divisiTarget">Divisi Tujuan *</label>
+                  <div class="input-icon-wrap">
+                    <i class="fas fa-sitemap"></i>
+                    <select id="divisiTarget" required>
+                      <option value="" disabled selected>Pilih Divisi...</option>
+                      <option value="BPH / Pimpinan">BPH / Ketua Umum</option>
+                      <option value="Akademik & Fasilitas">Akademik & Fasilitas Lab</option>
+                      <option value="PSDM / Kemahasiswaan">PSDM & Advokasi</option>
+                      <option value="Riset & Kompetisi">Riset & IT Competition</option>
+                      <option value="Humas & Media">Humas & Informasi</option>
+                      <option value="Event & Acara">Event & Kegiatan</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="pesanInput">Pesan Aspirasi & Saran *</label>
+                <textarea id="pesanInput" rows="4" placeholder="Tuliskan aspirasi, ide, atau keluhan Anda dengan jelas..." required></textarea>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-block">
+                <span>Kirimkan Aspirasi</span>
+                <i class="fas fa-paper-plane"></i>
+              </button>
+
+              <div id="formSuccessAlert" class="alert-success" style="display: none;">
+                <i class="fas fa-circle-check"></i>
+                <div>
+                  <strong>Terima kasih!</strong>
+                  <p>Aspirasi Anda berhasil dicatat dan akan segera dievaluasi oleh pengurus kabinet.</p>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
     </section>
   </main>
 
+  <!-- Footer -->
   <footer class="site-footer">
-    <a class="identity footer-identity" href="#beranda"><img src="assets/logo-himakom.jpg" alt="Logo HIMAKOM" loading="lazy"><span><strong>Kabinet Rahman 25</strong><small>HIMAKOM · FMIPA ULM</small></span></a>
-    <p>Himpunan Mahasiswa Ilmu Komputer<br>Universitas Lambung Mangkurat</p>
-    <a class="back-top" href="#beranda">Kembali ke atas <span aria-hidden="true">↑</span></a>
-    <small class="copyright">© 2025 HIMAKOM ULM · Kabinet Rahman 25</small>
+    <div class="container footer-container">
+      <div class="footer-col brand-col">
+        <div class="footer-brand">
+          <img src="assets/Logo-Kabinet.jpg" alt="Logo Kabinet" />
+          <div>
+            <h3>Kabinet Rahman 25</h3>
+            <p>HIMAKOM FMIPA ULM</p>
+          </div>
+        </div>
+        <p class="footer-about">
+          Himpunan Mahasiswa Ilmu Komputer Universitas Lambung Mangkurat adalah wadah kemahasiswaan yang berdedikasi membangun insan akademis, inovatif, dan berintegritas.
+        </p>
+        <div class="footer-socials">
+          <a href="https://instagram.com" target="_blank" rel="noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="https://tiktok.com" target="_blank" rel="noreferrer" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+          <a href="https://github.com/RahmannCH" target="_blank" rel="noreferrer" aria-label="GitHub"><i class="fab fa-github"></i></a>
+          <a href="https://wa.me/6281234567890" target="_blank" rel="noreferrer" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+          <a href="mailto:himakom.fmipa@ulm.ac.id" aria-label="Email"><i class="fas fa-envelope"></i></a>
+        </div>
+      </div>
+
+      <div class="footer-col links-col">
+        <h4>Navigasi Cepat</h4>
+        <ul>
+          <li><a href="#beranda"><i class="fas fa-chevron-right"></i> Beranda</a></li>
+          <li><a href="#tentang"><i class="fas fa-chevron-right"></i> Profil & Visi Misi</a></li>
+          <li><a href="#pimpinan"><i class="fas fa-chevron-right"></i> Pimpinan Kabinet</a></li>
+          <li><a href="#divisi"><i class="fas fa-chevron-right"></i> Struktur 7 Divisi</a></li>
+          <li><a href="#proker"><i class="fas fa-chevron-right"></i> Program Kerja</a></li>
+          <li><a href="#aspirasi"><i class="fas fa-chevron-right"></i> Layanan Aspirasi</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col contact-col">
+        <h4>Pusat Sekretariat</h4>
+        <div class="contact-entry">
+          <i class="fas fa-map-location-dot"></i>
+          <p>Gedung Jurusan Ilmu Komputer, FMIPA Universitas Lambung Mangkurat, Jl. A. Yani KM 36, Banjarbaru, Kalimantan Selatan 70714</p>
+        </div>
+        <div class="contact-entry">
+          <i class="fas fa-envelope"></i>
+          <p>himakom.ulm@gmail.com</p>
+        </div>
+        <div class="contact-entry">
+          <i class="fas fa-phone"></i>
+          <p>+62 821-4150-2025 (Humas HIMAKOM)</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="container bottom-flex">
+        <p>&copy; 2025–2026 Kabinet Rahman 25 • HIMAKOM FMIPA ULM. Hak Cipta Dilindungi.</p>
+        <a href="#beranda" class="back-to-top">
+          <span>Kembali ke atas</span>
+          <i class="fas fa-arrow-up"></i>
+        </a>
+      </div>
+    </div>
   </footer>
+
+  <!-- Scripts -->
+  <script src="js/main.js"></script>
 </body>
 </html>
