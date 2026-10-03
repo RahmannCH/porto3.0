@@ -442,10 +442,25 @@ const petOne = page.locator('#pet-1');
   });
   expect(style.fontSize).toBeGreaterThanOrEqual(12);
   expect(style.lineHeight).toBeGreaterThanOrEqual(style.fontSize * 1.15);
-  expect(style.whiteSpace).toBe('normal');
   expect(style.maxWidth).toBeGreaterThanOrEqual(120);
   expect(style.opacity).toBeGreaterThan(0.9);
   expect((style.text ?? '').trim().length).toBeGreaterThan(0);
+
+  // Compact by design: the pill is a single line, and its own width is capped so
+  // it can never stretch into a two-line paragraph over the page content.
+  expect(style.whiteSpace).toBe('nowrap');
+  expect(bubble).toHaveCSS('width', /px/);
+  const singleLine = await bubble.evaluate(el => {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const rects = range.getClientRects();
+    return rects.length <= 1;
+  });
+  expect(singleLine).toBe(true);
+
+  // Short lines only, so the greeting cannot outstay the walk that carries it.
+  expect(style.text.trim().length).toBeLessThanOrEqual(32);
+  expect(await bubble.evaluate(el => getComputedStyle(el).textOverflow)).toBe('ellipsis');
 
   const fits = await page.evaluate(() => {
     const env = document.querySelector('.mascot-environment');
@@ -454,6 +469,60 @@ const petOne = page.locator('#pet-1');
     return box.top >= env.getBoundingClientRect().top - 1;
   });
   expect(fits).toBe(true);
+});
+
+test('a greeting is rate limited so a hovering pointer cannot spam bubbles', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(baseURL);
+  const petOne = page.locator('#pet-1');
+
+  // Fire the same deliberate trigger many times in a row and count how many
+  // distinct speech bursts actually start. The cooldown must swallow the rest.
+  const bursts = await page.evaluate(async () => {
+    const pet = document.querySelector('#pet-1');
+    const bubble = pet.querySelector('.speech-bubble');
+    let seen = 0;
+    let wasShowing = false;
+    for (let i = 0; i < 40; i += 1) {
+      pet.dispatchEvent(new PointerEvent('pointerenter', { bubbles: true }));
+      pet.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      const showing = bubble.textContent.length > 0;
+      if (showing && !wasShowing) seen += 1;
+      wasShowing = showing;
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+    return seen;
+  });
+  expect(bursts).toBeLessThanOrEqual(4);
+});
+
+test('a startled pet keeps moving instead of freezing in place', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(baseURL);
+
+  // A real pointer has to be present, because the pet deliberately ignores a
+  // synthetic hover that no cursor produced.
+  const target = await page.locator('#pet-1').boundingBox();
+  await page.mouse.move(target.x + target.width / 2, target.y + target.height / 2);
+  await page.waitForTimeout(60);
+
+  const movement = await page.evaluate(async () => {
+    const pet = document.querySelector('#pet-1');
+    const read = () => parseFloat(pet.style.left || '0') || pet.getBoundingClientRect().left;
+    const before = read();
+    const positions = [];
+    for (let i = 0; i < 40; i += 1) {
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      positions.push(read());
+    }
+    const moved = Math.abs(positions[positions.length - 1] - before);
+    return { moved, distinct: new Set(positions.map(value => value.toFixed(1))).size };
+  });
+
+  // It has to travel while panicking, and it has to keep travelling every frame,
+  // so a pet that freezes mid-reaction (the earlier bug) fails this.
+  expect(movement.moved).toBeGreaterThan(4);
+  expect(movement.distinct).toBeGreaterThan(10);
 });
 
 test('mascots start on opposite sides and are keyboard reachable', async ({ page }) => {

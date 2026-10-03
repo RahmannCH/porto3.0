@@ -259,23 +259,28 @@ if (petEls.length === 2 && mascotEnv) {
   // old frame counters meant the whole cast walked, sprinted and finished
   // speaking 2.4 times faster on a 144Hz display than on a 60Hz one.
   const WALK_SPEED = 62;
-  const SCARED_SPEED = 250;
+  const SCARED_SPEED = 150;
   const START_GAP = 14;
-  const TOUCH_GAP = 24;
-  const SCARED_FOR = 0.55;
-  const FEAR_COOLDOWN = 0.8;
-  const SPEECH_MS = 2800;
+  const TOUCH_GAP = 26;
+  const SCARED_FOR = 1.1;
+  const REACT_GAP = 3;
+  const SPEECH_MS = 2200;
+  const GREET_CHANCE = 0.5;
 
   const clamp = (value, low, high) => (value < low ? low : value > high ? high : value);
   const pick = list => list[Math.floor(Math.random() * list.length)];
 
+  // Every line is two to four words so the pill stays one line on a phone and
+  // the greeting never outlasts the walk that carries it. The first list is
+  // Rahman's guide character, the second is the sleepy one, so the two read as
+  // separate voices instead of one bot with two sprites.
   const greetings = [
-    ['Salam! \uD83D\uDE0A', 'Nice to meet you! \u2728', 'Coba scroll ke bawah yuk! \uD83D\uDC47', 'Ada terminal CLI di bawah loh \uD83D\uDCBB', 'Mau cetak CV? Ada tombol di atas! \uD83D\uDCC4', 'Cek proyek full-stack Rahman! \uD83D\uDE80'],
-    ['Santai dulu kawan \u2615', 'Lagi liat-liat portofolio ya? \uD83D\uDC40', 'Klik aku lagi dong! \uD83C\uDF89', 'Kodenya clean kan? \uD83E\uDDD1\u200D\uD83D\uDCBB', 'Bentar, ngantuk zZ \uD83D\uDCA4']
+    ['Salam! \uD83D\uDE0A', 'Nice to meet you \u2728', 'Scroll ke bawah \uD83D\uDC47', 'Ada proyek seru \uD83D\uDE80', 'Cek CV-ku \uD83D\uDCC4'],
+    ['Hai, santai dulu \u2615', 'Nonton dulu ya \uD83D\uDC40', 'Ngantuk nih zZ \uD83D\uDCA4', 'Klik aku dong \uD83C\uDF89']
   ];
-  const startleLines = ['Halo! Mau ngobrol? \uD83D\uDC4B', 'Eh, ada kursor! \uD83D\uDE04'];
+  const startleLines = ['Eh, halo! \uD83D\uDC4B', 'Woy, kaget \uD83D\uDE04'];
   const cheerLines = ['Halo juga! \uD83C\uDF89', 'Asyik! \uD83D\uDE06'];
-  const bumpLines = ['Permisi, numpang lewat~ \uD83D\uDC4B', 'Halo sobat! \u2728', 'Awas tabrakan! \uD83D\uDE04'];
+  const bumpLines = ['Permisi~ \uD83D\uDC4B', 'Eh, maaf \uD83D\uDE05', 'Halo sobat \u2728'];
 
   const pets = Array.from(petEls).map((el, index) => ({
     el,
@@ -289,6 +294,7 @@ if (petEls.length === 2 && mascotEnv) {
     state: 'IDLE',
     timer: index === 0 ? 1 : 1.5,
     fear: 0,
+    react: 0,
     speechHandle: 0,
     placed: false
   }));
@@ -330,8 +336,13 @@ if (petEls.length === 2 && mascotEnv) {
     });
   };
 
+  // One gate for every spoken line in the module. Without it the pointer could
+  // sit on a pet and retrigger the greeting on every frame, which is what made
+  // the bubbles feel like spam.
   const say = (p, message) => {
     if (mascotPaused || !p.bubble) return;
+    if (p.react > 0) return;
+    p.react = REACT_GAP;
     p.bubble.textContent = message;
     p.el.classList.add('has-speech');
     if (p.state === 'IDLE') p.el.classList.add('is-jumping');
@@ -348,12 +359,15 @@ if (petEls.length === 2 && mascotEnv) {
     p.vx = p.dir * p.baseSpeed;
   };
 
+  // Panic is a moving state, not a freeze: the pet keeps travelling away from the
+  // cursor while it yelps, so it never stands still mid-reaction. `reverse` flips
+  // the hush away from a click or focus rather than from the pointer position.
   const startle = (p, message, reverse = false) => {
-    p.state = 'IDLE';
-    p.timer = 2.5;
-    p.fear = FEAR_COOLDOWN;
+    p.state = 'SCARED';
+    p.timer = SCARED_FOR;
+    p.fear = SCARED_FOR;
     p.dir = reverse ? (p.dir > 0 ? -1 : 1) : ((p.x + p.w / 2) > mouseX ? 1 : -1);
-    p.vx = 0;
+    p.vx = p.dir * SCARED_SPEED;
     say(p, message);
   };
 
@@ -413,6 +427,7 @@ if (petEls.length === 2 && mascotEnv) {
     pets.forEach(p => {
       const voice = p.el.dataset.pet === '2' ? 1 : 0;
       p.fear = Math.max(0, p.fear - dt);
+      p.react = Math.max(0, p.react - dt);
       p.timer -= dt;
 
       if (p.timer <= 0) {
@@ -423,7 +438,7 @@ if (petEls.length === 2 && mascotEnv) {
           p.state = 'IDLE';
           p.timer = 2 + Math.random() * 3;
           p.vx = 0;
-          if (Math.random() > 0.45) say(p, pick(greetings[voice]));
+          if (Math.random() < GREET_CHANCE) say(p, pick(greetings[voice]));
         }
       }
 
@@ -469,15 +484,20 @@ if (petEls.length === 2 && mascotEnv) {
 
   pets.forEach(p => {
     const voice = p.el.dataset.pet === '2' ? 1 : 0;
+    // A deliberate click is the one action the user chose, so it may interrupt
+    // an already-running greeting. Incidental hover and focus respect the gate.
     p.el.addEventListener('pointerenter', () => {
-      if (isMouseActive && p.state !== 'SCARED') startle(p, startleLines[voice]);
+      if (isMouseActive && p.state !== 'SCARED' && p.react <= 0) {
+        startle(p, startleLines[voice]);
+      }
     });
     p.el.addEventListener('focus', () => {
-      if (p.fear <= 0) startle(p, cheerLines[voice], true);
+      if (p.fear <= 0 && p.react <= 0) startle(p, cheerLines[voice], true);
     });
     p.el.addEventListener('click', () => {
       p.fear = 0;
-      startle(p, cheerLines[voice], true);
+      p.react = 0;
+      startle(p, pick(cheerLines), true);
     });
   });
 

@@ -327,8 +327,10 @@ Components added after the reference-driven pass, kept in their own file so
 .walking-mascot b { right: calc(8px * var(--unit)); animation-delay: 0.16s; }
 
 .walking-mascot.is-running i,
-.walking-mascot.is-running b {
-  animation-duration: 0.14s !important;
+.walking-mascot.is-running b,
+.walking-mascot.is-scared i,
+.walking-mascot.is-scared b {
+  animation-duration: 0.13s !important;
 }
 
 .walking-mascot.is-paused i,
@@ -340,9 +342,13 @@ Components added after the reference-driven pass, kept in their own file so
   animation-play-state: paused !important;
 }
 
-/* Startled: taller and narrower with wider eyes. Held off transform so the
-   facing flip survives the scare. */
-.walking-mascot.is-scared { scale: 0.9 1.16; }
+/* Startled: taller, narrower, wider eyes, and leaning into the sprint. The lean
+   lives on `translate` so it survives the facing flip that JS owns, and it is
+   what tells the eye the pet is running away rather than standing there. */
+.walking-mascot.is-scared {
+  scale: 0.9 1.16;
+  translate: 0 calc(-2px * var(--unit));
+}
 .walking-mascot.is-scared .pet-eye { scale: 1.35; }
 
 @keyframes pet-jump {
@@ -352,30 +358,35 @@ Components added after the reference-driven pass, kept in their own file so
 
 .walking-mascot.is-jumping { animation: pet-jump 0.3s ease-in-out 1; }
 
-/* The greeting has to be readable at a glance while it walks past, so it gets a
-   real font size, a real line height and a two-line cap rather than a single
-   nowrap string. The tail is a bordered square tucked under the bubble edge so
-   it matches the surface on both themes. */
+/* The greeting has to read in one glance while the pet walks past, so it is a
+   compact pill: an inverted surface so it never blends into the page behind it,
+   one line of text at a real size, and a hard shell instead of a soft shadow.
+   Colours come from the theme tokens rather than fixed hex, because a white pill
+   on the light theme was invisible and a black one vanished on the dark theme. */
 .speech-bubble {
   position: absolute;
-  bottom: calc(100% + 8px);
+  bottom: calc(100% + 10px);
   left: 50%;
-  max-width: clamp(10rem, 48vw, 15rem);
-  padding: 6px 16px;
-  border: 2px solid #090a0c;
+  width: max-content;
+  max-width: min(15rem, 70vw);
+  padding: 5px 14px;
+  border: 1.5px solid var(--ink);
   border-radius: 9999px;
-  background: #ffffff;
-  color: #000000;
+  background: var(--ink);
+  color: var(--bg);
   font-family: var(--sans);
-  font-size: clamp(0.85rem, 2.5vw, 0.95rem);
-  font-weight: 750;
-  line-height: 1.35;
+  font-size: clamp(0.76rem, 2.2vw, 0.85rem);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
   text-align: center;
   text-wrap: balance;
-  white-space: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   opacity: 0;
   pointer-events: none;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
   transform: translateX(-50%) translateY(4px) scaleX(var(--facing, 1)) scale(0.85);
   transform-origin: bottom center;
   transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease-out;
@@ -383,7 +394,17 @@ Components added after the reference-driven pass, kept in their own file so
 }
 
 .speech-bubble::after {
-  display: none;
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-right: 1.5px solid var(--ink);
+  border-bottom: 1.5px solid var(--ink);
+  background: var(--ink);
+  transform: rotate(45deg);
 }
 
 .walking-mascot.has-speech .speech-bubble {
