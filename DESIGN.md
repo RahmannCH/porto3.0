@@ -82,7 +82,6 @@ Desktop uses asymmetric editorial compositions; mobile collapses to readable sin
 
 - Owner portrait: local `assets/ProfileRahman.jpeg`, meaningful alt text, intrinsic dimensions and stable aspect ratio.
 - Project preview images: locally stored real preview screenshots sourced from the owner’s public GitHub profile, with descriptive alt text and dimensions.
-- Existing cabinet logos remain unused legacy files until safe cleanup; they must not appear in the personal portfolio.
 - `assets/rahman-mark.svg` is a simple initials favicon/monogram.
 - No stock face or stock image framed as a project screenshot, certificate, or personal event photo.
 - Lazy-load below-fold project images; prioritize the hero image. Keep source attribution/URL in PRD/data record.
@@ -91,4 +90,4 @@ Desktop uses asymmetric editorial compositions; mobile collapses to readable sin
 
 Target WCAG 2.2 AA. Test keyboard, visible/unobscured focus, 320px reflow, text/interactive contrast, reduced motion, screen-reader headings/landmarks, and touch targets. The mascot and draggable labels must never be necessary for understanding or navigating the site.
 
-Release checks: Playwright viewports 1440, 768, 390, 320; theme persistence; keyboard menu/drag; image decoding; internal anchors; 404; no console/page errors; accent parity between the design tokens and the animation engine in both themes; print controls reach `window.print()`; print media hides chrome and resolves reveal opacity; manual contrast and copy review. See `PRD_KabinetRahman25.md` for the product requirements and evidence policy.
+Release checks: Playwright viewports 1440, 768, 390, 320; theme persistence; keyboard menu/drag; image decoding; internal anchors; 404; no console/page errors; accent parity between the design tokens and the animation engine in both themes; print controls reach `window.print()`; print media hides chrome and resolves reveal opacity; manual contrast and copy review. See `PRD.md` for the product requirements and evidence policy.

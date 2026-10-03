@@ -125,7 +125,7 @@ test('cli drawer opens from the footer, closes on Escape, and restores focus', a
   await expect(trigger).toBeFocused();
 });
 
-test('unknown path returns 404 instead of cabinet or portfolio page', async ({ request }) => {
+test('unknown path returns 404 instead of portfolio page', async ({ request }) => {
   const response = await request.get(`${baseURL}/missing-route`);
   expect(response.status()).toBe(404);
 });

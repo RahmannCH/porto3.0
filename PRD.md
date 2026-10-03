@@ -9,7 +9,7 @@
 
 ## Problem statement
 
-Visitors currently need one clear place to understand Rahman’s identity, education, full-stack direction, projects, experience, and contact paths. The `porto3.0` source previously described Kabinet Rahman 25 and did not function as his personal portfolio. The goal is to convert the existing lightweight static site into an accurate, navigable personal portfolio without adding an unnecessary application backend or framework.
+Visitors currently need one clear place to understand Rahman’s identity, education, full-stack direction, projects, experience, and contact paths. The goal is to provide a high-performance, accessible, and navigable static personal portfolio without adding unnecessary application backends or frameworks.
 
 ## Goals
 
@@ -124,7 +124,6 @@ Use monochrome surfaces and text with one restrained pastel blue accent. Dark/li
 
 ## Acceptance criteria
 
-- No Kabinet/HIMAKOM organizational-site copy, draft banner, organizational logos, program/aspiration UI, or cabinet metadata remains in the live personal portfolio.
 - Personal name/role, study, work, contact, and project claims reflect owner-provided/public sources and no fabricated numbers.
 - 3–4 selected GitHub projects have genuine preview images, functional source/demo links, correct alt text and coherent descriptions.
 - Light/dark theme follows saved/system preference and remains usable if storage is disabled.
