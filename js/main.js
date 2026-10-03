@@ -270,12 +270,12 @@ if (petEls.length === 2 && mascotEnv) {
   const pick = list => list[Math.floor(Math.random() * list.length)];
 
   const greetings = [
-    ['Hai, Rahman di sini! \uD83D\uDC4B', 'Santai dulu kawan \u2615', 'Halo! Semangat berkarya \u2728'],
-    ['Bentar, ngantuk zZ \uD83D\uDCA4', 'Hehe, halo juga! \uD83D\uDE04', 'Lagi liat-liat ya? \uD83D\uDC40']
+    ['Salam! \uD83D\uDE0A', 'Nice to meet you! \u2728', 'Coba scroll ke bawah yuk! \uD83D\uDC47', 'Ada terminal CLI di bawah loh \uD83D\uDCBB', 'Mau cetak CV? Ada tombol di atas! \uD83D\uDCC4', 'Cek proyek full-stack Rahman! \uD83D\uDE80'],
+    ['Santai dulu kawan \u2615', 'Lagi liat-liat portofolio ya? \uD83D\uDC40', 'Klik aku lagi dong! \uD83C\uDF89', 'Kodenya clean kan? \uD83E\uDDD1\u200D\uD83D\uDCBB', 'Bentar, ngantuk zZ \uD83D\uDCA4']
   ];
-  const startleLines = ['Kaget, euy! \uD83D\uDE28', 'Waduh, pelan-pelan! \uD83D\uDE31'];
-  const cheerLines = ['Nah, halo! \uD83C\uDF89', 'Asyik! \uD83D\uDE06'];
-  const bumpLines = ['Eh, maaf ya! \uD83D\uDE05', 'Permisi~ \uD83D\uDC4B', 'Awas tabrakan! \uD83D\uDE04'];
+  const startleLines = ['Halo! Mau ngobrol? \uD83D\uDC4B', 'Eh, ada kursor! \uD83D\uDE04'];
+  const cheerLines = ['Halo juga! \uD83C\uDF89', 'Asyik! \uD83D\uDE06'];
+  const bumpLines = ['Permisi, numpang lewat~ \uD83D\uDC4B', 'Halo sobat! \u2728', 'Awas tabrakan! \uD83D\uDE04'];
 
   const pets = Array.from(petEls).map((el, index) => ({
     el,
@@ -349,11 +349,11 @@ if (petEls.length === 2 && mascotEnv) {
   };
 
   const startle = (p, message, reverse = false) => {
-    p.state = 'SCARED';
-    p.timer = SCARED_FOR;
+    p.state = 'IDLE';
+    p.timer = 2.5;
     p.fear = FEAR_COOLDOWN;
     p.dir = reverse ? (p.dir > 0 ? -1 : 1) : ((p.x + p.w / 2) > mouseX ? 1 : -1);
-    p.vx = p.dir * SCARED_SPEED;
+    p.vx = 0;
     say(p, message);
   };
 

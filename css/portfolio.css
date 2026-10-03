@@ -286,7 +286,7 @@ Components added after the reference-driven pass, kept in their own file so
   border: 0;
   appearance: none;
   border-radius: calc(24px * var(--unit)) calc(24px * var(--unit)) calc(14px * var(--unit)) calc(14px * var(--unit));
-  background: var(--ink);
+  background: #090a0c;
   font: inherit;
   color: inherit;
   cursor: pointer;
@@ -305,7 +305,7 @@ Components added after the reference-driven pass, kept in their own file so
   width: calc(10px * var(--unit));
   height: calc(14px * var(--unit));
   border-radius: calc(6px * var(--unit));
-  background: var(--bg);
+  background: #ffffff;
   transition: scale 0.16s ease-out;
 }
 
@@ -358,17 +358,16 @@ Components added after the reference-driven pass, kept in their own file so
    it matches the surface on both themes. */
 .speech-bubble {
   position: absolute;
-  bottom: 100%;
+  bottom: calc(100% + 8px);
   left: 50%;
   max-width: clamp(10rem, 48vw, 15rem);
-  margin-bottom: 8px;
-  padding: 8px 14px;
-  border: 1.5px solid var(--line);
-  border-radius: 16px;
-  background: var(--surface-raised);
-  color: var(--ink);
+  padding: 6px 16px;
+  border: 2px solid #090a0c;
+  border-radius: 9999px;
+  background: #ffffff;
+  color: #000000;
   font-family: var(--sans);
-  font-size: clamp(0.82rem, 2.5vw, 0.92rem);
+  font-size: clamp(0.85rem, 2.5vw, 0.95rem);
   font-weight: 750;
   line-height: 1.35;
   text-align: center;
@@ -376,7 +375,7 @@ Components added after the reference-driven pass, kept in their own file so
   white-space: normal;
   opacity: 0;
   pointer-events: none;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
   transform: translateX(-50%) translateY(4px) scaleX(var(--facing, 1)) scale(0.85);
   transform-origin: bottom center;
   transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease-out;
@@ -384,17 +383,7 @@ Components added after the reference-driven pass, kept in their own file so
 }
 
 .speech-bubble::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  width: 10px;
-  height: 10px;
-  margin: -6px 0 0 -5px;
-  border-right: 1.5px solid var(--line);
-  border-bottom: 1.5px solid var(--line);
-  background: var(--surface-raised);
-  transform: rotate(45deg);
+  display: none;
 }
 
 .walking-mascot.has-speech .speech-bubble {
