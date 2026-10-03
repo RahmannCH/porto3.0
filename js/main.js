@@ -260,8 +260,8 @@ if (petEls.length === 2 && mascotEnv) {
   // speaking 2.4 times faster on a 144Hz display than on a 60Hz one.
   const WALK_SPEED = 62;
   const SCARED_SPEED = 250;
-  const START_GAP = 10;
-  const TOUCH_GAP = 20;
+  const START_GAP = 14;
+  const TOUCH_GAP = 24;
   const SCARED_FOR = 0.55;
   const FEAR_COOLDOWN = 0.8;
   const SPEECH_MS = 2800;
@@ -270,12 +270,12 @@ if (petEls.length === 2 && mascotEnv) {
   const pick = list => list[Math.floor(Math.random() * list.length)];
 
   const greetings = [
-    ['Hai, Rahman!', 'Santai dulu ya', 'Halo, datang sini'],
-    ['Bentar, ngantuk', 'Hehe, hehe', 'Jangan dikejar']
+    ['Hai, Rahman di sini! \uD83D\uDC4B', 'Santai dulu kawan \u2615', 'Halo! Semangat berkarya \u2728'],
+    ['Bentar, ngantuk zZ \uD83D\uDCA4', 'Hehe, halo juga! \uD83D\uDE04', 'Lagi liat-liat ya? \uD83D\uDC40']
   ];
-  const startleLines = ['Eh, retreating!', 'Woy, pelan-pelan'];
-  const cheerLines = ['Nah, ganteng!', 'Oke, oke!'];
-  const bumpLines = ['Maaf, lewat ya', 'Sip, formedais'];
+  const startleLines = ['Kaget, euy! \uD83D\uDE28', 'Waduh, pelan-pelan! \uD83D\uDE31'];
+  const cheerLines = ['Nah, halo! \uD83C\uDF89', 'Asyik! \uD83D\uDE06'];
+  const bumpLines = ['Eh, maaf ya! \uD83D\uDE05', 'Permisi~ \uD83D\uDC4B', 'Awas tabrakan! \uD83D\uDE04'];
 
   const pets = Array.from(petEls).map((el, index) => ({
     el,
@@ -305,8 +305,8 @@ if (petEls.length === 2 && mascotEnv) {
   const measure = () => {
     floorY = mascotEnv.getBoundingClientRect().bottom;
     pets.forEach(p => {
-      p.w = p.el.offsetWidth;
-      p.h = p.el.offsetHeight;
+      p.w = p.el.offsetWidth || (p.el.dataset.pet === '2' ? 49 : 58);
+      p.h = p.el.offsetHeight || (p.el.dataset.pet === '2' ? 60 : 70);
     });
   };
 
@@ -323,8 +323,10 @@ if (petEls.length === 2 && mascotEnv) {
 
   const paint = () => {
     pets.forEach(p => {
+      const facing = p.dir > 0 ? -1 : 1;
       p.el.style.left = `${p.x.toFixed(2)}px`;
-      p.el.style.transform = `scaleX(${p.dir > 0 ? -1 : 1})`;
+      p.el.style.transform = `scaleX(${facing})`;
+      p.el.style.setProperty('--facing', facing);
     });
   };
 
@@ -379,20 +381,28 @@ if (petEls.length === 2 && mascotEnv) {
     near.x = left;
     far.x = left + near.w + START_GAP;
 
-    const closing = (near.dir > 0 && far.dir < 0) || (near.dir < 0 && far.dir > 0);
+    const closing = near.dir > 0 && far.dir < 0;
     if (closing) {
-      near.dir *= -1;
-      far.dir *= -1;
-      walk(near, 1.2 + Math.random());
-      walk(far, 1.2 + Math.random());
-    } else if (near.vx === 0 && far.vx !== 0) {
-      walk(far, 1.5);
-    } else if (far.vx === 0 && near.vx !== 0) {
-      walk(near, 1.5);
+      near.dir = -1;
+      far.dir = 1;
+      walk(near, 1.8 + Math.random() * 2);
+      walk(far, 1.8 + Math.random() * 2);
+    } else if (near.dir > 0 && far.dir > 0) {
+      near.dir = -1;
+      walk(near, 1.5 + Math.random());
+    } else if (near.dir < 0 && far.dir < 0) {
+      far.dir = 1;
+      walk(far, 1.5 + Math.random());
+    } else if (near.state === 'IDLE' && far.dir < 0) {
+      far.dir = 1;
+      walk(far, 1.5 + Math.random());
+    } else if (far.state === 'IDLE' && near.dir > 0) {
+      near.dir = -1;
+      walk(near, 1.5 + Math.random());
     }
 
     if (bumpCooldown <= 0) {
-      bumpCooldown = 2.5;
+      bumpCooldown = 3.0;
       say(Math.random() < 0.5 ? near : far, pick(bumpLines));
     }
   };

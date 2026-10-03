@@ -270,7 +270,7 @@ Components added after the reference-driven pass, kept in their own file so
   bottom: 0.8rem;
   left: 0;
   width: 100%;
-  height: 118px;
+  height: 150px;
   overflow: visible;
   pointer-events: none;
 }
@@ -279,13 +279,13 @@ Components added after the reference-driven pass, kept in their own file so
   --unit: 1;
   position: absolute;
   bottom: 0;
-  width: calc(46px * var(--unit));
-  height: calc(54px * var(--unit));
+  width: calc(58px * var(--unit));
+  height: calc(70px * var(--unit));
   margin: 0;
   padding: 0;
   border: 0;
   appearance: none;
-  border-radius: calc(20px * var(--unit)) calc(20px * var(--unit)) calc(12px * var(--unit)) calc(12px * var(--unit));
+  border-radius: calc(24px * var(--unit)) calc(24px * var(--unit)) calc(14px * var(--unit)) calc(14px * var(--unit));
   background: var(--ink);
   font: inherit;
   color: inherit;
@@ -297,34 +297,34 @@ Components added after the reference-driven pass, kept in their own file so
 }
 
 .pet-1 { --unit: 1; z-index: 3; }
-.pet-2 { --unit: 0.84; z-index: 2; }
+.pet-2 { --unit: 0.85; z-index: 2; }
 
 .pet-eye {
   position: absolute;
-  top: calc(15px * var(--unit));
-  width: calc(8px * var(--unit));
-  height: calc(11px * var(--unit));
-  border-radius: calc(5px * var(--unit));
+  top: calc(18px * var(--unit));
+  width: calc(10px * var(--unit));
+  height: calc(14px * var(--unit));
+  border-radius: calc(6px * var(--unit));
   background: var(--bg);
   transition: scale 0.16s ease-out;
 }
 
-.pet-eye:first-of-type { left: calc(11px * var(--unit)); }
-.pet-eye:last-of-type { right: calc(11px * var(--unit)); }
+.pet-eye:first-of-type { left: calc(13px * var(--unit)); }
+.pet-eye:last-of-type { right: calc(13px * var(--unit)); }
 
 .walking-mascot i,
 .walking-mascot b {
   position: absolute;
-  bottom: calc(-5px * var(--unit));
-  width: calc(10px * var(--unit));
-  height: calc(10px * var(--unit));
-  border-radius: 0 0 calc(5px * var(--unit)) calc(5px * var(--unit));
+  bottom: calc(-6px * var(--unit));
+  width: calc(12px * var(--unit));
+  height: calc(12px * var(--unit));
+  border-radius: 0 0 calc(6px * var(--unit)) calc(6px * var(--unit));
   background: var(--accent-strong);
   animation: step 0.34s ease-in-out infinite alternate;
 }
 
-.walking-mascot i { left: calc(6px * var(--unit)); }
-.walking-mascot b { right: calc(6px * var(--unit)); animation-delay: 0.16s; }
+.walking-mascot i { left: calc(8px * var(--unit)); }
+.walking-mascot b { right: calc(8px * var(--unit)); animation-delay: 0.16s; }
 
 .walking-mascot.is-running i,
 .walking-mascot.is-running b {
@@ -347,7 +347,7 @@ Components added after the reference-driven pass, kept in their own file so
 
 @keyframes pet-jump {
   0%, 100% { translate: 0 0; }
-  38% { translate: 0 calc(-7px * var(--unit)); }
+  38% { translate: 0 calc(-10px * var(--unit)); }
 }
 
 .walking-mascot.is-jumping { animation: pet-jump 0.3s ease-in-out 1; }
@@ -360,26 +360,27 @@ Components added after the reference-driven pass, kept in their own file so
   position: absolute;
   bottom: 100%;
   left: 50%;
-  max-width: clamp(9rem, 44vw, 13rem);
-  margin-bottom: 5px;
-  padding: 7px 11px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: var(--surface);
+  max-width: clamp(10rem, 48vw, 15rem);
+  margin-bottom: 8px;
+  padding: 8px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-raised);
   color: var(--ink);
   font-family: var(--sans);
-  font-size: clamp(0.78rem, 2.4vw, 0.88rem);
-  font-weight: 700;
-  line-height: 1.3;
+  font-size: clamp(0.82rem, 2.5vw, 0.92rem);
+  font-weight: 750;
+  line-height: 1.35;
   text-align: center;
   text-wrap: balance;
   white-space: normal;
   opacity: 0;
   pointer-events: none;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.24);
-  transform: translateX(-50%) translateY(4px) scale(0.86);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.2);
+  transform: translateX(-50%) translateY(4px) scaleX(var(--facing, 1)) scale(0.85);
   transform-origin: bottom center;
-  transition: transform 0.26s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.18s;
+  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease-out;
+  z-index: 20;
 }
 
 .speech-bubble::after {
@@ -387,17 +388,17 @@ Components added after the reference-driven pass, kept in their own file so
   position: absolute;
   top: 100%;
   left: 50%;
-  width: 9px;
-  height: 9px;
-  margin: -5px 0 0 -4.5px;
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  background: var(--surface);
+  width: 10px;
+  height: 10px;
+  margin: -6px 0 0 -5px;
+  border-right: 1.5px solid var(--line);
+  border-bottom: 1.5px solid var(--line);
+  background: var(--surface-raised);
   transform: rotate(45deg);
 }
 
 .walking-mascot.has-speech .speech-bubble {
-  transform: translateX(-50%) translateY(0) scale(1);
+  transform: translateX(-50%) translateY(0) scaleX(var(--facing, 1)) scale(1);
   opacity: 1;
 }
 /* Hero lanyard ID card
