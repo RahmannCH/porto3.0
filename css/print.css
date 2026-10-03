@@ -1,0 +1,314 @@
+/* ============================================================================
+   print.css
+   ----------------------------------------------------------------------------
+   Loaded with media="print", so it costs nothing on screen.
+
+   Why this exists: none of the three reference sites could be turned into a CV,
+   because they all depend on a PDF the owner has to supply. This page already
+   contains the whole profile, so the honest version of "Download CV" is a print
+   stylesheet: the reader saves this page as a PDF and it lays out as a document
+   rather than as a website.
+   ========================================================================== */
+
+@page {
+  margin: 14mm 12mm;
+}
+
+@media print {
+  /* Palette: force the light column and never rely on a token that a theme
+     toggle may have left in the dark column. */
+  html,
+  html[data-theme="dark"],
+  html[data-theme="light"] {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface-raised: #f2f5f7;
+    --ink: #14191e;
+    --muted: #4f5c67;
+    --subtle: #667582;
+    --line: #d7e0e6;
+    --accent: #286a87;
+    --accent-strong: #286a87;
+    --sc-canvas: #ffffff;
+    --sc-ink: #14191e;
+    --sc-ink-soft: #4f5c67;
+    --sc-accent: #286a87;
+  }
+
+  html {
+    background: #ffffff;
+  }
+
+  body {
+    background: #ffffff;
+    color: #14191e;
+    font-size: 10.5pt;
+    line-height: 1.45;
+    overflow: visible;
+  }
+
+  /* Chrome that carries no information on paper.
+     Note what is NOT here: .project-links, .contact-links, and .all-projects.
+     An earlier revision hid them and also declared ::after rules to print their
+     hrefs, which meant the URL rules could never match anything. Those
+     containers are restyled further down instead of hidden, because on a CV
+     the destinations are the point. */
+  .site-header,
+  .skip-link,
+  .scroll-progress-bar,
+  .sticker-field,
+  .mascot-dock,
+  .mascot-environment,
+  .id-card-hint,
+  .cli-drawer,
+  .footer-actions,
+  .hero-actions,
+  .project-image,
+  .button-case-study,
+  .drag-hint,
+  .hero-bottom .hero-print,
+  .contact-status .text-link,
+  .contact-links span[aria-hidden],
+  dialog,
+  .theme-transition * {
+    display: none !important;
+  }
+
+  /* Sections stop being viewport-height experiences and become document flow. */
+  .hero {
+    min-height: 0 !important;
+    display: block !important;
+    padding: 0 0 6mm !important;
+  }
+
+  .section,
+  .hero,
+  .contact,
+  .about,
+  .capabilities,
+  .journey,
+  .projects {
+    padding: 0 0 6mm !important;
+    margin: 0 !important;
+    border-top: 1px solid var(--line);
+  }
+
+  .section-heading h2,
+  .about-content h2,
+  .contact-copy h2 {
+    font-size: 15pt !important;
+    letter-spacing: -0.02em;
+  }
+
+  h1 {
+    font-size: 26pt !important;
+    line-height: 1.05;
+  }
+
+  .hero-lead,
+  .contact-copy > p:last-child {
+    max-width: 46em;
+    font-size: 10.5pt;
+  }
+
+  /* The portrait is the one image worth its weight on paper, so it is kept at
+     a size that stays sharp and given a caption that prints. */
+  .hero-portrait {
+    float: right;
+    width: 42mm;
+    margin: 0 0 4mm 6mm !important;
+    break-inside: avoid;
+  }
+
+  .id-card-sway {
+    animation: none !important;
+  }
+
+  .id-card-pendulum,
+  .id-card-body,
+  .card-photo-frame {
+    width: 100% !important;
+    height: auto !important;
+    padding: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    margin: 0 !important;
+    transform: none !important;
+  }
+
+  /* The cord, the clip, the punched hole and the watermark are how the card
+     reads as a hanging object on screen. On paper they are noise around a
+     portrait, so they are dropped rather than flattened. */
+  .lanyard-run,
+  .lanyard-elastic,
+  .metal-clip-wrap,
+  .card-hole,
+  .card-watermark,
+  .id-card-hint {
+    display: none !important;
+  }
+  .hero-portrait img {
+    width: 100%;
+    height: auto;
+  }
+
+  /* The screen caption is absolutely positioned at right:-.55rem, an overhang
+     that looks deliberate against the page. On paper the float already sits on
+     the page edge, so that overhang runs off the sheet, which put 9px of text
+     past the printable width at every viewport. Static placement removes it. */
+  .hero-portrait figcaption,
+  .card-bottom {
+    position: static;
+    display: block;
+    height: auto !important;
+    margin-top: 1.5mm;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    font-size: 8pt;
+  }
+
+  .portrait-index,
+  .project-number {
+    display: none;
+  }
+
+  .project-grid {
+    display: block !important;
+  }
+
+  /* Each project prints as a compact block rather than a fixed-aspect card. */
+  .project {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border-bottom: 1px solid var(--line);
+    padding: 0 0 4mm;
+    margin: 0 0 4mm;
+  }
+
+  .project img {
+    display: none;
+  }
+
+  .project-copy p {
+    font-size: 9.5pt;
+  }
+
+  .tech-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.5rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tech-list li {
+    border: 1px solid var(--line);
+    padding: 0.1rem 0.35rem;
+    font-size: 8pt;
+  }
+
+  .capability-list,
+  .timeline,
+  .capability {
+    display: block !important;
+  }
+
+  .capability,
+  .timeline-item {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border-bottom: 1px solid var(--line);
+    padding: 0 0 3mm;
+    margin: 0 0 3mm;
+  }
+
+  .footer {
+    border-top: 1px solid var(--line);
+    padding-top: 3mm;
+    font-size: 8.5pt;
+  }
+
+  /* Link containers print as one inline run per project instead of a button
+     row: a recruiter reading paper needs the addresses, not the buttons that
+     normally produce them. */
+  .project-links,
+  .contact-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 1rem;
+    margin-top: 1.5mm;
+    padding: 0;
+    list-style: none;
+  }
+
+  .project-links a,
+  .contact-links a {
+    display: inline;
+    border: 0;
+    padding: 0;
+    color: var(--ink);
+    font-size: 8.5pt;
+    text-decoration: none;
+  }
+
+  .contact-links a > span:first-child {
+    display: inline;
+    color: var(--subtle);
+  }
+
+  .contact-links a > strong {
+    font-weight: 700;
+  }
+
+  /* Print the destination of every outbound link, otherwise a printed CV hides
+     where the repos and profiles actually are. */
+  .project-links a[href^="http"]::after,
+  .contact-links a[href^="http"]::after,
+  .about-content a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 7.5pt;
+    color: var(--subtle);
+    word-break: break-all;
+  }
+
+  /* The contact status prints as one line of facts, minus the print button,
+     which is meaningless on the output it produces. */
+  .contact-status {
+    display: block !important;
+    margin: 4mm 0 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .contact-status > div {
+    display: inline;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .contact-status > div + div::before {
+    content: " \00B7 ";
+    color: var(--subtle);
+  }
+
+  .contact-status dt {
+    display: inline;
+    font-size: 7.5pt;
+  }
+
+  .contact-status dd {
+    display: inline;
+    font-size: 8.5pt;
+  }
+
+  /* Reveal is a scroll animation. On paper nothing has scrolled, so everything
+     is visible by default and must not be left at opacity 0. */
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

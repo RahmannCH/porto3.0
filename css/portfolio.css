@@ -1,0 +1,643 @@
+/* ============================================================================
+   portfolio.css
+   ----------------------------------------------------------------------------
+Components added after the reference-driven pass, kept in their own file so
+    this work is reviewable without diffing style.css. Two tokens in style.css
+    were also corrected (the font stack, which began at Arial rather than
+    system-ui, and the brand-mark colour, which sat at 4.42:1 on light canvas);
+    style.css is otherwise as shipped.
+
+   Every rule here answers R-31: one line on why it exists.
+   ========================================================================== */
+
+/* --- nav. Five destinations now, and every one has a real section. ---------
+   Why: #capabilities existed in the markup but was unreachable from the nav,
+   so a numbered section was invisible to anyone arriving through the header. */
+@media (max-width: 900px) {
+  .site-nav {
+    gap: clamp(0.6rem, 1.5vw, 1.1rem);
+  }
+  .site-nav a {
+    font-size: 0.76rem;
+  }
+}
+
+/* --- print control in the hero profile strip. ------------------------------
+   Why: it replaces a scroll cue that duplicated the hero CTA and added no
+   information. It is a button, not a link, because it triggers the browser
+   print dialog, which is a real action with no destination URL. */
+.hero-print {
+  display: grid;
+  align-content: center;
+  min-height: 68px;
+  padding: 0 1.1rem;
+  border: 0;
+  border-right: 1px solid var(--line);
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 650;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.18s, background-color 0.18s;
+}
+
+.hero-print small {
+  margin-bottom: 0.3rem;
+  color: var(--subtle);
+  font-size: 0.57rem;
+  letter-spacing: 0.12em;
+}
+
+.hero-print:hover,
+.hero-print:focus-visible {
+  color: var(--ink);
+  background: var(--surface);
+}
+
+@media (max-width: 720px) {
+  .hero-print {
+    min-height: 56px;
+    padding-right: 0.7rem;
+    padding-left: 0.7rem;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-print {
+    padding: 0.45rem;
+    font-size: 0.55rem;
+  }
+}
+
+/* --- contact status strip. -------------------------------------------------
+   Why: availability was a coloured dot with no meaning. These four facts are
+   already stated elsewhere on the page (location, study, contact copy), so the
+   strip adds no new claim, it just makes the status answerable at a glance. */
+.contact-status {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  border-top: 1px solid var(--line);
+}
+
+.contact-status > div {
+  display: grid;
+  grid-template-columns: 108px minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: baseline;
+  min-height: 61px;
+  padding: 0.95rem 0.2rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.contact-status dt {
+  color: var(--subtle);
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+}
+
+.contact-status dd {
+  margin: 0;
+  font-size: 0.79rem;
+}
+
+#local-time {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Why: the button reuses the .text-link rule from style.css, which was written
+   for anchors and carries a top margin that would misalign it inside <dd>. */
+.contact-status .text-link {
+  margin-top: 0;
+  padding-bottom: 0.2rem;
+  border: 0;
+  border-bottom: 1px solid var(--accent);
+  background: none;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 750;
+  text-align: left;
+  cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  .contact-status {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .contact-status > div {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .contact-status > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.25rem;
+    padding: 0.8rem 0.2rem;
+  }
+}
+/* --- Interactive Stack Gallery for Timeline Documentation --------- */
+.timeline-gallery {
+  position: relative;
+  width: calc(100% - 44px);
+  max-width: 480px;
+  aspect-ratio: 16 / 10;
+  margin-top: 1.2rem;
+  user-select: none;
+  touch-action: pan-y;
+}
+
+.stack-card {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  cursor: grab;
+  transform-origin: bottom center;
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.35s ease;
+  will-change: transform, opacity;
+}
+
+.stack-card:active {
+  cursor: grabbing;
+}
+
+.stack-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.stack-card[style*="--card-index: 0"] {
+  z-index: 30;
+  opacity: 1;
+  transform: translate(var(--swipe-x, 0px), var(--swipe-y, 0px)) rotate(var(--swipe-rot, 0deg));
+}
+
+.stack-card[style*="--card-index: 1"] {
+  z-index: 20;
+  opacity: 0.85;
+  transform: translateX(18px) translateY(6px) scale(0.95) rotate(4deg);
+  pointer-events: none;
+}
+
+.stack-card[style*="--card-index: 2"] {
+  z-index: 10;
+  opacity: 0.65;
+  transform: translateX(36px) translateY(12px) scale(0.9) rotate(8deg);
+  pointer-events: none;
+}
+
+.stack-card:after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.stack-card:not([style*="--card-index: 0"]):after {
+  opacity: 1;
+}
+
+.stack-counter {
+  position: absolute;
+  bottom: 0.8rem;
+  right: 0.8rem;
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  border: 1px solid var(--line);
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--ink);
+  z-index: 40;
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+/* --- 3D Physics Stickers --- */
+.sticker {
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  transform: translate(var(--drag-x, 0), var(--drag-y, 0)) rotate(var(--tilt, 0deg)) rotateX(var(--flip-x, 0deg));
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.16s, border-color 0.16s;
+  transform-style: preserve-3d;
+  backface-visibility: visible;
+}
+
+.sticker.is-dragging {
+  transition: none;
+  box-shadow: 6px 8px 0 var(--accent-strong);
+  z-index: 10;
+}
+
+.sticker-one { left: 10%; top: -1.8rem; --tilt: -5deg; }
+.sticker-two { left: 35%; top: 1.2rem; --tilt: 4deg; }
+.sticker-three { right: 10%; top: -2rem; --tilt: 3deg; }
+.sticker-four { left: 60%; top: -0.5rem; --tilt: -8deg; border-radius: 50%; width: 44px; height: 44px; padding: 0; display: grid; place-items: center; }
+.sticker-five { right: 35%; top: 1.5rem; --tilt: 12deg; border-radius: 50%; width: 40px; height: 40px; padding: 0; display: grid; place-items: center; }
+.sticker-six { left: 5%; top: 2rem; --tilt: -3deg; }
+
+/* Dual mascots
+
+   One shape at two sizes. Every part derives from --unit, so pet-2 is exactly
+   84% of pet-1 rather than being a second hand-tuned set of numbers that drifts
+   out of sync the moment the base size is edited.
+
+   The two expressive states use the scale and translate properties, never
+   transform. JS owns transform for facing, and an animation or declaration
+   written to transform would overwrite it, which is why a pet used to lose its
+   direction mid-jump. scale, translate and transform compose independently.
+
+   The bubble opens upward from the pet, so the environment must be tall enough
+   to hold a two-line greeting and must not clip. It also only clamps the pets
+   horizontally through JS, so vertical overflow is free. */
+
+.mascot-environment {
+  position: fixed;
+  z-index: 15;
+  bottom: 0.8rem;
+  left: 0;
+  width: 100%;
+  height: 118px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.walking-mascot {
+  --unit: 1;
+  position: absolute;
+  bottom: 0;
+  width: calc(46px * var(--unit));
+  height: calc(54px * var(--unit));
+  margin: 0;
+  padding: 0;
+  border: 0;
+  appearance: none;
+  border-radius: calc(20px * var(--unit)) calc(20px * var(--unit)) calc(12px * var(--unit)) calc(12px * var(--unit));
+  background: var(--ink);
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+  transform-origin: bottom center;
+  transition: scale 0.16s ease-out;
+}
+
+.pet-1 { --unit: 1; z-index: 3; }
+.pet-2 { --unit: 0.84; z-index: 2; }
+
+.pet-eye {
+  position: absolute;
+  top: calc(15px * var(--unit));
+  width: calc(8px * var(--unit));
+  height: calc(11px * var(--unit));
+  border-radius: calc(5px * var(--unit));
+  background: var(--bg);
+  transition: scale 0.16s ease-out;
+}
+
+.pet-eye:first-of-type { left: calc(11px * var(--unit)); }
+.pet-eye:last-of-type { right: calc(11px * var(--unit)); }
+
+.walking-mascot i,
+.walking-mascot b {
+  position: absolute;
+  bottom: calc(-5px * var(--unit));
+  width: calc(10px * var(--unit));
+  height: calc(10px * var(--unit));
+  border-radius: 0 0 calc(5px * var(--unit)) calc(5px * var(--unit));
+  background: var(--accent-strong);
+  animation: step 0.34s ease-in-out infinite alternate;
+}
+
+.walking-mascot i { left: calc(6px * var(--unit)); }
+.walking-mascot b { right: calc(6px * var(--unit)); animation-delay: 0.16s; }
+
+.walking-mascot.is-running i,
+.walking-mascot.is-running b {
+  animation-duration: 0.14s !important;
+}
+
+.walking-mascot.is-paused i,
+.walking-mascot.is-paused b,
+.mascot-dock.is-paused .walking-mascot i,
+.mascot-dock.is-paused .walking-mascot b,
+.mascot-dock.is-reduced .walking-mascot i,
+.mascot-dock.is-reduced .walking-mascot b {
+  animation-play-state: paused !important;
+}
+
+/* Startled: taller and narrower with wider eyes. Held off transform so the
+   facing flip survives the scare. */
+.walking-mascot.is-scared { scale: 0.9 1.16; }
+.walking-mascot.is-scared .pet-eye { scale: 1.35; }
+
+@keyframes pet-jump {
+  0%, 100% { translate: 0 0; }
+  38% { translate: 0 calc(-7px * var(--unit)); }
+}
+
+.walking-mascot.is-jumping { animation: pet-jump 0.3s ease-in-out 1; }
+
+/* The greeting has to be readable at a glance while it walks past, so it gets a
+   real font size, a real line height and a two-line cap rather than a single
+   nowrap string. The tail is a bordered square tucked under the bubble edge so
+   it matches the surface on both themes. */
+.speech-bubble {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  max-width: clamp(9rem, 44vw, 13rem);
+  margin-bottom: 5px;
+  padding: 7px 11px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: clamp(0.78rem, 2.4vw, 0.88rem);
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+  text-wrap: balance;
+  white-space: normal;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.24);
+  transform: translateX(-50%) translateY(4px) scale(0.86);
+  transform-origin: bottom center;
+  transition: transform 0.26s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.18s;
+}
+
+.speech-bubble::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  margin: -5px 0 0 -4.5px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  transform: rotate(45deg);
+}
+
+.walking-mascot.has-speech .speech-bubble {
+  transform: translateX(-50%) translateY(0) scale(1);
+  opacity: 1;
+}
+/* Hero lanyard ID card
+
+   The card hangs from a hook that sits 300px above the card box, so the cord
+   runs off the top of the hero. Three pieces, each with one job:
+
+   .lanyard-run      hook to pivot. Fixed length. The load path next to a hook
+                     hangs vertically, so JS counter-rotates it and it never
+                     swings, which is what stops the cord detaching at the top.
+   .lanyard-elastic  pivot to clip. This is the only stretchy segment, because
+                     the clip is metal and the card is rigid, so every bit of
+                     cord elongation has to be absorbed between hook and clip.
+                     Height and necking are driven by --stretch.
+   .id-card-body     the card, offset along the cord by --drop.
+
+   Shadow reason: the card is the single lifted object in the hero, so it is the
+   only element carrying a drop shadow. Nothing behind it gets one, and there is
+   no fade-to-background gradient behind it, because that gradient belonged to
+   the old flat portrait and stayed pinned to the anchor while the card moved. */
+
+.id-card-anchor {
+  position: relative;
+  width: min(100%, 340px);
+  justify-self: end;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: visible !important;
+  z-index: 5;
+}
+
+.id-card-sway {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.id-card-pendulum {
+  position: relative;
+  width: 260px;
+  transform-origin: 50% -300px;
+  will-change: transform;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.lanyard-run,
+.lanyard-elastic {
+  position: absolute;
+  left: 50%;
+  width: 44px;
+  margin-left: -22px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+}
+
+.lanyard-run {
+  top: -585px;
+  height: 285px;
+  background: #181818;
+  box-shadow: inset 2px 0 4px rgba(255, 255, 255, 0.08), inset -2px 0 4px rgba(0, 0, 0, 0.6);
+}
+
+.lanyard-elastic {
+  top: -300px;
+  height: 245px;
+  transform-origin: 50% 0;
+  transform: scaleX(calc(1 - 0.26 * var(--stretch, 0)));
+  background: #181818;
+  box-shadow: inset 2px 0 4px rgba(255, 255, 255, 0.08), inset -2px 0 4px rgba(0, 0, 0, 0.6);
+}
+
+/* Stretched webbing thins and catches more light along its length, which is
+   what tells the eye the cord is loaded rather than merely longer. */
+.lanyard-elastic::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  opacity: calc(var(--stretch, 0) * 0.55);
+}
+
+.lanyard-text {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-family: monospace;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.32em;
+  color: #555555;
+  text-transform: uppercase;
+  user-select: none;
+  line-height: 44px;
+  transform: rotate(180deg);
+}
+
+.metal-clip-wrap {
+  position: absolute;
+  top: -65px;
+  left: 50%;
+  transform: translate(-50%, var(--drop, 0px));
+  width: 65px;
+  height: 80px;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.metal-clip-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.id-card-body {
+  position: relative;
+  width: 260px;
+  height: 375px;
+  transform: translateY(var(--drop, 0px));
+  border-radius: 18px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 28px 55px rgba(0, 0, 0, 0.4), 0 10px 20px rgba(0, 0, 0, 0.25);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  overflow: hidden;
+  padding: 34px 14px 12px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s;
+}
+
+/* Depth cue while held: the card is lifted toward the viewer, so its shadow
+   spreads. This is the only state change on drag. */
+.id-card-body.is-held {
+  cursor: grabbing;
+  box-shadow: 0 35px 65px rgba(0, 0, 0, 0.5), 0 12px 25px rgba(0, 0, 0, 0.3);
+}
+
+.card-hole {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 12px;
+  border-radius: 999px;
+  background: #191919;
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.8), 0 1px 1px rgba(255, 255, 255, 0.2);
+}
+
+.card-photo-frame {
+  position: relative;
+  width: 100%;
+  height: 265px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #e0e0e0;
+}
+
+.card-photo-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
+  filter: saturate(0.9);
+  pointer-events: none;
+}
+
+.card-bottom {
+  position: relative;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+.card-watermark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--display);
+  font-size: 50px;
+  font-weight: 850;
+  letter-spacing: -0.04em;
+  color: rgba(0, 0, 0, 0.06);
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.card-role {
+  position: relative;
+  z-index: 1;
+  font-family: monospace;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #111111;
+  text-align: center;
+}
+
+.id-card-hint {
+  margin: 1.1rem 0 0;
+  max-width: 30ch;
+  color: var(--subtle);
+  font-size: 0.66rem;
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* Idle life. A hanging cord never sits perfectly still, and a frozen card reads
+   as a broken image. Five uneven stops over 19s keep it from looking
+   metronomic, and the amplitude stays under a fifth of a degree so it reads as
+   physics rather than as an animation. */
+@keyframes lanyard-drift {
+  0% { transform: rotate(0.09deg); }
+  23% { transform: rotate(-0.14deg); }
+  47% { transform: rotate(0.04deg); }
+  71% { transform: rotate(0.15deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.id-card-sway {
+  animation: lanyard-drift 19s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .id-card-sway {
+    animation: none;
+  }
+}

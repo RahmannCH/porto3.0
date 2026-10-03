@@ -1,103 +1,289 @@
 <!doctype html>
-<html lang="id">
+<html lang="id" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#ffffff">
-  <meta name="description" content="Kabinet Rahman 25, HIMAKOM FMIPA Universitas Lambung Mangkurat. Informasi kabinet, divisi, agenda, dan aspirasi mahasiswa.">
-  <meta property="og:title" content="Kabinet Rahman 25 | HIMAKOM ULM">
-  <meta property="og:description" content="Ruang kolaborasi mahasiswa Ilmu Komputer Universitas Lambung Mangkurat.">
-  <meta property="og:image" content="assets/Logo-Kabinet.jpg">
-  <title>Kabinet Rahman 25 | HIMAKOM ULM</title>
-  <link rel="icon" href="assets/Logo-Kabinet.jpg" type="image/jpeg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <meta name="theme-color" content="#0b0d10">
+  <meta name="description" content="Muhammad Nur Rahman, mahasiswa Ilmu Komputer Universitas Lambung Mangkurat dan full-stack developer. Lihat proyek, pengalaman, dan profil teknisnya.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Muhammad Nur Rahman: Ilmu Komputer & Full-stack Developer">
+  <meta property="og:description" content="Proyek web interaktif, pengalaman, dan perjalanan belajar Muhammad Nur Rahman.">
+  <meta property="og:image" content="assets/ProfileRahman.jpeg">
+  <meta name="color-scheme" content="dark light">
+  <title>Muhammad Nur Rahman: Mahasiswa Ilmu Komputer & Full-stack Developer</title>
+  <link rel="icon" href="assets/rahman-mark.svg" type="image/svg+xml">
+  <link rel="preload" as="image" href="assets/ProfileRahman.jpeg" fetchpriority="high">
+  <script>
+    try {
+      const savedTheme = localStorage.getItem('rahman-portfolio-theme');
+      const theme = savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      document.documentElement.dataset.theme = theme;
+    } catch {
+      document.documentElement.dataset.theme = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    }
+  </script>
+  <link rel="stylesheet" href="css/scrollcraft.css">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/portfolio.css">
+  <link rel="stylesheet" href="css/print.css" media="print">
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "Muhammad Nur Rahman",
+      "jobTitle": "Full-stack Developer",
+      "email": "mailto:Rahmannch19@gmail.com",
+      "sameAs": [
+        "https://github.com/RahmannCH",
+        "https://www.instagram.com/mangch._",
+        "https://www.linkedin.com/in/muhammad-nur-rahman-b57975384"
+      ]
+    }
+  </script>
+  <script type="module">
+    import { snapdom } from 'https://unpkg.com/@zumer/snapdom@3.2.0/dist/snapdom.mjs';
+    window.snapdom = snapdom;
+  </script>
+  <script src="js/scrollcraft.js" defer></script>
   <script src="js/main.js" defer></script>
 </head>
 <body>
+  <div class="scroll-progress-bar" id="scroll-progress-bar" data-sc-progress aria-hidden="true"></div>
   <a class="skip-link" href="#main">Lewati ke konten</a>
   <header class="site-header">
-    <a class="brand" href="#beranda" aria-label="Kabinet Rahman 25, beranda">
-      <img src="assets/Logo-Kabinet.jpg" alt="Logo Kabinet Rahman 25">
-      <span><strong>Kabinet Rahman 25</strong><small>HIMAKOM · FMIPA ULM</small></span>
+    <a class="brand" href="#home" aria-label="Rahman, beranda">
+      <span class="brand-mark" aria-hidden="true">R</span>
+      <span><strong>RAHMAN</strong><small>PORTOFOLIO PERSONAL</small></span>
     </a>
-    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Buka navigasi"><span></span><span></span></button>
     <nav id="site-nav" class="site-nav" aria-label="Navigasi utama">
-      <a href="#beranda">Beranda</a><a href="#tentang">Tentang</a><a href="#divisi">Organisasi</a><a href="#program">Program</a><a class="nav-action" href="#aspirasi">Aspirasi <span aria-hidden="true">↗</span></a>
+      <a href="#projects">Proyek</a>
+      <a href="#about">Tentang</a>
+      <a href="#capabilities">Kemampuan</a>
+      <a href="#journey">Perjalanan</a>
+      <a class="nav-contact" href="#contact">Kontak <span aria-hidden="true">↗</span></a>
     </nav>
+    <div class="header-actions">
+      <button class="snap-btn" type="button" id="snap-btn" aria-label="Export ringkasan halaman sebagai gambar" title="Export halaman (SnapDOM)"><svg class="snap-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 1.5v8m0 0L5 6.5m3 3l3-3M2.5 12.5h11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg> <span class="snap-label">Snap</span></button>
+      <button class="theme-toggle" type="button" aria-label="Ganti tema" aria-pressed="false"><span class="theme-icon" aria-hidden="true">◐</span><span class="theme-label">Terang</span></button>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Buka navigasi"><span></span><span></span></button>
+    </div>
   </header>
 
   <main id="main">
-    <section class="hero" id="beranda" aria-labelledby="hero-title">
+    <section class="hero" id="home" aria-labelledby="hero-title" data-sc-act="flow">
       <div class="hero-copy">
-        <p class="eyebrow"><span></span> Himpunan Mahasiswa Ilmu Komputer · ULM</p>
-        <h1 id="hero-title">Bertumbuh<br>lewat <em>kebersamaan.</em></h1>
-        <p class="hero-lead">Kenali Kabinet Rahman 25, ruang kolaborasi mahasiswa HIMAKOM FMIPA Universitas Lambung Mangkurat.</p>
-        <div class="hero-actions"><a class="button button-primary" href="#tentang">Kenali kabinet <span aria-hidden="true">↓</span></a><a class="button button-quiet" href="#divisi">Lihat struktur</a></div>
-        <div class="hero-identities" aria-label="Identitas organisasi">
-          <img src="assets/logo-ulm.png" alt="Universitas Lambung Mangkurat">
-          <img src="assets/logo-himakom.jpg" alt="HIMAKOM ULM">
-          <span>Kolaborasi dalam satu himpunan</span>
+        <div class="hero-meta"><span class="availability-dot" aria-hidden="true"></span><span>MAHASISWA ILMU KOMPUTER · ULM</span></div>
+        <div class="sticker-field" aria-label="Label interaktif, dapat diseret atau digeser dengan tombol panah">
+          <button class="sticker sticker-one" type="button" data-draggable aria-label="Full-stack developer, geser dengan panah atau seret">FULL-STACK</button>
+          <button class="sticker sticker-two" type="button" data-draggable aria-label="Web development, geser dengan panah atau seret">WEB DEV</button>
+          <button class="sticker sticker-three" type="button" data-draggable aria-label="Belajar dan membangun, geser dengan panah atau seret">BUILD &#183; LEARN</button>
+          <button class="sticker sticker-four" type="button" data-draggable aria-label="Simbol kode, geser dengan panah atau seret">&lt;/&gt;</button>
+          <button class="sticker sticker-five" type="button" data-draggable aria-label="Simbol bintang, geser dengan panah atau seret">&#10022;</button>
+          <button class="sticker sticker-six" type="button" data-draggable aria-label="UI/UX, geser dengan panah atau seret">UI/UX</button>
         </div>
-      </div>
-      <figure class="hero-portrait">
-        <img src="assets/ProfileRahman.jpeg" alt="Muhammad Nur Rahman, Ketua Umum HIMAKOM" fetchpriority="high">
-        <figcaption><img src="assets/Logo-Kabinet.jpg" alt=""><span><small>Ketua Umum HIMAKOM</small><strong>Muhammad Nur Rahman</strong></span></figcaption>
-        <span class="portrait-label">KABINET RAHMAN 25</span>
-      </figure>
-      <span class="hero-side-note" aria-hidden="true">FMIPA · UNIVERSITAS LAMBUNG MANGKURAT</span>
-    </section>
-
-    <section class="intro section" id="tentang" aria-labelledby="about-title">
-      <div class="section-kicker"><span>01</span> Tentang kabinet</div>
-      <div class="intro-body">
-        <h2 id="about-title">Organisasi mahasiswa untuk saling mendengar dan bergerak bersama.</h2>
-        <div class="intro-bottom"><p>Kabinet Rahman 25 adalah kepengurusan Himpunan Mahasiswa Ilmu Komputer FMIPA ULM. Website ini menjadi ruang informasi bagi mahasiswa untuk mengenal organisasi dan menemukan agenda kabinet.</p><span class="intro-seal">HIMAKOM<br><b>ULM</b></span></div>
-      </div>
-    </section>
-
-    <section class="values section" aria-labelledby="values-title">
-      <div class="section-kicker"><span>02</span> Cara kami bergerak</div>
-      <div class="values-content">
-        <h2 id="values-title">Ruang organisasi tumbuh dari partisipasi.</h2>
-        <div class="values-list">
-          <article><span>01</span><div><h3>Mendengar mahasiswa</h3><p>Membuka ruang untuk kebutuhan, pertanyaan, dan gagasan mahasiswa.</p></div><span class="value-mark">+</span></article>
-          <article><span>02</span><div><h3>Menghubungkan potensi</h3><p>Mendorong anggota berbagi pengetahuan dan bekerja lintas minat.</p></div><span class="value-mark">+</span></article>
-          <article><span>03</span><div><h3>Menghidupkan gagasan</h3><p>Mengembangkan kegiatan bersama yang memberi nilai bagi komunitas HIMAKOM.</p></div><span class="value-mark">+</span></article>
+        <h1 id="hero-title">MUHAMMAD<br><span>NUR RAHMAN</span></h1>
+        <p class="hero-role">Mahasiswa Ilmu Komputer <span>&</span> Full-stack Developer</p>
+        <p class="hero-lead">Membangun aplikasi web dan eksperimen interaktif, berangkat dari fondasi jaringan komputer hingga produk yang bisa dijelajahi langsung.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#projects">Lihat proyek <span aria-hidden="true">↓</span></a>
+          <a class="button button-quiet" href="https://github.com/RahmannCH" target="_blank" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>
         </div>
-        <p class="editorial-note">Narasi pengantar, bukan kutipan visi-misi resmi. Rumusan kabinet akan ditambahkan setelah dikonfirmasi.</p>
+        <p class="drag-hint">Label bisa diseret, atau fokuskan lalu gunakan tombol panah. Home untuk reset.</p>
       </div>
-    </section>
-
-    <section class="organization section" id="divisi" aria-labelledby="division-title">
-      <div class="section-kicker"><span>03</span> Organisasi</div>
-      <div class="organization-content">
-        <div class="organization-heading"><h2 id="division-title">Satu himpunan.<br><em>Banyak ruang berkontribusi.</em></h2><p>Nama divisi diambil dari daftar pada dashboard sumber. Susunan final dan uraian tugas menunggu konfirmasi.</p></div>
-        <div class="division-list">
-          <article><span class="division-number">01</span><h3>Badan Pengurus Harian</h3><span class="division-short">BPH</span></article>
-          <article><span class="division-number">02</span><h3>Hubungan Masyarakat</h3><span class="division-short">Humas</span></article>
-          <article><span class="division-number">03</span><h3>Pengembangan Sumber Daya Mahasiswa</h3><span class="division-short">PSDM</span></article>
-          <article><span class="division-number">04</span><h3>Riset</h3><span class="division-short">Riset</span></article>
-          <article><span class="division-number">05</span><h3>Media</h3><span class="division-short">Media</span></article>
-          <article><span class="division-number">06</span><h3>Kewirausahaan</h3><span class="division-short">KWU</span></article>
-          <article><span class="division-number">07</span><h3>Acara</h3><span class="division-short">Acara</span></article>
+      <div class="hero-portrait id-card-anchor" id="id-card-anchor" data-sc-parallax="-0.15">
+        <div class="id-card-sway">
+          <div class="id-card-pendulum" id="id-card-pendulum">
+          <div class="lanyard-run" aria-hidden="true">
+            <span class="lanyard-text">RAHMAN RAHMAN RAHMAN RAHMAN RAHMAN</span>
+          </div>
+          <div class="lanyard-elastic" aria-hidden="true">
+            <span class="lanyard-text">RAHMAN RAHMAN</span>
+          </div>
+          <div class="metal-clip-wrap" aria-hidden="true">
+            <svg width="120" height="150" viewBox="0 0 120 150" class="metal-clip-svg">
+              <defs>
+                <linearGradient id="metal-front" x1="0" y1="0" x2="0" y2="100%">
+                  <stop offset="0%" stop-color="#5C5C5C"/>
+                  <stop offset="30%" stop-color="#D6D6D6"/>
+                  <stop offset="50%" stop-color="#F8F8F8"/>
+                  <stop offset="70%" stop-color="#B8B8B8"/>
+                  <stop offset="100%" stop-color="#8E8E8E"/>
+                </linearGradient>
+                <linearGradient id="fabric-fold" x1="0" y1="0" x2="0" y2="100%">
+                  <stop offset="0%" stop-color="#2A2A2A"/>
+                  <stop offset="50%" stop-color="#333333"/>
+                  <stop offset="100%" stop-color="#151515"/>
+                </linearGradient>
+              </defs>
+              <path d="M 40 0 L 80 0 L 72 25 Q 60 30 48 25 Z" fill="url(#fabric-fold)"/>
+              <ellipse cx="60" cy="50" rx="18" ry="12" fill="none" stroke="url(#metal-front)" stroke-width="4"/>
+              <path d="M 50 62 Q 45 80 60 110 L 70 110 Q 75 80 70 62 Z" fill="url(#metal-front)"/>
+              <path d="M 60 110 C 65 125 70 140 85 145" fill="none" stroke="url(#metal-front)" stroke-width="6" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <figure class="id-card-body" aria-label="ID Card profil Muhammad Nur Rahman, bisa diayunkan" aria-describedby="id-card-hint" role="button" tabindex="0" data-physics-lanyard>
+            <div class="card-hole"></div>
+            <div class="card-photo-frame">
+              <img src="assets/ProfileRahman.jpeg" alt="Muhammad Nur Rahman di kawasan pegunungan" width="959" height="1280" fetchpriority="high">
+            </div>
+            <figcaption class="card-bottom">
+              <div class="card-watermark" aria-hidden="true">RAHMAN</div>
+              <div class="card-role">FULL-STACK DEVELOPER</div>
+            </figcaption>
+          </figure>
+          </div>
         </div>
+        <p class="id-card-hint" id="id-card-hint">Tarik kartunya untuk memantulkan tali, atau fokuskan lalu tekan panah kiri dan kanan untuk mengayun.</p>
+      </div>
+      <div class="hero-bottom" aria-label="Ringkasan profil">
+        <span><small>STUDI</small>Ilmu Komputer · ULM</span>
+        <span><small>LATAR</small>TJKT · SMKN 1 Banjarmasin</span>
+        <span><small>BERBASIS</small>Kalimantan Selatan, Indonesia</span>
+        <button class="hero-print" type="button" id="print-cv" data-print><small>CV</small><span>Cetak / PDF</span></button>
       </div>
     </section>
 
-    <section class="program section" id="program" aria-labelledby="program-title">
-      <div class="section-kicker"><span>04</span> Agenda kabinet</div>
-      <div class="program-content"><div><h2 id="program-title">Kegiatan yang<br><em>mempertemukan kita.</em></h2><p>Program kerja resmi belum tercantum pada sumber yang tersedia. Informasi akan ditambahkan setelah daftar dan jadwal dikonfirmasi.</p></div><div class="program-empty"><span>AGENDA KABINET</span><p>Ruang agenda akan diperbarui setelah program resmi diumumkan.</p><i aria-hidden="true"></i></div></div>
+    <section class="projects section" id="projects" aria-labelledby="projects-title">
+      <div class="section-heading reveal">
+        <p class="section-kicker">KARYA PILIHAN · 01</p>
+        <h2 id="projects-title">Proyek yang bisa<br>kamu <em>jelajahi.</em></h2>
+        <p>Beberapa proyek dari repositori publik. Fitur dijelaskan berdasarkan dokumentasi proyek; angka dampak tidak dicantumkan tanpa pengukuran.</p>
+      </div>
+      <div class="project-grid">
+        <article class="project project-featured reveal">
+          <a class="project-image" href="https://zadify.vercel.app" target="_blank" rel="noreferrer" aria-label="Buka demo Zadify">
+            <img src="assets/zadify-preview.jpg" alt="Tampilan Zadify: ruang belajar Al-Qur’an dengan menu ibadah dan edukasi" width="2560" height="1440" loading="lazy">
+            <span class="project-number">01</span>
+          </a>
+          <div class="project-copy"><p class="project-type">WEB APP · TYPESCRIPT</p><h3>Zadify</h3><p>Ruang belajar Al-Qur’an dengan fitur audio, pendamping AI, dan kompas kiblat interaktif sesuai deskripsi proyek.</p><ul class="tech-list"><li>TypeScript</li><li>Web Audio</li><li>Gemini AI</li><li>Framer Motion</li></ul><div class="project-links"><button class="button-case-study" type="button" data-project="zadify" aria-haspopup="dialog">Case Study ↗</button><a href="https://zadify.vercel.app" target="_blank" rel="noreferrer">Lihat demo ↗</a><a href="https://github.com/RahmannCH/Zadify" target="_blank" rel="noreferrer">Source code ↗</a></div></div>
+        </article>
+        <article class="project reveal">
+          <a class="project-image" href="https://code-chrome.vercel.app" target="_blank" rel="noreferrer" aria-label="Buka demo CodeChrome">
+            <img src="assets/codechrome-preview.jpg" alt="Tampilan dashboard browser CodeChrome" width="2560" height="1440" loading="lazy"><span class="project-number">02</span>
+          </a>
+          <div class="project-copy"><p class="project-type">BROWSER DASHBOARD</p><h3>CodeChrome</h3><p>Dashboard browser dengan pendekatan keyboard-first, audio feedback, dan fitur AI yang tercantum di README.</p><ul class="tech-list"><li>TypeScript</li><li>Keyboard UX</li><li>Web Audio</li></ul><div class="project-links"><button class="button-case-study" type="button" data-project="codechrome" aria-haspopup="dialog">Case Study ↗</button><a href="https://github.com/RahmannCH/CodeChrome" target="_blank" rel="noreferrer">Kode ↗</a></div></div>
+        </article>
+        <article class="project reveal">
+          <a class="project-image" href="https://game-farm-2-0.vercel.app" target="_blank" rel="noreferrer" aria-label="Buka demo Game Farm 2.0">
+            <img src="assets/gamefarm-preview.jpg" alt="Tampilan permainan simulasi pertanian Game Farm 2.0" width="2560" height="1440" loading="lazy"><span class="project-number">03</span>
+          </a>
+          <div class="project-copy"><p class="project-type">GAME · CANVAS</p><h3>Game Farm 2.0</h3><p>Simulasi pertanian 2D yang dibangun menggunakan HTML Canvas 2D tanpa game engine eksternal, menurut README.</p><ul class="tech-list"><li>JavaScript</li><li>HTML Canvas 2D</li></ul><div class="project-links"><button class="button-case-study" type="button" data-project="gamefarm" aria-haspopup="dialog">Case Study ↗</button><a href="https://game-farm-2-0.vercel.app" target="_blank" rel="noreferrer">Demo ↗</a><a href="https://github.com/RahmannCH/Game-Farm-2.0" target="_blank" rel="noreferrer">Kode ↗</a></div></div>
+        </article>
+        <article class="project reveal">
+          <a class="project-image" href="https://virtual-pet-tekom.vercel.app" target="_blank" rel="noreferrer" aria-label="Buka demo VirtualPet TeKom">
+            <img src="assets/virtualpet-preview.jpg" alt="Tampilan simulasi VirtualPet TeKom" width="2560" height="1440" loading="lazy"><span class="project-number">04</span>
+          </a>
+          <div class="project-copy"><p class="project-type">PROYEK AKADEMIK · DFA</p><h3>VirtualPet TeKom</h3><p>Simulasi konsep Deterministic Finite Automaton untuk Teori Komputasi, berdasarkan dokumentasi repositori.</p><ul class="tech-list"><li>JavaScript</li><li>HTML & CSS</li><li>DFA</li></ul><div class="project-links"><button class="button-case-study" type="button" data-project="virtualpet" aria-haspopup="dialog">Case Study ↗</button><a href="https://virtual-pet-tekom.vercel.app" target="_blank" rel="noreferrer">Demo ↗</a><a href="https://github.com/RahmannCH/VirtualPet_TeKom" target="_blank" rel="noreferrer">Kode ↗</a></div></div>
+        </article>
+      </div>
+      <a class="all-projects reveal" href="https://github.com/RahmannCH?tab=repositories" target="_blank" rel="noreferrer">Jelajahi repositori GitHub <span aria-hidden="true">↗</span></a>
     </section>
 
-    <section class="contact section" id="aspirasi" aria-labelledby="contact-title">
-      <div class="section-kicker"><span>05</span> Ruang aspirasi</div>
-      <div class="contact-content"><h2 id="contact-title">Ada gagasan<br>untuk HIMAKOM?</h2><div><p>Kami ingin mendengar masukan dan pertanyaan mahasiswa. Kanal aspirasi resmi akan dicantumkan setelah alamatnya dikonfirmasi.</p><span class="contact-notice">Belum ada form aktif. Halaman ini tidak menyimpan atau mengirim pesan.</span></div></div>
+    <section class="about section" id="about" aria-labelledby="about-title">
+      <div class="about-index reveal"><span>02</span><span>TENTANG SAYA</span><span>ULM · BANJARMASIN</span></div>
+      <div class="about-content reveal">
+        <h2 id="about-title">Belajar lintas lapisan,<br>dari <em>jaringan ke web.</em></h2>
+        <p>Saya Muhammad Nur Rahman, mahasiswa S1 Ilmu Komputer di FMIPA Universitas Lambung Mangkurat. Sebelumnya, saya menempuh Teknik Jaringan Komputer dan Telekomunikasi di SMKN 1 Banjarmasin.</p>
+        <p>Minat saya mencakup pengembangan web, keamanan siber, sistem interaktif, dan cara teknologi dapat membantu orang menyelesaikan hal nyata. Saya juga aktif dalam kegiatan organisasi kampus dan public speaking.</p>
+        <a class="text-link" href="mailto:Rahmannch19@gmail.com">Kirim email <span aria-hidden="true">↗</span></a>
+      </div>
+    </section>
+
+    <section class="capabilities section" id="capabilities" aria-labelledby="capabilities-title">
+      <div class="section-heading reveal"><p class="section-kicker">BIDANG YANG SAYA TEKUNI · 03</p><h2 id="capabilities-title">Teknologi dan<br><em>cara bekerja.</em></h2><p>Ringkasan berdasarkan proyek dan latar pendidikan. Bukan penilaian level formal.</p></div>
+      <div class="capability-list">
+        <article class="capability reveal"><span>01</span><div><h3>Web development</h3><p>TypeScript, JavaScript, React, Next.js, PHP, dan pengembangan UI web interaktif.</p></div><span class="capability-mark">WEB</span></article>
+        <article class="capability reveal"><span>02</span><div><h3>Jaringan & keamanan</h3><p>Fondasi TJKT, jaringan komputer, infrastruktur, dan edukasi keamanan digital.</p></div><span class="capability-mark">SYSTEMS</span></article>
+        <article class="capability reveal"><span>03</span><div><h3>Interaksi & media</h3><p>Canvas, eksperimen 3D web, pengalaman browser, komunikasi visual, dan public speaking.</p></div><span class="capability-mark">INTERACTION</span></article>
+      </div>
+    </section>
+
+    <section class="journey section" id="journey" aria-labelledby="journey-title">
+      <div class="section-heading reveal"><p class="section-kicker">PENDIDIKAN & PENGALAMAN · 04</p><h2 id="journey-title">Perjalanan yang<br><em>terus berkembang.</em></h2></div>
+      <div class="timeline">
+        <article class="timeline-item reveal"><time datetime="2025">2025 · SEKARANG</time><div><h3>S1 Ilmu Komputer</h3><p class="timeline-org">FMIPA · Universitas Lambung Mangkurat</p><p>Menempuh pendidikan Ilmu Komputer sambil mengeksplorasi pengembangan perangkat lunak dan kegiatan kemahasiswaan.</p></div></article>
+        <article class="timeline-item reveal"><time datetime="2025">2025 · 2026</time><div><h3>Edukasi keamanan digital</h3><p class="timeline-org">HIMAKOM Mengabdi</p><p>Portofolio mencatat pengalaman sebagai pemateri edukasi keamanan digital dan phishing defense.</p></div></article>
+        <article class="timeline-item reveal"><time datetime="2025">2025 · 2026</time><div><h3>Kegiatan organisasi & pembawa acara</h3><p class="timeline-org">EKSMUD BEM · RKIK · HIMAKOM Visit · Tapak Desa</p><p>Pengalaman yang tercatat mencakup magang bidang Kemasyarakatan dan Media Kreatif serta menjadi MC di kegiatan kampus.</p>
+        <div class="timeline-gallery" data-stack-gallery>
+          <div class="stack-card" style="--card-index: 0"><img src="assets/ProfileRahman.jpeg" alt="Dokumentasi kegiatan 1" draggable="false"></div>
+          <div class="stack-card" style="--card-index: 1"><img src="assets/logo-himakom.jpg" alt="Dokumentasi kegiatan 2" draggable="false"></div>
+          <div class="stack-card" style="--card-index: 2"><img src="assets/Logo-Kabinet.jpg" alt="Dokumentasi kegiatan 3" draggable="false"></div>
+          <div class="stack-counter"><span class="stack-current">1</span> / 3</div>
+        </div>
+        </div></article>
+        <article class="timeline-item reveal"><time datetime="2021">2021 · 2025</time><div><h3>Teknik Jaringan Komputer & Telekomunikasi</h3><p class="timeline-org">SMKN 1 Banjarmasin</p><p>Fondasi pendidikan vokasi pada jaringan komputer dan telekomunikasi sebelum melanjutkan studi Ilmu Komputer.</p></div></article>
+      </div>
+    </section>
+
+    <section class="contact section" id="contact" aria-labelledby="contact-title">
+      <div class="contact-copy reveal"><p class="section-kicker">TERHUBUNG · 05</p><h2 id="contact-title">Punya ide?<br><em>Mari ngobrol.</em></h2><p>Terbuka untuk diskusi proyek web, kolaborasi, dan kegiatan seputar teknologi.</p></div>
+      <div class="contact-links reveal"><a href="mailto:Rahmannch19@gmail.com"><span>Email</span><strong>Rahmannch19@gmail.com</strong><span aria-hidden="true">↗</span></a><a href="https://github.com/RahmannCH" target="_blank" rel="noreferrer"><span>GitHub</span><strong>RahmannCH</strong><span aria-hidden="true">↗</span></a><a href="https://www.instagram.com/mangch._" target="_blank" rel="noreferrer"><span>Instagram</span><strong>@mangch._</strong><span aria-hidden="true">↗</span></a><a href="https://www.linkedin.com/in/muhammad-nur-rahman-b57975384" target="_blank" rel="noreferrer"><span>LinkedIn</span><strong>Muhammad Nur Rahman</strong><span aria-hidden="true">↗</span></a></div>
+      <dl class="contact-status reveal">
+        <div><dt>LOKASI</dt><dd>Banjarmasin, Kalimantan Selatan</dd></div>
+        <div><dt>ZONA WAKTU</dt><dd>WITA (UTC+8)</dd></div>
+        <div><dt>WAKTU LOKAL</dt><dd><span id="local-time" data-fallback="WITA">WITA</span></dd></div>
+        <div><dt>CV</dt><dd><button class="text-link" type="button" data-print>Cetak profil ini</button></dd></div>
+      </dl>
     </section>
   </main>
 
-  <footer class="footer"><a class="brand" href="#beranda"><img src="assets/logo-himakom.jpg" alt="Logo HIMAKOM" loading="lazy"><span><strong>Kabinet Rahman 25</strong><small>HIMAKOM · FMIPA ULM</small></span></a><p>Himpunan Mahasiswa Ilmu Komputer<br>Universitas Lambung Mangkurat</p><a class="back-top" href="#beranda">Kembali ke atas ↑</a><small class="copyright">© 2025 · Kabinet Rahman 25</small></footer>
+  <footer class="footer"><a class="brand" href="#home" aria-label="Rahman, kembali ke beranda"><span class="brand-mark" aria-hidden="true">R</span><span><strong>MUHAMMAD NUR RAHMAN</strong><small>MAHASISWA ILMU KOMPUTER · FULL-STACK DEVELOPER</small></span></a><p>Dirancang dan dibangun dengan rasa ingin tahu.</p><div class="footer-actions"><button type="button" id="footer-cli-btn" class="footer-cli-btn" title="Buka Developer CLI">Terminal CLI <span aria-hidden="true">`</span></button><a class="back-top" href="#home">Kembali ke atas ↑</a></div><small class="copyright">© <span id="current-year">2026</span> Muhammad Nur Rahman</small></footer>
+
+  <div class="mascot-dock" aria-label="Kontrol maskot interaktif">
+    <button class="mascot-toggle" type="button" aria-pressed="false" aria-label="Jeda maskot">Jeda</button>
+  </div>
+
+  <div class="mascot-environment">
+    <button class="walking-mascot pet-1" id="pet-1" type="button" data-pet="1" aria-label="Pet berjalan di bawah halaman, klik untuk menyapa">
+      <span class="speech-bubble" aria-hidden="true"></span>
+      <span class="pet-eye"></span><span class="pet-eye"></span><i></i><b></b>
+    </button>
+    <button class="walking-mascot pet-2" id="pet-2" type="button" data-pet="2" aria-label="Pet kedua berjalan di bawah halaman, klik untuk menyapa">
+      <span class="speech-bubble" aria-hidden="true"></span>
+      <span class="pet-eye"></span><span class="pet-eye"></span><i></i><b></b>
+    </button>
+  </div>
+
+  <div id="cli-drawer" class="cli-drawer" aria-hidden="true" role="dialog" aria-label="Developer Console">
+    <div class="cli-header">
+      <span>Terminal</span>
+      <button class="cli-close" type="button" aria-label="Tutup terminal">×</button>
+    </div>
+    <div class="cli-body" id="cli-body">
+      <div class="cli-output" id="cli-output">
+        <p>RahmanOS v1.0.0. Ketik 'help' untuk daftar perintah.</p>
+      </div>
+      <div class="cli-input-line">
+        <span class="cli-prompt">~ $</span>
+        <input type="text" id="cli-input" class="cli-input" autocomplete="off" spellcheck="false" aria-label="Terminal input">
+      </div>
+    </div>
+  </div>
+
+  <dialog id="case-study-modal" class="project-modal" aria-labelledby="modal-title">
+    <div class="modal-backdrop" aria-hidden="true"></div>
+    <div class="modal-content" role="document">
+      <button class="modal-close" aria-label="Tutup detail proyek" type="button"><span aria-hidden="true">×</span></button>
+      <div class="modal-body">
+        <p class="modal-kicker" id="modal-kicker"></p>
+        <h2 id="modal-title"></h2>
+        <div class="modal-block">
+          <h3>Problem & Scope</h3>
+          <p id="modal-problem"></p>
+        </div>
+        <div class="modal-block">
+          <h3>My Contribution</h3>
+          <p id="modal-contribution"></p>
+        </div>
+        <div class="modal-block">
+          <h3>Architecture Diagram</h3>
+          <div id="modal-architecture-diagram" class="modal-diagram-container" aria-hidden="true"></div>
+          <p id="modal-architecture"></p>
+        </div>
+        <div class="modal-actions" id="modal-actions"></div>
+      </div>
+    </div>
+  </dialog>
+
 </body>
 </html>
