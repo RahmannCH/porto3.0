@@ -62,15 +62,23 @@ const revealElements = document.querySelectorAll('.reveal');
 if (motionPreference.matches || !('IntersectionObserver' in window)) {
   revealElements.forEach(element => element.classList.add('is-visible'));
 } else {
-  document.body.classList.add('js-ready');
+  document.documentElement.classList.add('js-ready');
   const revealObserver = new IntersectionObserver(entries => {
     entries.forEach(entry => {
       if (!entry.isIntersecting) return;
       entry.target.classList.add('is-visible');
       revealObserver.unobserve(entry.target);
     });
-  }, { threshold: 0.14 });
+  }, { threshold: 0.06, rootMargin: '0px 0px 80px 0px' });
   revealElements.forEach(element => revealObserver.observe(element));
+  // Hardening: if the observer silently fails (e.g. in a headless screenshot),
+  // force every reveal visible after a generous timeout so content is never
+  // permanently hidden.
+  window.setTimeout(() => {
+    revealElements.forEach(element => {
+      if (!element.classList.contains('is-visible')) element.classList.add('is-visible');
+    });
+  }, 4500);
 }
 
 // The engine only exports mount(); nothing self-initialises, so the

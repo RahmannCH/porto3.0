@@ -68,6 +68,18 @@ for (const viewport of viewports) {
     expect(failedLocalRequests).toEqual([]);
     expect(pageErrors).toEqual([]);
     expect(consoleErrors).toEqual([]);
+    // Step through the page so every IntersectionObserver reveal fires before the
+    // full-page screenshot, which otherwise captures below-the-fold content at
+    // opacity:0.
+    await page.evaluate(async () => {
+      const step = Math.max(200, window.innerHeight * 0.8);
+      for (let y = 0; y <= document.body.scrollHeight; y += step) {
+        window.scrollTo({ top: y, behavior: 'instant' });
+        await new Promise(r => setTimeout(r, 60));
+      }
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    });
+    await page.waitForTimeout(400);
     await page.screenshot({ path: `test-results/${viewport.name}.png`, fullPage: true });
   });
 }
