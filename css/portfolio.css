@@ -598,10 +598,11 @@ Components added after the reference-driven pass, kept in their own file so
 
 .orbit-dot {
   position: absolute;
-  width: calc(3px * var(--unit));
-  height: calc(3px * var(--unit));
+  width: calc(5px * var(--unit));
+  height: calc(5px * var(--unit));
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--accent-strong);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 70%, transparent);
   opacity: 0;
 }
 
