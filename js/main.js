@@ -271,11 +271,11 @@ if (petEls.length === 2 && mascotEnv) {
   const START_GAP = 14;
   const TOUCH_GAP = 26;
   const SCARED_FOR = 1.1;
-  // A message is on screen for SPEECH_MS, and the pet is then unavailable for
-  // REACT_GAP. The lock is armed when the message disappears, not when it starts,
-  // so a hovering cursor can never land on the line it just finished reading.
-  const SPEECH_MS = 2200;
-  const REACT_GAP = 2.4;
+  // A message is on screen for SPEECH_MS, then the pet waits REACT_GAP before it
+  // may speak again. Together they hold the pair to one bubble per three seconds,
+  // so a line can never flicker in and out or repeat back to back.
+  const SPEECH_MS = 2500;
+  const REACT_GAP = 0.5;
   const GREET_CHANCE = 0.5;
 
   const clamp = (value, low, high) => (value < low ? low : value > high ? high : value);
@@ -310,7 +310,7 @@ if (petEls.length === 2 && mascotEnv) {
   const pets = Array.from(petEls).map((el, index) => ({
     el,
     bubble: el.querySelector('.speech-bubble'),
-    badge: el.querySelector('.pet-badge'),
+    orbitIcon: el.querySelector('.orbit-icon'),
     voice: el.dataset.pet === '2' ? 1 : 0,
     w: 0,
     h: 0,
@@ -377,6 +377,21 @@ if (petEls.length === 2 && mascotEnv) {
       p.el.style.left = `${p.x.toFixed(2)}px`;
       p.el.style.transform = `scaleX(${facing})`;
       p.el.style.setProperty('--facing', facing);
+
+      // Pupils follow the cursor within a small radius. The offset is measured
+      // from the pet's face centre, normalised to about three pixels, and mirrored
+      // on the x axis because the body is flipped by scaleX.
+      if (isMouseActive) {
+        const cx = p.x + p.w / 2;
+        const cy = floorY - p.h * 0.72;
+        const dx = clamp((mouseX - cx) / 120, -1, 1) * 3;
+        const dy = clamp((mouseY - cy) / 120, -1, 1) * 2.5;
+        p.el.style.setProperty('--pupil-x', `${(dx * facing * -1).toFixed(2)}px`);
+        p.el.style.setProperty('--pupil-y', `${dy.toFixed(2)}px`);
+      } else {
+        p.el.style.setProperty('--pupil-x', '0px');
+        p.el.style.setProperty('--pupil-y', '0px');
+      }
     });
   };
 
@@ -411,20 +426,20 @@ if (petEls.length === 2 && mascotEnv) {
   };
 
   // The face is the readable part of the reaction, so the mood is written as a
-  // class and the eyes are drawn from CSS. Anything that could not be shown by a
-  // static pair of circles (a smile, a startle, sleep) becomes a shape change.
-  const moodProps = {
-    happy: ['\u2728', '\uD83D\uDE0A', '\uD83C\uDF89'],
-    alarmed: ['\uD83D\uDCA6', '\u2757', '\uD83D\uDE28'],
-    sleepy: ['\uD83D\uDCA4', '\uD83D\uDE34', '\uD83C\uDF19'],
-    idle: ['\u2728', '\uD83D\uDC4B', '\uD83D\uDC40']
+  // class and the eyes are drawn from CSS. The orbiting icon swaps its glyph with
+  // the mood, so the pet carries a visible prop that changes, not just a face.
+  const moodGlyphs = {
+    happy: ['</>', '{ }', '\u2726', '#'],
+    alarmed: ['!', '\u26A0', '!?', '\u203C'],
+    sleepy: ['zZ', '\u263E', '~', '. . .'],
+    idle: ['</>', '{ }', '#', '\u25CB']
   };
 
   const setMood = (p, mood) => {
     if (p.mood === mood) return;
     p.mood = mood;
     p.el.dataset.mood = mood;
-    if (p.badge) p.badge.textContent = pick(moodProps[mood] || moodProps.idle);
+    if (p.orbitIcon) p.orbitIcon.textContent = pick(moodGlyphs[mood] || moodGlyphs.idle);
   };
 
   const walk = (p, seconds) => {
@@ -443,13 +458,12 @@ if (petEls.length === 2 && mascotEnv) {
     p.fear = SCARED_FOR;
     p.dir = reverse ? (p.dir > 0 ? -1 : 1) : ((p.x + p.w / 2) > mouseX ? 1 : -1);
     p.vx = p.dir * SCARED_SPEED;
-    // The mood is set even when the line has to wait, because the face should
-    // react the moment the pet is startled.
-    setMood(p, 'alarmed');
-    // A line that arrives during the lock is queued rather than dropped, so a
-    // reaction the user caused always gets said once the previous one has been
-    // read. The newest request wins, since that is the one still relevant.
-    if (!say(p, pool, 'alarmed')) p.queued = { pool, mood: 'alarmed' };
+    // Cheer reactions (click/focus) are joyful, not panicked, so the mood is
+    // excited. Proximity reactions are alarmed.
+    const isCheer = pool === lines.cheer;
+    const mood = isCheer ? 'excited' : 'alarmed';
+    setMood(p, mood);
+    if (!say(p, pool, mood)) p.queued = { pool, mood };
   };
 
   // Distance from the pointer to the nearest edge of the pet box, so touching a
@@ -533,6 +547,16 @@ if (petEls.length === 2 && mascotEnv) {
       }
       p.touched = withinReach;
 
+      // A middle distance reads as curiosity rather than alarm: the pet notices
+      // the cursor and widens its eyes without breaking stride. It only applies
+      // when no stronger mood (alarmed, happy) is already active.
+      const curiousReach = isMouseActive && !withinReach && pointerGap(p, mouseX, mouseY) <= TOUCH_GAP * 3.2;
+      if (curiousReach && p.state !== 'SCARED' && p.mood === 'idle') {
+        setMood(p, 'curious');
+      } else if (!curiousReach && p.mood === 'curious') {
+        setMood(p, 'idle');
+      }
+
       p.x += p.vx * dt;
 
       if (p.x <= 0) {
@@ -579,7 +603,8 @@ if (petEls.length === 2 && mascotEnv) {
     });
     p.el.addEventListener('click', () => {
       p.fear = 0;
-      p.react = 0;
+      // The click startles the pet (mood + direction) but the bubble respects
+      // the three-second gate, so rapid clicks never flicker bubbles.
       startle(p, lines.cheer, true);
     });
   });

@@ -376,9 +376,23 @@ Components added after the reference-driven pass, kept in their own file so
   pointer-events: none;
 }
 
+/* The floor line the pets stand on. Without it the boots hang in empty space
+   and the cast reads as floating rather than walking, which is exactly what the
+   reference shows: a solid bar the character's feet rest on. */
+.mascot-environment::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--line);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--bg) 60%, transparent);
+}
+
 .walking-mascot {
   --unit: 1;
-  --shell: color-mix(in srgb, var(--ink) 88%, var(--accent) 12%);
+  --shell: var(--ink);
   --glint: var(--bg);
   position: absolute;
   bottom: 0;
@@ -388,7 +402,7 @@ Components added after the reference-driven pass, kept in their own file so
   padding: 0;
   border: 0;
   appearance: none;
-  border-radius: calc(22px * var(--unit)) calc(22px * var(--unit)) calc(16px * var(--unit)) calc(16px * var(--unit));
+  border-radius: calc(26px * var(--unit)) calc(26px * var(--unit)) calc(14px * var(--unit)) calc(14px * var(--unit));
   background: var(--shell);
   font: inherit;
   color: inherit;
@@ -406,9 +420,9 @@ Components added after the reference-driven pass, kept in their own file so
 
    The eye is a bright disc with a dark pupil (::after). The pupil is what the
    mood moves: sliding it up reads as a smile, shrinking it to a bead reads as
-   alarm, and hiding it under a lid reads as sleep. A static pair of circles
-   cannot say any of that, which is why the faces looked blank however much the
-   body moved. */
+   alarm, and hiding it under a lid reads as sleep. On top of the mood shapes the
+   pupil also follows the cursor through --pupil-x/--pupil-y, so the pet looks at
+   the visitor rather than staring through them. */
 .pet-eye {
   position: absolute;
   top: calc(15px * var(--unit));
@@ -418,19 +432,20 @@ Components added after the reference-driven pass, kept in their own file so
   background: var(--glint);
   overflow: hidden;
   transition: height 0.18s ease-out, top 0.18s ease-out, border-radius 0.18s ease-out;
+  animation: pet-blink 5.2s ease-in-out infinite;
 }
 
 .pet-eye::after {
   content: "";
   position: absolute;
-  left: 50%;
-  top: 46%;
+  left: calc(50% + var(--pupil-x, 0px));
+  top: calc(46% + var(--pupil-y, 0px));
   width: calc(8px * var(--unit));
   height: calc(8px * var(--unit));
   margin: calc(-4px * var(--unit)) 0 0 calc(-4px * var(--unit));
   border-radius: 50%;
   background: var(--shell);
-  transition: width 0.16s ease-out, height 0.16s ease-out, top 0.16s ease-out, margin 0.16s ease-out, opacity 0.16s ease-out;
+  transition: width 0.16s ease-out, height 0.16s ease-out, top 0.16s ease-out, margin 0.16s ease-out, opacity 0.16s ease-out, left 0.12s ease-out;
 }
 
 .pet-eye.is-left { left: calc(15px * var(--unit)); }
@@ -469,22 +484,56 @@ Components added after the reference-driven pass, kept in their own file so
   opacity: 0;
 }
 
-/* Legs. The boots are anchored so their bottoms sit exactly on the pet's bottom
-   edge, not hanging in space below it. The idle step then lifts them from that
-   baseline, which reads as standing on the floor rather than floating. */
+/* Curious: the eyes stay round but the pupil widens and rides high, the look a
+   pet gives when it notices something new. One eye opens wider than the other so
+   the face is never perfectly symmetric. */
+.walking-mascot[data-mood="curious"] .pet-eye {
+  height: calc(17px * var(--unit));
+}
+
+.walking-mascot[data-mood="curious"] .pet-eye::after {
+  width: calc(9.5px * var(--unit));
+  height: calc(9.5px * var(--unit));
+  top: 34%;
+  margin: calc(-4.75px * var(--unit)) 0 0 calc(-4.75px * var(--unit));
+}
+
+/* Excited: a full happy arch with a large, bright pupil, the face for a cheer. */
+.walking-mascot[data-mood="excited"] .pet-eye {
+  height: calc(13px * var(--unit));
+  border-radius: calc(9px * var(--unit)) calc(9px * var(--unit)) calc(5px * var(--unit)) calc(5px * var(--unit));
+}
+
+.walking-mascot[data-mood="excited"] .pet-eye::after {
+  width: calc(10px * var(--unit));
+  height: calc(10px * var(--unit));
+  top: calc(-1px * var(--unit));
+  margin: calc(-5px * var(--unit)) 0 0 calc(-5px * var(--unit));
+}
+
+/* A blink on an already-closed or wide-eyed face reads as a glitch, so the two
+   extreme moods suspend it. */
+.walking-mascot[data-mood="sleepy"] .pet-eye,
+.walking-mascot[data-mood="alarmed"] .pet-eye {
+  animation: none;
+}
+
+/* Legs. Rounded stubs that sit flush on the platform line so the pet reads as
+   standing rather than floating. The walk animation lifts them from that
+   baseline, creating the impression of stepping. */
 .walking-mascot i,
 .walking-mascot b {
   position: absolute;
   bottom: 0;
-  width: calc(16px * var(--unit));
-  height: calc(12px * var(--unit));
-  border-radius: calc(3px * var(--unit)) calc(3px * var(--unit)) calc(8px * var(--unit)) calc(8px * var(--unit));
+  width: calc(14px * var(--unit));
+  height: calc(10px * var(--unit));
+  border-radius: calc(6px * var(--unit)) calc(6px * var(--unit)) calc(4px * var(--unit)) calc(4px * var(--unit));
   background: var(--accent-strong);
-  animation: step 0.34s ease-in-out infinite alternate;
+  animation: step-alive 0.36s ease-in-out infinite alternate;
 }
 
-.walking-mascot i { left: calc(11px * var(--unit)); }
-.walking-mascot b { right: calc(11px * var(--unit)); animation-delay: 0.16s; }
+.walking-mascot i { left: calc(13px * var(--unit)); }
+.walking-mascot b { right: calc(13px * var(--unit)); animation-delay: 0.18s; }
 
 .walking-mascot.is-running i,
 .walking-mascot.is-running b,
@@ -511,31 +560,58 @@ Components added after the reference-driven pass, kept in their own file so
   translate: 0 calc(-2px * var(--unit));
 }
 
-/* A small token that floats beside the pet and swaps with the mood, so the pet
-   carries a visible prop the way the reference does instead of only speaking. */
-.pet-badge {
+/* Orbiting icon and particles around the pet. The icon is a tech glyph that
+   dangles above the head; the dots are ambient particles that float upward.
+   Together they give the pet a visible aura instead of a bare body. */
+.pet-orbit {
   position: absolute;
   top: calc(-4px * var(--unit));
-  right: calc(-14px * var(--unit));
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.orbit-icon {
+  position: absolute;
+  bottom: calc(20px * var(--unit));
+  left: 50%;
   display: grid;
-  width: calc(24px * var(--unit));
-  height: calc(24px * var(--unit));
+  width: calc(22px * var(--unit));
+  height: calc(22px * var(--unit));
   place-items: center;
   border: 1.5px solid var(--line);
   border-radius: 50%;
   background: var(--surface);
-  font-size: calc(11px * var(--unit));
+  color: var(--accent-strong);
+  font: 700 calc(7px * var(--unit)) var(--mono, monospace);
   line-height: 1;
   opacity: 0;
-  transform: translateY(4px) scale(0.7);
-  transition: opacity 0.2s ease-out, transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  pointer-events: none;
+  transform: translateX(-50%) translateY(4px) scale(0.7);
+  animation: orbit-dangle 3s ease-in-out infinite;
 }
 
-.walking-mascot.has-speech .pet-badge {
+.walking-mascot.has-speech .orbit-icon {
   opacity: 1;
-  transform: translateY(0) scale(1);
+  transform: translateX(-50%) translateY(0) scale(1);
 }
+
+.orbit-dot {
+  position: absolute;
+  width: calc(3px * var(--unit));
+  height: calc(3px * var(--unit));
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0;
+}
+
+.walking-mascot.has-speech .orbit-dot {
+  animation: orbit-float 1.8s ease-out infinite;
+}
+
+.orbit-dot:nth-child(2) { bottom: calc(16px * var(--unit)); left: calc(-12px * var(--unit)); animation-delay: 0s; }
+.orbit-dot:nth-child(3) { bottom: calc(22px * var(--unit)); left: calc(10px * var(--unit)); animation-delay: 0.4s; }
+.orbit-dot:nth-child(4) { bottom: calc(28px * var(--unit)); left: calc(-4px * var(--unit)); animation-delay: 0.8s; }
 
 @keyframes pet-jump {
   0%, 100% { translate: 0 0; }

@@ -510,12 +510,12 @@ test('mascots are large enough to read and keep a minimum gap while walking', as
   expect(themeInk.dark.eye).not.toBe(themeInk.dark.body);
   expect(themeInk.light.eye).not.toBe(themeInk.light.body);
 
-  // A mood prop floats beside the pet while it speaks, and its glyph tracks the
-  // mood. The pet's own loop is paused first, otherwise it can start talking on
-  // its own schedule and race this check.
+  // An orbiting icon and particles surround the pet while it speaks, and the
+  // icon glyph tracks the mood. The pet's own loop is paused first, otherwise it
+  // can start talking on its own schedule and race this check.
   const badge = await page.evaluate(async () => {
     const pet = document.querySelector('#pet-1');
-    const prop = pet.querySelector('.pet-badge');
+    const prop = pet.querySelector('.orbit-icon');
     if (!prop) return { supported: false };
 
     document.querySelector('.mascot-toggle')?.click();
