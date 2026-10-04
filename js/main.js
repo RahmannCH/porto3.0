@@ -263,28 +263,47 @@ if (petEls.length === 2 && mascotEnv) {
   const START_GAP = 14;
   const TOUCH_GAP = 26;
   const SCARED_FOR = 1.1;
-  const REACT_GAP = 3;
+  // A message is on screen for SPEECH_MS, and the pet is then unavailable for
+  // REACT_GAP. The lock is armed when the message disappears, not when it starts,
+  // so a hovering cursor can never land on the line it just finished reading.
   const SPEECH_MS = 2200;
+  const REACT_GAP = 2.4;
   const GREET_CHANCE = 0.5;
 
   const clamp = (value, low, high) => (value < low ? low : value > high ? high : value);
   const pick = list => list[Math.floor(Math.random() * list.length)];
 
-  // Every line is two to four words so the pill stays one line on a phone and
-  // the greeting never outlasts the walk that carries it. The first list is
-  // Rahman's guide character, the second is the sleepy one, so the two read as
-  // separate voices instead of one bot with two sprites.
-  const greetings = [
-    ['Salam! \uD83D\uDE0A', 'Nice to meet you \u2728', 'Scroll ke bawah \uD83D\uDC47', 'Ada proyek seru \uD83D\uDE80', 'Cek CV-ku \uD83D\uDCC4'],
-    ['Hai, santai dulu \u2615', 'Nonton dulu ya \uD83D\uDC40', 'Ngantuk nih zZ \uD83D\uDCA4', 'Klik aku dong \uD83C\uDF89']
-  ];
-  const startleLines = ['Eh, halo! \uD83D\uDC4B', 'Woy, kaget \uD83D\uDE04'];
-  const cheerLines = ['Halo juga! \uD83C\uDF89', 'Asyik! \uD83D\uDE06'];
-  const bumpLines = ['Permisi~ \uD83D\uDC4B', 'Eh, maaf \uD83D\uDE05', 'Halo sobat \u2728'];
+  // Every line is two to four words so the pill stays one line on a phone and the
+  // greeting never outlasts the walk that carries it. The first list is Rahman's
+  // guide character, the second is the sleepy one, so the two read as separate
+  // voices instead of one bot with two sprites.
+  const lines = {
+    greet: [
+      ['Salam! \uD83D\uDE0A', 'Nice to meet you \u2728', 'Scroll ke bawah \uD83D\uDC47', 'Ada proyek seru \uD83D\uDE80', 'Cek CV-ku \uD83D\uDCC4'],
+      ['Hai, santai dulu \u2615', 'Nonton dulu ya \uD83D\uDC40', 'Ngantuk nih zZ \uD83D\uDCA4', 'Klik aku dong \uD83C\uDF89']
+    ],
+    // The pointer hover is the most repeated interaction on the page, so it gets
+    // the widest pool. A two-line pool is what made the same word appear over and
+    // over while the cursor hovered.
+    touch: [
+      ['Eh, halo! \uD83D\uDC4B', 'Woy, kaget \uD83D\uDE04', 'Hai, mampir ya? \uD83D\uDC40', 'Sapa dong \uD83D\uDE0A', 'Iya, aku di sini!', 'Awas, geli \uD83D\uDE02'],
+      ['Halo juga \uD83D\uDE04', 'Eh, jangan diusik zZ', 'Kenapa, bos? \uD83D\uDE34', 'Ih, kaget aku', 'Hmm, ada apa? \uD83D\uDC40']
+    ],
+    cheer: [
+      ['Halo juga! \uD83C\uDF89', 'Asyik! \uD83D\uDE06', 'Yeay, disapa! \u2728', 'Semangat! \uD83D\uDCAA'],
+      ['Hehe, halo \uD83D\uDE04', 'Akhirnya diklik \uD83C\uDF89', 'Kaget, tapi senang', 'Hmm, terima kasih \uD83D\uDE0A']
+    ],
+    bump: [
+      ['Permisi~ \uD83D\uDC4B', 'Eh, maaf \uD83D\uDE05', 'Halo sobat \u2728', 'Ups, tabrakan \uD83D\uDE02'],
+      ['Aduh, kenapa? \uD83D\uDE34', 'Minggir dulu ya', 'Hai, lewat \uD83D\uDC4B', 'Sori, sori \uD83D\uDE05']
+    ]
+  };
 
   const pets = Array.from(petEls).map((el, index) => ({
     el,
     bubble: el.querySelector('.speech-bubble'),
+    badge: el.querySelector('.pet-badge'),
+    voice: el.dataset.pet === '2' ? 1 : 0,
     w: 0,
     h: 0,
     x: 0,
@@ -292,12 +311,29 @@ if (petEls.length === 2 && mascotEnv) {
     dir: index === 0 ? 1 : -1,
     baseSpeed: index === 0 ? WALK_SPEED : WALK_SPEED * 1.1,
     state: 'IDLE',
+    mood: 'idle',
     timer: index === 0 ? 1 : 1.5,
     fear: 0,
     react: 0,
+    // The last two lines this pet said, so a new line is never one the user has
+    // just seen. This is what stops the same word repeating on every hover.
+    said: [],
+    queued: null,
+    touched: false,
     speechHandle: 0,
     placed: false
   }));
+
+  // Picks the next line for a pet, preferring one it has not just spoken. The last
+  // two are excluded rather than only the previous one, because with a short pool
+  // excluding a single line still produced A-B-A-B, which reads as a repeat.
+  const speak = (p, pool) => {
+    const options = pool[p.voice] || pool[0];
+    const fresh = options.filter(line => !p.said.includes(line));
+    const chosen = fresh.length ? pick(fresh) : pick(options);
+    p.said = [chosen, ...p.said].slice(0, Math.min(2, Math.max(0, options.length - 1)));
+    return chosen;
+  };
 
   let mouseX = -1000;
   let mouseY = -1000;
@@ -311,8 +347,8 @@ if (petEls.length === 2 && mascotEnv) {
   const measure = () => {
     floorY = mascotEnv.getBoundingClientRect().bottom;
     pets.forEach(p => {
-      p.w = p.el.offsetWidth || (p.el.dataset.pet === '2' ? 49 : 58);
-      p.h = p.el.offsetHeight || (p.el.dataset.pet === '2' ? 60 : 70);
+      p.w = p.el.offsetWidth || (p.el.dataset.pet === '2' ? 55 : 66);
+      p.h = p.el.offsetHeight || (p.el.dataset.pet === '2' ? 45 : 54);
     });
   };
 
@@ -336,39 +372,76 @@ if (petEls.length === 2 && mascotEnv) {
     });
   };
 
-  // One gate for every spoken line in the module. Without it the pointer could
-  // sit on a pet and retrigger the greeting on every frame, which is what made
-  // the bubbles feel like spam.
-  const say = (p, message) => {
-    if (mascotPaused || !p.bubble) return;
-    if (p.react > 0) return;
-    p.react = REACT_GAP;
-    p.bubble.textContent = message;
+  // The single gate for every spoken line.
+  //
+  // `p.react` is armed for the whole life of a message and then for REACT_GAP
+  // after it clears. Arming it only at the start left a dead window: the bubble
+  // had gone but the pet was still counting down, so the next hover arrived the
+  // instant it unlocked and drew the same line again. Holding the lock across
+  // both phases means a new line can only begin once the previous one is finished
+  // and a short pause has passed, which is what makes the text feel varied.
+  const say = (p, pool, mood) => {
+    if (mascotPaused || !p.bubble) return false;
+    if (p.react > 0) return false;
+    p.react = SPEECH_MS / 1000 + REACT_GAP;
+    p.bubble.textContent = speak(p, pool);
     p.el.classList.add('has-speech');
-    if (p.state === 'IDLE') p.el.classList.add('is-jumping');
+    setMood(p, mood);
     window.clearTimeout(p.speechHandle);
     p.speechHandle = window.setTimeout(() => {
       p.el.classList.remove('has-speech');
       p.el.classList.remove('is-jumping');
+      setMood(p, p.state === 'SCARED' ? 'alarmed' : 'idle');
+      // A line still queued by the cooldown shows as soon as the pause is over.
+      if (p.queued) {
+        const next = p.queued;
+        p.queued = null;
+        say(p, next.pool, next.mood);
+      }
     }, SPEECH_MS);
+    return true;
+  };
+
+  // The face is the readable part of the reaction, so the mood is written as a
+  // class and the eyes are drawn from CSS. Anything that could not be shown by a
+  // static pair of circles (a smile, a startle, sleep) becomes a shape change.
+  const moodProps = {
+    happy: ['\u2728', '\uD83D\uDE0A', '\uD83C\uDF89'],
+    alarmed: ['\uD83D\uDCA6', '\u2757', '\uD83D\uDE28'],
+    sleepy: ['\uD83D\uDCA4', '\uD83D\uDE34', '\uD83C\uDF19'],
+    idle: ['\u2728', '\uD83D\uDC4B', '\uD83D\uDC40']
+  };
+
+  const setMood = (p, mood) => {
+    if (p.mood === mood) return;
+    p.mood = mood;
+    p.el.dataset.mood = mood;
+    if (p.badge) p.badge.textContent = pick(moodProps[mood] || moodProps.idle);
   };
 
   const walk = (p, seconds) => {
     p.state = 'WALK';
     p.timer = seconds;
     p.vx = p.dir * p.baseSpeed;
+    if (p.mood !== 'alarmed') setMood(p, 'idle');
   };
 
   // Panic is a moving state, not a freeze: the pet keeps travelling away from the
   // cursor while it yelps, so it never stands still mid-reaction. `reverse` flips
   // the hush away from a click or focus rather than from the pointer position.
-  const startle = (p, message, reverse = false) => {
+  const startle = (p, pool, reverse = false) => {
     p.state = 'SCARED';
     p.timer = SCARED_FOR;
     p.fear = SCARED_FOR;
     p.dir = reverse ? (p.dir > 0 ? -1 : 1) : ((p.x + p.w / 2) > mouseX ? 1 : -1);
     p.vx = p.dir * SCARED_SPEED;
-    say(p, message);
+    // The mood is set even when the line has to wait, because the face should
+    // react the moment the pet is startled.
+    setMood(p, 'alarmed');
+    // A line that arrives during the lock is queued rather than dropped, so a
+    // reaction the user caused always gets said once the previous one has been
+    // read. The newest request wins, since that is the one still relevant.
+    if (!say(p, pool, 'alarmed')) p.queued = { pool, mood: 'alarmed' };
   };
 
   // Distance from the pointer to the nearest edge of the pet box, so touching a
@@ -417,7 +490,7 @@ if (petEls.length === 2 && mascotEnv) {
 
     if (bumpCooldown <= 0) {
       bumpCooldown = 3.0;
-      say(Math.random() < 0.5 ? near : far, pick(bumpLines));
+      say(Math.random() < 0.5 ? near : far, lines.bump, 'happy');
     }
   };
 
@@ -425,7 +498,6 @@ if (petEls.length === 2 && mascotEnv) {
     bumpCooldown = Math.max(0, bumpCooldown - dt);
 
     pets.forEach(p => {
-      const voice = p.el.dataset.pet === '2' ? 1 : 0;
       p.fear = Math.max(0, p.fear - dt);
       p.react = Math.max(0, p.react - dt);
       p.timer -= dt;
@@ -438,14 +510,20 @@ if (petEls.length === 2 && mascotEnv) {
           p.state = 'IDLE';
           p.timer = 2 + Math.random() * 3;
           p.vx = 0;
-          if (Math.random() < GREET_CHANCE) say(p, pick(greetings[voice]));
+          setMood(p, 'idle');
+          if (Math.random() < GREET_CHANCE) say(p, lines.greet, 'happy');
         }
       }
 
-      if (isMouseActive && p.fear <= 0 && p.state !== 'SCARED'
-        && pointerGap(p, mouseX, mouseY) <= TOUCH_GAP) {
-        startle(p, startleLines[voice]);
+      // Proximity panic fires on the transition from "out of reach" to "in reach",
+      // never on every frame. The old check re-triggered sixty times a second while
+      // the cursor rested on a pet, which stamped the same line over and over and
+      // is exactly the repetition that was reported.
+      const withinReach = isMouseActive && pointerGap(p, mouseX, mouseY) <= TOUCH_GAP;
+      if (withinReach && !p.touched && p.fear <= 0 && p.state !== 'SCARED') {
+        startle(p, lines.touch);
       }
+      p.touched = withinReach;
 
       p.x += p.vx * dt;
 
@@ -483,21 +561,18 @@ if (petEls.length === 2 && mascotEnv) {
   window.addEventListener('blur', () => { isMouseActive = false; });
 
   pets.forEach(p => {
-    const voice = p.el.dataset.pet === '2' ? 1 : 0;
-    // A deliberate click is the one action the user chose, so it may interrupt
-    // an already-running greeting. Incidental hover and focus respect the gate.
+    // A deliberate click is the one action the user chose, so it may interrupt an
+    // already-running greeting. Incidental hover and focus respect the gate.
     p.el.addEventListener('pointerenter', () => {
-      if (isMouseActive && p.state !== 'SCARED' && p.react <= 0) {
-        startle(p, startleLines[voice]);
-      }
+      if (isMouseActive && p.state !== 'SCARED') startle(p, lines.touch);
     });
     p.el.addEventListener('focus', () => {
-      if (p.fear <= 0 && p.react <= 0) startle(p, cheerLines[voice], true);
+      if (p.fear <= 0) startle(p, lines.cheer, true);
     });
     p.el.addEventListener('click', () => {
       p.fear = 0;
       p.react = 0;
-      startle(p, pick(cheerLines), true);
+      startle(p, lines.cheer, true);
     });
   });
 
@@ -521,6 +596,7 @@ if (petEls.length === 2 && mascotEnv) {
 
   measure();
   keepInside();
+  pets.forEach(p => setMood(p, 'idle'));
   paint();
   requestAnimationFrame(loop);
 }
@@ -831,86 +907,189 @@ cliInput?.addEventListener('keydown', (e) => {
 
 
 
-// Stacked Documentation Gallery Interaction (Swipe Cards)
+// Stacked activity gallery. The deck is an ordered array of cards whose render
+// slot is derived from its position, so one source of truth drives the stack, the
+// counter, and the arrows.
 document.querySelectorAll('[data-stack-gallery]').forEach(gallery => {
-  let cards = Array.from(gallery.querySelectorAll('.stack-card'));
+  const cards = Array.from(gallery.querySelectorAll('.stack-card'));
   const counterCurrent = gallery.querySelector('.stack-current');
-  let isDragging = false;
-  let startX = 0;
-  let currentX = 0;
-  let activeCard = null;
+  const prevButton = gallery.querySelector('[data-stack-prev]');
+  const nextButton = gallery.querySelector('[data-stack-next]');
+  if (cards.length < 2) return;
 
-  const updateIndices = () => {
-    cards.forEach((card, idx) => {
-      card.style.setProperty('--card-index', idx);
+  const SWIPE_COMMIT = 60;
+  const FLIP_MS = 300;
+  const MAX_BACKLOG = 3;
+
+  let order = cards.slice();
+  let dragCard = null;
+  let startX = 0;
+  let travelled = 0;
+  let backlog = 0;
+  let timer = 0;
+
+  // A card shows its photo when one exists and says so when it does not, so the
+  // deck is usable before the real documentation photos exist.
+  //
+  // The intended path lives in data-photo, not src. A src pointing at a file that
+  // is not on disk yet makes the browser log a failed request on every page load,
+  // and a shipped page must not 404. Adding a photo is one step: drop the file at
+  // the path, then move it from data-photo into src.
+  const flagPhoto = card => {
+    const image = card.querySelector('img');
+    const source = image && (image.getAttribute('data-photo') || image.getAttribute('src'));
+    if (!image || !source || !image.getAttribute('src')) {
+      card.setAttribute('data-missing', 'true');
+      return;
+    }
+    const settle = () => {
+      const loaded = image.complete && image.naturalWidth > 0;
+      card.setAttribute('data-missing', loaded ? 'false' : 'true');
+    };
+    image.addEventListener('load', settle);
+    image.addEventListener('error', settle);
+    settle();
+  };
+  cards.forEach(flagPhoto);
+
+  const writeCounter = () => {
+    if (!counterCurrent) return;
+    const front = order[0].dataset.activity || '';
+    const position = cards.findIndex(card => card.dataset.activity === front) + 1;
+    counterCurrent.textContent = String(position || 1);
+  };
+
+  // Applies the resting layout for the current order. Only the front card is
+  // exposed to assistive tech, otherwise one visible card would announce six
+  // captions stacked on top of each other.
+  const paint = () => {
+    order.forEach((card, slot) => {
+      card.dataset.slot = String(slot);
       card.style.removeProperty('--swipe-x');
       card.style.removeProperty('--swipe-rot');
-      card.style.opacity = idx === 0 ? '1' : (idx === 1 ? '0.85' : '0.65');
-      card.style.transition = 'transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.35s ease';
+      if (slot === 0) {
+        card.removeAttribute('aria-hidden');
+      } else {
+        card.setAttribute('aria-hidden', 'true');
+      }
     });
-    if (counterCurrent) {
-      const activeImg = cards[0].querySelector('img');
-      const originalIndex = parseInt(activeImg?.getAttribute('data-index') || '1', 10);
-      counterCurrent.textContent = originalIndex;
+    writeCounter();
+  };
+
+  // Slides the front card out and promotes the next one.
+  //
+  // Forward: the front card leaves to the right and goes to the back of the deck.
+  // Backward: the *last* card is the one that comes forward, and the card that
+  // leaves is the one that was in front. Promoting `outgoing` on the way back
+  // would put the departing card straight back in front, which is why the back
+  // arrow used to do nothing visible.
+  const flip = direction => {
+    const leaving = direction > 0 ? order[0] : order[order.length - 1];
+    const staying = direction > 0 ? order.slice(1) : order.slice(0, -1);
+
+    // `staying` is already in the order it should render once the leaving card is
+    // out of the way, so the waiting cards take their new slots immediately and
+    // the incoming front card is in place underneath while the old one leaves.
+    staying.forEach((card, slot) => {
+      card.style.transition = `transform ${FLIP_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity ${FLIP_MS}ms ease`;
+      card.dataset.slot = String(slot);
+      if (slot === 0) {
+        card.removeAttribute('aria-hidden');
+      } else {
+        card.setAttribute('aria-hidden', 'true');
+      }
+    });
+
+    leaving.setAttribute('aria-hidden', 'true');
+    leaving.style.transition = `transform ${FLIP_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity ${FLIP_MS}ms ease`;
+    leaving.style.setProperty('--swipe-x', `${direction > 0 ? 340 : -340}px`);
+    leaving.style.setProperty('--swipe-rot', `${direction > 0 ? 12 : -12}deg`);
+    leaving.style.opacity = '0';
+
+    // The offset is cleared only after the transition ends. Clearing it in the
+    // same frame snapped the card back and the deck looked like it did nothing.
+    timer = window.setTimeout(() => {
+      timer = 0;
+      order = direction > 0 ? [...staying, leaving] : [leaving, ...staying];
+      order.forEach(card => {
+        card.style.transition = '';
+        card.style.opacity = '';
+      });
+      paint();
+
+      if (backlog !== 0) {
+        const next = backlog > 0 ? 1 : -1;
+        backlog -= next;
+        flip(next);
+      }
+    }, FLIP_MS);
+  };
+
+  const request = direction => {
+    // Bounded so a held-down arrow cannot queue an unbounded backlog.
+    backlog = Math.max(-MAX_BACKLOG, Math.min(MAX_BACKLOG, backlog + direction));
+    if (!timer) {
+      const next = backlog > 0 ? 1 : -1;
+      backlog -= next;
+      flip(next);
     }
   };
 
-  cards.forEach((c, i) => c.querySelector('img')?.setAttribute('data-index', i + 1));
-
-  const advanceCard = (direction = 1) => {
-    if (cards.length < 2) return;
-    const top = cards[0];
-    top.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease';
-    top.style.setProperty('--swipe-x', `${direction > 0 ? 350 : -350}px`);
-    top.style.setProperty('--swipe-rot', `${direction > 0 ? 15 : -15}deg`);
-    top.style.opacity = '0';
-
-    setTimeout(() => {
-      const shifted = cards.shift();
-      cards.push(shifted);
-      updateIndices();
-    }, 200);
+  const beginDrag = event => {
+    // Only a gesture that starts on a card may drag the deck. Without this, a
+    // press on the arrow buttons bubbled up here, captured the pointer, and the
+    // button's own click was swallowed, so the arrows looked dead.
+    if (timer || event.button !== 0) return;
+    if (event.target.closest('.stack-toolbar')) return;
+    dragCard = order[0];
+    startX = event.clientX;
+    travelled = 0;
+    dragCard.style.transition = 'none';
+    try { dragCard.setPointerCapture(event.pointerId); } catch (error) { /* capture unsupported */ }
   };
 
-  const onPointerDown = e => {
-    if (e.button !== 0 || cards.length < 2) return;
-    activeCard = cards[0];
-    isDragging = true;
-    startX = e.clientX;
-    currentX = 0;
-    activeCard.style.transition = 'none';
-
-    const onPointerMove = ev => {
-      if (!isDragging || !activeCard) return;
-      currentX = ev.clientX - startX;
-      activeCard.style.setProperty('--swipe-x', `${currentX}px`);
-      activeCard.style.setProperty('--swipe-rot', `${currentX * 0.05}deg`);
-    };
-
-    const onPointerUp = () => {
-      if (!isDragging || !activeCard) return;
-      isDragging = false;
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', onPointerUp);
-      window.removeEventListener('pointercancel', onPointerUp);
-
-      activeCard.style.transition = 'transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.35s ease';
-
-      if (Math.abs(currentX) > 50) {
-        advanceCard(currentX > 0 ? 1 : -1);
-      } else {
-        activeCard.style.setProperty('--swipe-x', '0px');
-        activeCard.style.setProperty('--swipe-rot', '0deg');
-      }
-      activeCard = null;
-    };
-
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
-    window.addEventListener('pointercancel', onPointerUp);
+  const moveDrag = event => {
+    if (!dragCard) return;
+    travelled = event.clientX - startX;
+    dragCard.style.setProperty('--swipe-x', `${travelled.toFixed(1)}px`);
+    dragCard.style.setProperty('--swipe-rot', `${(travelled * 0.045).toFixed(2)}deg`);
   };
 
-  gallery.addEventListener('pointerdown', onPointerDown);
+  const endDrag = () => {
+    if (!dragCard) return;
+    const card = dragCard;
+    dragCard = null;
+    card.style.transition = '';
+    if (Math.abs(travelled) > SWIPE_COMMIT) {
+      request(travelled > 0 ? 1 : -1);
+      return;
+    }
+    card.style.removeProperty('--swipe-x');
+    card.style.removeProperty('--swipe-rot');
+  };
+
+  gallery.addEventListener('pointerdown', beginDrag);
+  gallery.addEventListener('pointermove', moveDrag);
+  gallery.addEventListener('pointerup', endDrag);
+  gallery.addEventListener('pointercancel', endDrag);
+  gallery.addEventListener('lostpointercapture', endDrag);
+
+  prevButton?.addEventListener('click', () => request(-1));
+  nextButton?.addEventListener('click', () => request(1));
+
+  // Left and right drive the deck from anywhere inside it, which also gives the
+  // arrows a keyboard path through the same code the pointer uses.
+  gallery.addEventListener('keydown', event => {
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      request(-1);
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      request(1);
+    }
+  });
+
+  paint();
 });
 const lanyardAnchor = document.getElementById('id-card-anchor');
 const lanyardPivot = document.getElementById('id-card-pendulum');

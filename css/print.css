@@ -59,6 +59,7 @@
   .sticker-field,
   .mascot-dock,
   .mascot-environment,
+  .stack-toolbar,
   .id-card-hint,
   .cli-drawer,
   .footer-actions,
@@ -71,6 +72,32 @@
   .contact-links span[aria-hidden],
   dialog,
   .theme-transition * {
+    display: none !important;
+  }
+
+  /* The deck is six cards stacked on one axis. On paper only the front card is
+     real content; the other five are rotated behind it and would print as dark
+     slivers over the caption. Flatten the deck to the front card. */
+  .stack-deck {
+    aspect-ratio: auto !important;
+  }
+
+  .stack-card[data-slot="1"],
+  .stack-card[data-slot="2"],
+  .stack-card[data-slot="3"],
+  .stack-card[data-slot="4"],
+  .stack-card[data-slot="5"] {
+    display: none !important;
+  }
+
+  .stack-card[data-slot="0"] {
+    position: static !important;
+    transform: none !important;
+    opacity: 1 !important;
+    break-inside: avoid;
+  }
+
+  .stack-card[data-missing="true"] {
     display: none !important;
   }
 

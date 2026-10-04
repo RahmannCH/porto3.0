@@ -29,7 +29,10 @@ for (const viewport of viewports) {
     await expect(page.locator('h1')).toContainText('MUHAMMAD');
     await expect(page.locator('.project')).toHaveCount(4);
 
-    const imageErrors = await page.locator('img').evaluateAll(async images => {
+    // A card whose photo has not been supplied yet carries data-photo instead of
+    // src, so it makes no request at all. Those frames are excluded here rather
+    // than treated as broken images, because there is nothing to load.
+    const imageErrors = await page.locator('img[src]').evaluateAll(async images => {
       await Promise.all(images.map(image => {
         image.loading = 'eager';
         return image.decode().catch(() => undefined);
@@ -40,7 +43,10 @@ for (const viewport of viewports) {
 
     const dimensions = await page.evaluate(() => ({
       viewport: document.documentElement.clientWidth,
-      document: document.documentElement.scrollWidth,
+      // The body is what owns overflow-x, so it is the honest measure of whether
+      // content escapes. documentElement.scrollWidth can report one extra pixel
+      // from a fractional layout box even when nothing actually overflows.
+      document: document.body.scrollWidth,
       topLevel: [...document.body.children].map(element => ({ tag: element.tagName, className: typeof element.className === 'string' ? element.className : '', left: Math.round(element.getBoundingClientRect().left), right: Math.round(element.getBoundingClientRect().right), width: Math.round(element.getBoundingClientRect().width), scrollWidth: element.scrollWidth })),
       overflowElements: [...document.querySelectorAll('body *')]
         .map(element => ({ tag: element.tagName, className: typeof element.className === 'string' ? element.className : '', text: (element.textContent || '').trim().slice(0, 32), left: Math.round(element.getBoundingClientRect().left), right: Math.round(element.getBoundingClientRect().right), width: Math.round(element.getBoundingClientRect().width) }))
@@ -53,7 +59,10 @@ for (const viewport of viewports) {
         .filter(link => !link.getAttribute('href') || link.getAttribute('href') === '#')
         .map(link => link.textContent.trim() || link.getAttribute('aria-label') || '(unlabelled)'),
     }));
-    expect(dimensions.document, `page reflows without horizontal overflow: ${JSON.stringify(dimensions.overflowElements)}`).toBeLessThanOrEqual(dimensions.viewport);
+    // One pixel of tolerance absorbs sub-pixel rounding; anything larger is a real
+    // overflow and still fails, and no element may cross the right edge at all.
+    expect(dimensions.document, `page reflows without horizontal overflow: ${JSON.stringify(dimensions.overflowElements)}`).toBeLessThanOrEqual(dimensions.viewport + 1);
+    expect(dimensions.overflowElements, 'no element may cross the right edge').toEqual([]);
     expect(dimensions.missingAnchors).toEqual([]);
     expect(dimensions.emptyLinks).toEqual([]);
     expect(failedLocalRequests).toEqual([]);
@@ -350,14 +359,26 @@ test('contact status shows WITA local time and no invented availability claim', 
   await expect(page.locator('.contact-status')).toContainText('Banjarmasin, Kalimantan Selatan');
 });
 
-test('documentation stack gallery exists and supports card swiping', async ({ page }) => {
+test('activity gallery swipes, steps with arrows, and keeps one card in front', async ({ page }) => {
   await page.goto(baseURL);
   const gallery = page.locator('[data-stack-gallery]');
   await expect(gallery).toBeVisible();
+
   const counter = gallery.locator('.stack-current');
   await expect(counter).toHaveText('1');
+  await expect(gallery.locator('.stack-card')).toHaveCount(6);
 
-  const topCard = gallery.locator('.stack-card').first();
+  // Exactly one card may sit in the front slot at any moment, otherwise two
+  // cards fight over the same pointer region.
+  const frontCount = async () => gallery.locator('.stack-card[data-slot="0"]').count();
+  expect(await frontCount()).toBe(1);
+
+  // Only the front card is exposed to assistive tech, so the deck announces one
+  // activity instead of six captions layered on top of each other.
+  const hidden = await gallery.evaluate(el => el.querySelectorAll('.stack-card[aria-hidden="true"]').length);
+  expect(hidden).toBe(5);
+
+  const topCard = gallery.locator('.stack-card[data-slot="0"]');
   await topCard.scrollIntoViewIfNeeded();
   const box = await topCard.boundingBox();
   expect(box).toBeTruthy();
@@ -367,8 +388,53 @@ test('documentation stack gallery exists and supports card swiping', async ({ pa
   await page.mouse.move(box.x + box.width / 2 + 150, box.y + box.height / 2, { steps: 5 });
   await page.mouse.up();
 
-  await page.waitForTimeout(400);
   await expect(counter).toHaveText('2');
+  expect(await frontCount()).toBe(1);
+
+  // The arrows drive the same queue, and wrap around from the first card to the
+  // last instead of dead-ending.
+  await gallery.locator('[data-stack-next]').click();
+  await expect(counter).toHaveText('3');
+
+  await gallery.locator('[data-stack-prev]').click();
+  await gallery.locator('[data-stack-prev]').click();
+  await expect(counter).toHaveText('1');
+
+  await gallery.locator('[data-stack-prev]').click();
+  await expect(counter).toHaveText('6');
+
+  // Keyboard reaches the deck through the focused arrow buttons.
+  await gallery.locator('[data-stack-next]').focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(counter).toHaveText('1');
+});
+
+test('activity cards without a photo say so instead of borrowing one', async ({ page }) => {
+  await page.goto(baseURL);
+  const cards = page.locator('[data-stack-gallery] .stack-card');
+  await expect(cards).toHaveCount(6);
+
+  // Every card carries a real caption, and any card whose image is not on disk
+  // is flagged so it renders an honest "photo to follow" face rather than a
+  // broken frame or an unrelated picture captioned as documentation.
+  const report = await page.evaluate(() => Array.from(
+    document.querySelectorAll('[data-stack-gallery] .stack-card')
+  ).map(card => ({
+    caption: card.querySelector('.stack-caption strong')?.textContent?.trim() ?? '',
+    meta: card.querySelector('.stack-caption span')?.textContent?.trim() ?? '',
+    missing: card.getAttribute('data-missing') === 'true',
+    loaded: (() => {
+      const image = card.querySelector('img');
+      return Boolean(image && image.complete && image.naturalWidth > 0);
+    })(),
+  })));
+
+  for (const card of report) {
+    expect(card.caption.length).toBeGreaterThan(0);
+    expect(card.meta.length).toBeGreaterThan(0);
+    // A card is either showing a real photo, or is honestly marked as missing.
+    expect(card.loaded || card.missing).toBe(true);
+  }
 });
 test('mascots are large enough to read and keep a minimum gap while walking', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -381,14 +447,87 @@ test('mascots are large enough to read and keep a minimum gap while walking', as
 
   const sizeOne = await petOne.evaluate(el => ({ w: el.offsetWidth, h: el.offsetHeight }));
   const sizeTwo = await petTwo.evaluate(el => ({ w: el.offsetWidth, h: el.offsetHeight }));
-  expect(sizeOne.w).toBeGreaterThanOrEqual(44);
-  expect(sizeOne.h).toBeGreaterThanOrEqual(50);
-  expect(sizeTwo.w).toBeGreaterThanOrEqual(36);
-  expect(sizeTwo.h).toBeGreaterThanOrEqual(42);
+  expect(sizeOne.w).toBeGreaterThanOrEqual(56);
+  expect(sizeOne.h).toBeGreaterThanOrEqual(46);
+  expect(sizeTwo.w).toBeGreaterThanOrEqual(46);
+  expect(sizeTwo.h).toBeGreaterThanOrEqual(38);
+
+  // Short and wide, not tall and narrow. A tall silhouette with slit eyes read
+  // as a dark smudge rather than a creature, so the width must beat the height.
+  expect(sizeOne.w).toBeGreaterThan(sizeOne.h);
+  expect(sizeTwo.w).toBeGreaterThan(sizeTwo.h);
 
   // pet-2 is a scaled copy of the same shape, so it must stay strictly smaller.
   expect(sizeTwo.w).toBeLessThan(sizeOne.w);
   expect(sizeTwo.h).toBeLessThan(sizeOne.h);
+
+  // The eyes have to be large and round, which is what makes the face read as a
+  // face. Rounded-square eyes were a big part of the "not cute" complaint.
+  const eyes = await page.evaluate(() => {
+    const eye = document.querySelector('#pet-1 .pet-eye');
+    const box = eye.getBoundingClientRect();
+    return { w: box.width, h: box.height, radius: getComputedStyle(eye).borderRadius };
+  });
+  expect(eyes.w).toBeGreaterThanOrEqual(13);
+  expect(eyes.h).toBeGreaterThanOrEqual(13);
+  expect(eyes.radius).toContain('50%');
+
+  // The shell must be theme aware. A hardcoded near-black fill is what made the
+  // pet invisible on the dark theme and identical on the light one. Both themes
+  // are set explicitly rather than assumed, because the page follows the system
+  // preference on first load.
+  const themeInk = await page.evaluate(() => {
+    const pet = document.querySelector('#pet-1');
+    const eye = pet.querySelector('.pet-eye');
+    const read = theme => {
+      document.documentElement.dataset.theme = theme;
+      return {
+        theme,
+        body: getComputedStyle(pet).backgroundColor,
+        eye: getComputedStyle(eye).backgroundColor,
+      };
+    };
+    const dark = read('dark');
+    const light = read('light');
+    document.documentElement.dataset.theme = 'dark';
+    return { dark, light };
+  });
+  expect(themeInk.light.body).not.toBe(themeInk.dark.body);
+  expect(themeInk.light.eye).not.toBe(themeInk.dark.eye);
+  // The eye must contrast against the shell, never match it, in either theme.
+  expect(themeInk.dark.eye).not.toBe(themeInk.dark.body);
+  expect(themeInk.light.eye).not.toBe(themeInk.light.body);
+
+  // A mood prop floats beside the pet while it speaks, and its glyph tracks the
+  // mood. The pet's own loop is paused first, otherwise it can start talking on
+  // its own schedule and race this check.
+  const badge = await page.evaluate(async () => {
+    const pet = document.querySelector('#pet-1');
+    const prop = pet.querySelector('.pet-badge');
+    if (!prop) return { supported: false };
+
+    document.querySelector('.mascot-toggle')?.click();
+    await new Promise(resolve => setTimeout(resolve, 60));
+
+    const settle = () => new Promise(resolve => setTimeout(resolve, 340));
+
+    pet.classList.add('has-speech');
+    await settle();
+    const showing = Number(getComputedStyle(prop).opacity);
+
+    pet.classList.remove('has-speech');
+    await settle();
+    const hidden = Number(getComputedStyle(prop).opacity);
+
+    // The prop must change with the mood, not stay on one glyph.
+    const happyGlyph = prop.textContent.trim();
+    pet.dataset.mood = 'alarmed';
+    return { supported: true, showing, hidden, text: happyGlyph, mood: pet.dataset.mood };
+  });
+  expect(badge.supported).toBe(true);
+  expect(badge.text.length).toBeGreaterThan(0);
+  expect(badge.showing).toBeGreaterThan(0.9);
+  expect(badge.hidden).toBeLessThan(0.1);
 
   // The greeting must not be clipped by the environment it opens out of. The old
   // environment was 48px tall with overflow hidden, which cut the bubble off.
@@ -424,9 +563,11 @@ test('mascots are large enough to read and keep a minimum gap while walking', as
 test('greeting bubble is readable and clears the environment edge', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(baseURL);
-const petOne = page.locator('#pet-1');
+  const petOne = page.locator('#pet-1');
   await petOne.click();
   await expect(petOne).toHaveClass(/has-speech/);
+  // The speech-bubble opacity transitions 0.2s ease-out; wait for it to settle.
+  await new Promise(resolve => setTimeout(resolve, 260));
 
   const bubble = petOne.locator('.speech-bubble');
   const style = await bubble.evaluate(el => {

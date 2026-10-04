@@ -141,90 +141,187 @@ Components added after the reference-driven pass, kept in their own file so
     padding: 0.8rem 0.2rem;
   }
 }
-/* --- Interactive Stack Gallery for Timeline Documentation --------- */
+/* --- Interactive Stack Gallery for Timeline Documentation ---------
+
+   A deck of activity flashcards. The deck is its own stacking context so the
+   absolutely-positioned cards cannot escape into the timeline row, which frees
+   the toolbar to sit underneath instead of floating over the cards.
+
+   Deck order is owned by --slot, written by JS. Slot 0 is the front card and is
+   the only one that accepts pointers, so a swipe can never grab a card that is
+   already behind another one. */
 .timeline-gallery {
   position: relative;
-  width: calc(100% - 44px);
+  width: 100%;
   max-width: 480px;
-  aspect-ratio: 16 / 10;
-  margin-top: 1.2rem;
+  margin-top: 1.4rem;
   user-select: none;
+}
+
+.stack-deck {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
   touch-action: pan-y;
 }
 
 .stack-card {
   position: absolute;
   inset: 0;
+  margin: 0;
   border-radius: 16px;
   overflow: hidden;
   border: 1px solid var(--line);
-  background: var(--surface);
+  background: var(--surface-raised);
   box-shadow: var(--shadow);
   cursor: grab;
   transform-origin: bottom center;
   transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.35s ease;
-  will-change: transform, opacity;
 }
 
 .stack-card:active {
   cursor: grabbing;
 }
 
-.stack-card img {
+.stack-card[data-slot="0"] {
+  z-index: 30;
+  opacity: 1;
+  transform: translate(var(--swipe-x, 0px), 0) rotate(var(--swipe-rot, 0deg));
+}
+
+.stack-card[data-slot="1"] {
+  z-index: 20;
+  opacity: 0.7;
+  pointer-events: none;
+  transform: translateX(16px) translateY(8px) scale(0.95);
+}
+
+.stack-card[data-slot="2"] {
+  z-index: 10;
+  opacity: 0.4;
+  pointer-events: none;
+  transform: translateX(30px) translateY(16px) scale(0.9);
+}
+
+.stack-card[data-slot="3"],
+.stack-card[data-slot="4"],
+.stack-card[data-slot="5"] {
+  z-index: 5;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(40px) translateY(22px) scale(0.86);
+}
+
+.stack-photo {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.stack-photo img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   pointer-events: none;
 }
 
-.stack-card[style*="--card-index: 0"] {
-  z-index: 30;
-  opacity: 1;
-  transform: translate(var(--swipe-x, 0px), var(--swipe-y, 0px)) rotate(var(--swipe-rot, 0deg));
+/* When a photo has not been supplied yet the card says so on its face rather
+   than borrowing an unrelated image and captioning it as documentation. The
+   image still occupies the frame, so dropping the real file in is the only step
+   needed later. */
+.stack-card[data-missing="true"] {
+  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--surface-raised) 92%, var(--line)) 0 12px, var(--surface-raised) 12px 24px);
 }
 
-.stack-card[style*="--card-index: 1"] {
-  z-index: 20;
-  opacity: 0.85;
-  transform: translateX(18px) translateY(6px) scale(0.95) rotate(4deg);
-  pointer-events: none;
+.stack-card[data-missing="true"] .stack-photo img {
+  opacity: 0;
 }
 
-.stack-card[style*="--card-index: 2"] {
-  z-index: 10;
-  opacity: 0.65;
-  transform: translateX(36px) translateY(12px) scale(0.9) rotate(8deg);
-  pointer-events: none;
-}
-
-.stack-card:after {
-  content: "";
+.stack-card[data-missing="true"] .stack-photo::before {
+  content: attr(data-missing);
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.3);
-  opacity: 0;
-  transition: opacity 0.3s;
+  display: grid;
+  place-items: center;
+  padding: 0 1.5rem;
+  color: var(--subtle);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.stack-caption {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 1.6rem 1rem 0.85rem;
+  background: linear-gradient(transparent, rgba(4, 6, 9, 0.88));
+  color: #f4f6f8;
   pointer-events: none;
 }
 
-.stack-card:not([style*="--card-index: 0"]):after {
-  opacity: 1;
+.stack-caption strong {
+  font-size: 0.86rem;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+.stack-caption span {
+  color: #b9c2cc;
+  font-size: 0.67rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.stack-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+}
+
+.stack-nav {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 0.18s, color 0.18s, transform 0.18s;
+}
+
+.stack-nav svg {
+  width: 18px;
+  height: 18px;
+}
+
+.stack-nav:hover {
+  border-color: var(--accent-strong);
+  color: var(--accent-strong);
+  transform: translateY(-1px);
+}
+
+.stack-nav:active {
+  transform: scale(0.94);
 }
 
 .stack-counter {
-  position: absolute;
-  bottom: 0.8rem;
-  right: 0.8rem;
-  background: color-mix(in srgb, var(--bg) 80%, transparent);
-  border: 1px solid var(--line);
-  padding: 0.2rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.7rem;
-  font-weight: 700;
+  min-width: 3.6rem;
+  color: var(--muted);
+  font: 700 0.72rem monospace;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+.stack-current {
   color: var(--ink);
-  z-index: 40;
-  backdrop-filter: blur(8px);
-  pointer-events: none;
 }
 /* --- 3D Physics Stickers --- */
 .sticker {
@@ -251,18 +348,22 @@ Components added after the reference-driven pass, kept in their own file so
 
 /* Dual mascots
 
-   One shape at two sizes. Every part derives from --unit, so pet-2 is exactly
-   84% of pet-1 rather than being a second hand-tuned set of numbers that drifts
-   out of sync the moment the base size is edited.
+   One shape at two sizes. Every part derives from --unit, so pet-2 is a scaled
+   copy of pet-1 rather than a second hand-tuned set of numbers that drifts out
+   of sync the moment the base size is edited.
+
+   The silhouette is deliberately short and wide (roughly 1.15 : 1) and the eyes
+   are large and round, because a tall narrow body with slit eyes reads as a
+   shadow rather than a creature.
+
+   Body, eyes and legs use the theme tokens instead of fixed hex. The old pair of
+   hardcoded colours painted a near-black blob on the dark theme, which is why the
+   pets looked like smudges, and it could not follow a theme switch at all.
 
    The two expressive states use the scale and translate properties, never
-   transform. JS owns transform for facing, and an animation or declaration
-   written to transform would overwrite it, which is why a pet used to lose its
-   direction mid-jump. scale, translate and transform compose independently.
-
-   The bubble opens upward from the pet, so the environment must be tall enough
-   to hold a two-line greeting and must not clip. It also only clamps the pets
-   horizontally through JS, so vertical overflow is free. */
+   transform. JS owns transform for facing, and a declaration written to
+   transform would overwrite it, which is why a pet used to lose its direction
+   mid-jump. scale, translate and transform compose independently. */
 
 .mascot-environment {
   position: fixed;
@@ -277,16 +378,18 @@ Components added after the reference-driven pass, kept in their own file so
 
 .walking-mascot {
   --unit: 1;
+  --shell: color-mix(in srgb, var(--ink) 88%, var(--accent) 12%);
+  --glint: var(--bg);
   position: absolute;
   bottom: 0;
-  width: calc(58px * var(--unit));
-  height: calc(70px * var(--unit));
+  width: calc(66px * var(--unit));
+  height: calc(54px * var(--unit));
   margin: 0;
   padding: 0;
   border: 0;
   appearance: none;
-  border-radius: calc(24px * var(--unit)) calc(24px * var(--unit)) calc(14px * var(--unit)) calc(14px * var(--unit));
-  background: #090a0c;
+  border-radius: calc(22px * var(--unit)) calc(22px * var(--unit)) calc(16px * var(--unit)) calc(16px * var(--unit));
+  background: var(--shell);
   font: inherit;
   color: inherit;
   cursor: pointer;
@@ -297,34 +400,91 @@ Components added after the reference-driven pass, kept in their own file so
 }
 
 .pet-1 { --unit: 1; z-index: 3; }
-.pet-2 { --unit: 0.85; z-index: 2; }
+.pet-2 { --unit: 0.84; z-index: 2; }
 
+/* Expressive eyes.
+
+   The eye is a bright disc with a dark pupil (::after). The pupil is what the
+   mood moves: sliding it up reads as a smile, shrinking it to a bead reads as
+   alarm, and hiding it under a lid reads as sleep. A static pair of circles
+   cannot say any of that, which is why the faces looked blank however much the
+   body moved. */
 .pet-eye {
   position: absolute;
-  top: calc(18px * var(--unit));
-  width: calc(10px * var(--unit));
-  height: calc(14px * var(--unit));
-  border-radius: calc(6px * var(--unit));
-  background: #ffffff;
-  transition: scale 0.16s ease-out;
+  top: calc(15px * var(--unit));
+  width: calc(16px * var(--unit));
+  height: calc(16px * var(--unit));
+  border-radius: 50%;
+  background: var(--glint);
+  overflow: hidden;
+  transition: height 0.18s ease-out, top 0.18s ease-out, border-radius 0.18s ease-out;
 }
 
-.pet-eye:first-of-type { left: calc(13px * var(--unit)); }
-.pet-eye:last-of-type { right: calc(13px * var(--unit)); }
+.pet-eye::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: calc(8px * var(--unit));
+  height: calc(8px * var(--unit));
+  margin: calc(-4px * var(--unit)) 0 0 calc(-4px * var(--unit));
+  border-radius: 50%;
+  background: var(--shell);
+  transition: width 0.16s ease-out, height 0.16s ease-out, top 0.16s ease-out, margin 0.16s ease-out, opacity 0.16s ease-out;
+}
 
+.pet-eye.is-left { left: calc(15px * var(--unit)); }
+.pet-eye.is-right { right: calc(15px * var(--unit)); }
+
+/* Happy: the pupil rides up and the eye clips into a soft arch, the classic
+   closed-smile face. */
+.walking-mascot[data-mood="happy"] .pet-eye {
+  height: calc(12px * var(--unit));
+  border-radius: calc(9px * var(--unit)) calc(9px * var(--unit)) calc(4px * var(--unit)) calc(4px * var(--unit));
+}
+
+.walking-mascot[data-mood="happy"] .pet-eye::after {
+  top: calc(-2px * var(--unit));
+  width: calc(9px * var(--unit));
+  height: calc(9px * var(--unit));
+  margin: calc(-4px * var(--unit)) 0 0 calc(-4.5px * var(--unit));
+}
+
+/* Alarmed: the pupil shrinks to a pinprick and sits high and wide, which is the
+   same trick a startled cartoon face uses. */
+.walking-mascot[data-mood="alarmed"] .pet-eye::after {
+  width: calc(5px * var(--unit));
+  height: calc(5px * var(--unit));
+  top: 40%;
+  margin: calc(-2.5px * var(--unit)) 0 0 calc(-2.5px * var(--unit));
+}
+
+/* Sleepy: a heavy lid covers the top half and the pupil drops out of sight. */
+.walking-mascot[data-mood="sleepy"] .pet-eye {
+  height: calc(10px * var(--unit));
+  border-radius: calc(9px * var(--unit)) calc(9px * var(--unit)) calc(9px * var(--unit)) calc(9px * var(--unit));
+}
+
+.walking-mascot[data-mood="sleepy"] .pet-eye::after {
+  opacity: 0;
+}
+
+/* Legs. The boots are anchored so their bottoms sit exactly on the pet's bottom
+   edge, not hanging in space below it. The idle step then lifts them from that
+   baseline, which reads as standing on the floor rather than floating. */
 .walking-mascot i,
 .walking-mascot b {
   position: absolute;
-  bottom: calc(-6px * var(--unit));
-  width: calc(12px * var(--unit));
+  bottom: 0;
+  width: calc(16px * var(--unit));
   height: calc(12px * var(--unit));
-  border-radius: 0 0 calc(6px * var(--unit)) calc(6px * var(--unit));
+  border-radius: calc(3px * var(--unit)) calc(3px * var(--unit)) calc(8px * var(--unit)) calc(8px * var(--unit));
   background: var(--accent-strong);
   animation: step 0.34s ease-in-out infinite alternate;
 }
 
-.walking-mascot i { left: calc(8px * var(--unit)); }
-.walking-mascot b { right: calc(8px * var(--unit)); animation-delay: 0.16s; }
+.walking-mascot i { left: calc(11px * var(--unit)); }
+.walking-mascot b { right: calc(11px * var(--unit)); animation-delay: 0.16s; }
 
 .walking-mascot.is-running i,
 .walking-mascot.is-running b,
@@ -342,14 +502,40 @@ Components added after the reference-driven pass, kept in their own file so
   animation-play-state: paused !important;
 }
 
-/* Startled: taller, narrower, wider eyes, and leaning into the sprint. The lean
-   lives on `translate` so it survives the facing flip that JS owns, and it is
-   what tells the eye the pet is running away rather than standing there. */
+/* Startled: taller, narrower, and leaning into the sprint. The lean lives on
+   translate so it survives the facing flip that JS owns, and it is what tells the
+   eye the pet is running away rather than standing there. The face is handled by
+   the mood attribute, not here. */
 .walking-mascot.is-scared {
   scale: 0.9 1.16;
   translate: 0 calc(-2px * var(--unit));
 }
-.walking-mascot.is-scared .pet-eye { scale: 1.35; }
+
+/* A small token that floats beside the pet and swaps with the mood, so the pet
+   carries a visible prop the way the reference does instead of only speaking. */
+.pet-badge {
+  position: absolute;
+  top: calc(-4px * var(--unit));
+  right: calc(-14px * var(--unit));
+  display: grid;
+  width: calc(24px * var(--unit));
+  height: calc(24px * var(--unit));
+  place-items: center;
+  border: 1.5px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  font-size: calc(11px * var(--unit));
+  line-height: 1;
+  opacity: 0;
+  transform: translateY(4px) scale(0.7);
+  transition: opacity 0.2s ease-out, transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  pointer-events: none;
+}
+
+.walking-mascot.has-speech .pet-badge {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
 
 @keyframes pet-jump {
   0%, 100% { translate: 0 0; }
