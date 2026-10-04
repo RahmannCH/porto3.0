@@ -238,7 +238,7 @@ Components added after the reference-driven pass, kept in their own file so
 }
 
 .stack-card[data-missing="true"] .stack-photo::before {
-  content: attr(data-missing);
+  content: "Foto menyusul";
   position: absolute;
   inset: 0;
   display: grid;
