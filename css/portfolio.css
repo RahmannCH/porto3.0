@@ -833,6 +833,27 @@ Components added after the reference-driven pass, kept in their own file so
   animation: lanyard-drift 19s ease-in-out infinite;
 }
 
+/* On narrow screens the cord would hang over the hero text, so the card sits
+   as a plain portrait instead of a suspended object. The physics script still
+   runs, but the cord segments are hidden. */
+@media (max-width: 720px) {
+  .lanyard-run,
+  .lanyard-elastic,
+  .metal-clip-wrap {
+    display: none;
+  }
+  .id-card-pendulum {
+    transform: none !important;
+  }
+  .id-card-body {
+    transform: none !important;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35), 0 8px 16px rgba(0, 0, 0, 0.2);
+  }
+  .id-card-sway {
+    animation: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .id-card-sway {
     animation: none;
