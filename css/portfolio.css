@@ -402,7 +402,7 @@ Components added after the reference-driven pass, kept in their own file so
   padding: 0;
   border: 0;
   appearance: none;
-  border-radius: calc(26px * var(--unit)) calc(26px * var(--unit)) calc(14px * var(--unit)) calc(14px * var(--unit));
+  border-radius: calc(30px * var(--unit)) calc(30px * var(--unit)) calc(12px * var(--unit)) calc(12px * var(--unit));
   background: var(--shell);
   font: inherit;
   color: inherit;
@@ -518,18 +518,21 @@ Components added after the reference-driven pass, kept in their own file so
   animation: none;
 }
 
-/* Legs. Rounded stubs that sit flush on the platform line so the pet reads as
-   standing rather than floating. The walk animation lifts them from that
-   baseline, creating the impression of stepping. */
+/* Legs. Two small rounded feet that peek out from under the body and rest on
+   the platform line. They are slightly wider at the bottom, like a cartoon
+   animal's paws, and their colour matches the body so they read as part of the
+   same form rather than detached boots. */
 .walking-mascot i,
 .walking-mascot b {
   position: absolute;
-  bottom: 0;
-  width: calc(14px * var(--unit));
-  height: calc(10px * var(--unit));
-  border-radius: calc(6px * var(--unit)) calc(6px * var(--unit)) calc(4px * var(--unit)) calc(4px * var(--unit));
-  background: var(--accent-strong);
+  bottom: calc(-6px * var(--unit));
+  width: calc(15px * var(--unit));
+  height: calc(14px * var(--unit));
+  border-radius: calc(7px * var(--unit)) calc(7px * var(--unit)) calc(6px * var(--unit)) calc(6px * var(--unit));
+  background: var(--shell);
+  border-bottom: calc(3px * var(--unit)) solid var(--accent-strong);
   animation: step-alive 0.36s ease-in-out infinite alternate;
+  z-index: -1;
 }
 
 .walking-mascot i { left: calc(13px * var(--unit)); }
@@ -574,26 +577,28 @@ Components added after the reference-driven pass, kept in their own file so
 
 .orbit-icon {
   position: absolute;
-  bottom: calc(20px * var(--unit));
-  left: 50%;
+  bottom: calc(28px * var(--unit));
+  left: calc(100% + 2px);
   display: grid;
   width: calc(22px * var(--unit));
   height: calc(22px * var(--unit));
   place-items: center;
-  border: 1.5px solid var(--line);
+  border: 1.5px solid var(--accent-strong);
   border-radius: 50%;
   background: var(--surface);
   color: var(--accent-strong);
-  font: 700 calc(7px * var(--unit)) var(--mono, monospace);
+  font: 700 calc(8px * var(--unit)) var(--mono, monospace);
   line-height: 1;
   opacity: 0;
-  transform: translateX(-50%) translateY(4px) scale(0.7);
-  animation: orbit-dangle 3s ease-in-out infinite;
+  transform: translateX(-6px) scale(0.6);
+  transition: opacity 0.25s ease-out, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 5;
 }
 
 .walking-mascot.has-speech .orbit-icon {
   opacity: 1;
-  transform: translateX(-50%) translateY(0) scale(1);
+  transform: translateX(0) scale(1);
+  animation: orbit-dangle 3s ease-in-out 0.3s infinite;
 }
 
 .orbit-dot {
@@ -610,9 +615,9 @@ Components added after the reference-driven pass, kept in their own file so
   animation: orbit-float 1.8s ease-out infinite;
 }
 
-.orbit-dot:nth-child(2) { bottom: calc(16px * var(--unit)); left: calc(-12px * var(--unit)); animation-delay: 0s; }
-.orbit-dot:nth-child(3) { bottom: calc(22px * var(--unit)); left: calc(10px * var(--unit)); animation-delay: 0.4s; }
-.orbit-dot:nth-child(4) { bottom: calc(28px * var(--unit)); left: calc(-4px * var(--unit)); animation-delay: 0.8s; }
+.orbit-dot:nth-child(2) { bottom: calc(26px * var(--unit)); left: calc(100% + 14px); animation-delay: 0s; }
+.orbit-dot:nth-child(3) { bottom: calc(38px * var(--unit)); left: calc(100% + 8px); animation-delay: 0.6s; }
+.orbit-dot:nth-child(4) { bottom: calc(16px * var(--unit)); left: calc(100% + 18px); animation-delay: 1.2s; }
 
 @keyframes pet-jump {
   0%, 100% { translate: 0 0; }
