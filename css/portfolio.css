@@ -371,7 +371,7 @@ Components added after the reference-driven pass, kept in their own file so
   bottom: 0.8rem;
   left: 0;
   width: 100%;
-  height: 150px;
+  height: 180px;
   overflow: visible;
   pointer-events: none;
 }
@@ -396,13 +396,13 @@ Components added after the reference-driven pass, kept in their own file so
   --glint: var(--bg);
   position: absolute;
   bottom: 0;
-  width: calc(66px * var(--unit));
-  height: calc(54px * var(--unit));
+  width: calc(86px * var(--unit));
+  height: calc(70px * var(--unit));
   margin: 0;
   padding: 0;
   border: 0;
   appearance: none;
-  border-radius: calc(30px * var(--unit)) calc(30px * var(--unit)) calc(12px * var(--unit)) calc(12px * var(--unit));
+  border-radius: calc(38px * var(--unit)) calc(38px * var(--unit)) calc(16px * var(--unit)) calc(16px * var(--unit));
   background: var(--shell);
   font: inherit;
   color: inherit;
@@ -425,9 +425,9 @@ Components added after the reference-driven pass, kept in their own file so
    the visitor rather than staring through them. */
 .pet-eye {
   position: absolute;
-  top: calc(15px * var(--unit));
-  width: calc(16px * var(--unit));
-  height: calc(16px * var(--unit));
+  top: calc(18px * var(--unit));
+  width: calc(20px * var(--unit));
+  height: calc(20px * var(--unit));
   border-radius: 50%;
   background: var(--glint);
   overflow: hidden;
@@ -440,44 +440,44 @@ Components added after the reference-driven pass, kept in their own file so
   position: absolute;
   left: calc(50% + var(--pupil-x, 0px));
   top: calc(46% + var(--pupil-y, 0px));
-  width: calc(8px * var(--unit));
-  height: calc(8px * var(--unit));
-  margin: calc(-4px * var(--unit)) 0 0 calc(-4px * var(--unit));
+  width: calc(10px * var(--unit));
+  height: calc(10px * var(--unit));
+  margin: calc(-5px * var(--unit)) 0 0 calc(-5px * var(--unit));
   border-radius: 50%;
   background: var(--shell);
   transition: width 0.16s ease-out, height 0.16s ease-out, top 0.16s ease-out, margin 0.16s ease-out, opacity 0.16s ease-out, left 0.12s ease-out;
 }
 
-.pet-eye.is-left { left: calc(15px * var(--unit)); }
-.pet-eye.is-right { right: calc(15px * var(--unit)); }
+.pet-eye.is-left { left: calc(18px * var(--unit)); }
+.pet-eye.is-right { right: calc(18px * var(--unit)); }
 
 /* Happy: the pupil rides up and the eye clips into a soft arch, the classic
    closed-smile face. */
 .walking-mascot[data-mood="happy"] .pet-eye {
-  height: calc(12px * var(--unit));
-  border-radius: calc(9px * var(--unit)) calc(9px * var(--unit)) calc(4px * var(--unit)) calc(4px * var(--unit));
+  height: calc(15px * var(--unit));
+  border-radius: calc(12px * var(--unit)) calc(12px * var(--unit)) calc(5px * var(--unit)) calc(5px * var(--unit));
 }
 
 .walking-mascot[data-mood="happy"] .pet-eye::after {
   top: calc(-2px * var(--unit));
-  width: calc(9px * var(--unit));
-  height: calc(9px * var(--unit));
-  margin: calc(-4px * var(--unit)) 0 0 calc(-4.5px * var(--unit));
+  width: calc(11px * var(--unit));
+  height: calc(11px * var(--unit));
+  margin: calc(-5px * var(--unit)) 0 0 calc(-5.5px * var(--unit));
 }
 
 /* Alarmed: the pupil shrinks to a pinprick and sits high and wide, which is the
    same trick a startled cartoon face uses. */
 .walking-mascot[data-mood="alarmed"] .pet-eye::after {
-  width: calc(5px * var(--unit));
-  height: calc(5px * var(--unit));
+  width: calc(6px * var(--unit));
+  height: calc(6px * var(--unit));
   top: 40%;
-  margin: calc(-2.5px * var(--unit)) 0 0 calc(-2.5px * var(--unit));
+  margin: calc(-3px * var(--unit)) 0 0 calc(-3px * var(--unit));
 }
 
 /* Sleepy: a heavy lid covers the top half and the pupil drops out of sight. */
 .walking-mascot[data-mood="sleepy"] .pet-eye {
-  height: calc(10px * var(--unit));
-  border-radius: calc(9px * var(--unit)) calc(9px * var(--unit)) calc(9px * var(--unit)) calc(9px * var(--unit));
+  height: calc(13px * var(--unit));
+  border-radius: calc(12px * var(--unit)) calc(12px * var(--unit)) calc(12px * var(--unit)) calc(12px * var(--unit));
 }
 
 .walking-mascot[data-mood="sleepy"] .pet-eye::after {
@@ -488,27 +488,27 @@ Components added after the reference-driven pass, kept in their own file so
    pet gives when it notices something new. One eye opens wider than the other so
    the face is never perfectly symmetric. */
 .walking-mascot[data-mood="curious"] .pet-eye {
-  height: calc(17px * var(--unit));
+  height: calc(21px * var(--unit));
 }
 
 .walking-mascot[data-mood="curious"] .pet-eye::after {
-  width: calc(9.5px * var(--unit));
-  height: calc(9.5px * var(--unit));
+  width: calc(12px * var(--unit));
+  height: calc(12px * var(--unit));
   top: 34%;
-  margin: calc(-4.75px * var(--unit)) 0 0 calc(-4.75px * var(--unit));
+  margin: calc(-6px * var(--unit)) 0 0 calc(-6px * var(--unit));
 }
 
 /* Excited: a full happy arch with a large, bright pupil, the face for a cheer. */
 .walking-mascot[data-mood="excited"] .pet-eye {
-  height: calc(13px * var(--unit));
-  border-radius: calc(9px * var(--unit)) calc(9px * var(--unit)) calc(5px * var(--unit)) calc(5px * var(--unit));
+  height: calc(16px * var(--unit));
+  border-radius: calc(12px * var(--unit)) calc(12px * var(--unit)) calc(6px * var(--unit)) calc(6px * var(--unit));
 }
 
 .walking-mascot[data-mood="excited"] .pet-eye::after {
-  width: calc(10px * var(--unit));
-  height: calc(10px * var(--unit));
+  width: calc(13px * var(--unit));
+  height: calc(13px * var(--unit));
   top: calc(-1px * var(--unit));
-  margin: calc(-5px * var(--unit)) 0 0 calc(-5px * var(--unit));
+  margin: calc(-6.5px * var(--unit)) 0 0 calc(-6.5px * var(--unit));
 }
 
 /* A blink on an already-closed or wide-eyed face reads as a glitch, so the two
@@ -525,18 +525,18 @@ Components added after the reference-driven pass, kept in their own file so
 .walking-mascot i,
 .walking-mascot b {
   position: absolute;
-  bottom: calc(-6px * var(--unit));
-  width: calc(15px * var(--unit));
-  height: calc(14px * var(--unit));
-  border-radius: calc(7px * var(--unit)) calc(7px * var(--unit)) calc(6px * var(--unit)) calc(6px * var(--unit));
+  bottom: calc(-8px * var(--unit));
+  width: calc(19px * var(--unit));
+  height: calc(16px * var(--unit));
+  border-radius: calc(9px * var(--unit)) calc(9px * var(--unit)) calc(7px * var(--unit)) calc(7px * var(--unit));
   background: var(--shell);
   border-bottom: calc(3px * var(--unit)) solid var(--accent-strong);
   animation: step-alive 0.36s ease-in-out infinite alternate;
   z-index: -1;
 }
 
-.walking-mascot i { left: calc(13px * var(--unit)); }
-.walking-mascot b { right: calc(13px * var(--unit)); animation-delay: 0.18s; }
+.walking-mascot i { left: calc(17px * var(--unit)); }
+.walking-mascot b { right: calc(17px * var(--unit)); animation-delay: 0.18s; }
 
 .walking-mascot.is-running i,
 .walking-mascot.is-running b,
@@ -577,17 +577,17 @@ Components added after the reference-driven pass, kept in their own file so
 
 .orbit-icon {
   position: absolute;
-  bottom: calc(28px * var(--unit));
-  left: calc(100% + 2px);
+  bottom: calc(34px * var(--unit));
+  left: calc(100% + 4px);
   display: grid;
-  width: calc(22px * var(--unit));
-  height: calc(22px * var(--unit));
+  width: calc(28px * var(--unit));
+  height: calc(28px * var(--unit));
   place-items: center;
   border: 1.5px solid var(--accent-strong);
   border-radius: 50%;
   background: var(--surface);
   color: var(--accent-strong);
-  font: 700 calc(8px * var(--unit)) var(--mono, monospace);
+  font: 700 calc(10px * var(--unit)) var(--mono, monospace);
   line-height: 1;
   opacity: 0;
   transform: translateX(-6px) scale(0.6);
@@ -603,11 +603,11 @@ Components added after the reference-driven pass, kept in their own file so
 
 .orbit-dot {
   position: absolute;
-  width: calc(5px * var(--unit));
-  height: calc(5px * var(--unit));
+  width: calc(6px * var(--unit));
+  height: calc(6px * var(--unit));
   border-radius: 50%;
   background: var(--accent-strong);
-  box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 70%, transparent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 70%, transparent);
   opacity: 0;
 }
 
@@ -615,9 +615,9 @@ Components added after the reference-driven pass, kept in their own file so
   animation: orbit-float 1.8s ease-out infinite;
 }
 
-.orbit-dot:nth-child(2) { bottom: calc(26px * var(--unit)); left: calc(100% + 14px); animation-delay: 0s; }
-.orbit-dot:nth-child(3) { bottom: calc(38px * var(--unit)); left: calc(100% + 8px); animation-delay: 0.6s; }
-.orbit-dot:nth-child(4) { bottom: calc(16px * var(--unit)); left: calc(100% + 18px); animation-delay: 1.2s; }
+.orbit-dot:nth-child(2) { bottom: calc(32px * var(--unit)); left: calc(100% + 18px); animation-delay: 0s; }
+.orbit-dot:nth-child(3) { bottom: calc(46px * var(--unit)); left: calc(100% + 10px); animation-delay: 0.6s; }
+.orbit-dot:nth-child(4) { bottom: calc(20px * var(--unit)); left: calc(100% + 22px); animation-delay: 1.2s; }
 
 @keyframes pet-jump {
   0%, 100% { translate: 0 0; }
@@ -633,17 +633,17 @@ Components added after the reference-driven pass, kept in their own file so
    on the light theme was invisible and a black one vanished on the dark theme. */
 .speech-bubble {
   position: absolute;
-  bottom: calc(100% + 10px);
+  bottom: calc(100% + 14px);
   left: 50%;
   width: max-content;
-  max-width: min(15rem, 70vw);
-  padding: 5px 14px;
+  max-width: min(16rem, 72vw);
+  padding: 6px 16px;
   border: 1.5px solid var(--ink);
   border-radius: 9999px;
   background: var(--ink);
   color: var(--bg);
   font-family: var(--sans);
-  font-size: clamp(0.76rem, 2.2vw, 0.85rem);
+  font-size: clamp(0.82rem, 2.2vw, 0.92rem);
   font-weight: 700;
   line-height: 1.3;
   letter-spacing: 0.01em;
@@ -654,7 +654,7 @@ Components added after the reference-driven pass, kept in their own file so
   text-overflow: ellipsis;
   opacity: 0;
   pointer-events: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
   transform: translateX(-50%) translateY(4px) scaleX(var(--facing, 1)) scale(0.85);
   transform-origin: bottom center;
   transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease-out;
@@ -666,9 +666,9 @@ Components added after the reference-driven pass, kept in their own file so
   position: absolute;
   top: 100%;
   left: 50%;
-  width: 8px;
-  height: 8px;
-  margin: -4px 0 0 -4px;
+  width: 9px;
+  height: 9px;
+  margin: -4.5px 0 0 -4.5px;
   border-right: 1.5px solid var(--ink);
   border-bottom: 1.5px solid var(--ink);
   background: var(--ink);

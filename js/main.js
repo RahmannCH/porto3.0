@@ -263,49 +263,52 @@ motionPreference.addEventListener('change', event => {
 });
 
 if (petEls.length === 2 && mascotEnv) {
-  // Timers are seconds and speeds are px/second, not frames and px/frame. The
-  // old frame counters meant the whole cast walked, sprinted and finished
-  // speaking 2.4 times faster on a 144Hz display than on a 60Hz one.
-  const WALK_SPEED = 62;
-  const SCARED_SPEED = 150;
-  const START_GAP = 14;
-  const TOUCH_GAP = 26;
-  const SCARED_FOR = 1.1;
-  // A message is on screen for SPEECH_MS, then the pet waits REACT_GAP before it
-  // may speak again. Together they hold the pair to one bubble per three seconds,
-  // so a line can never flicker in and out or repeat back to back.
+  // Timers are seconds and speeds are px/second. Distinct personality speeds
+  // and independent decision clocks stop the cast from walking or speaking in lockstep.
+  const WALK_SPEED = 64;
+  const SCARED_SPEED = 158;
+  const START_GAP = 18;
+  const TOUCH_GAP = 32;
+  const SCARED_FOR = 1.15;
   const SPEECH_MS = 2500;
   const REACT_GAP = 0.5;
-  const GREET_CHANCE = 0.5;
 
   const clamp = (value, low, high) => (value < low ? low : value > high ? high : value);
   const pick = list => list[Math.floor(Math.random() * list.length)];
 
-  // Every line is two to four words so the pill stays one line on a phone and the
-  // greeting never outlasts the walk that carries it. The first list is Rahman's
-  // guide character, the second is the sleepy one, so the two read as separate
-  // voices instead of one bot with two sprites.
-  const lines = {
-    greet: [
-      ['Salam! \uD83D\uDE0A', 'Nice to meet you \u2728', 'Scroll ke bawah \uD83D\uDC47', 'Ada proyek seru \uD83D\uDE80', 'Cek CV-ku \uD83D\uDCC4'],
-      ['Hai, santai dulu \u2615', 'Nonton dulu ya \uD83D\uDC40', 'Ngantuk nih zZ \uD83D\uDCA4', 'Klik aku dong \uD83C\uDF89']
-    ],
-    // The pointer hover is the most repeated interaction on the page, so it gets
-    // the widest pool. A two-line pool is what made the same word appear over and
-    // over while the cursor hovered.
+  // Call-and-response dialogues: Pet 1 leads, Pet 2 replies with organic continuity.
+  const conversations = [
+    {
+      lead: ['Salam! 👋', 'Nice to meet you ✨', 'Yuk intip proyek 🚀', 'Halo developer! 💻'],
+      reply: ['Hai, santai dulu ☕', 'Keren nih websitenya!', 'Lanjut scroll ya ✨', 'Siap eksplorasi! 🚀']
+    },
+    {
+      lead: ['Cek CV-ku di atas 📄', 'Frontend-nya rapi ya ✨', 'Kode rapi, hati tenang 🧘', 'TypeScript mantap ⚡'],
+      reply: ['Udah tak baca barusan! 👍', 'Animasi-nya mulus juga 🎯', 'Setuju banget! 💯', 'Full-stack ready! 🔥']
+    },
+    {
+      lead: ['Ngantuk nih zZ 😴', 'Haus, butuh kopi ☕', 'Capek jalan terus 🐾'],
+      reply: ['Istirahat dulu bentar~', 'Sama nih, rehat dulu', 'Semangat, bentar lagi! 💪']
+    }
+  ];
+
+  const standaloneLines = {
     touch: [
-      ['Eh, halo! \uD83D\uDC4B', 'Woy, kaget \uD83D\uDE04', 'Hai, mampir ya? \uD83D\uDC40', 'Sapa dong \uD83D\uDE0A', 'Iya, aku di sini!', 'Awas, geli \uD83D\uDE02'],
-      ['Halo juga \uD83D\uDE04', 'Eh, jangan diusik zZ', 'Kenapa, bos? \uD83D\uDE34', 'Ih, kaget aku', 'Hmm, ada apa? \uD83D\uDC40']
+      ['Eh, halo! 👋', 'Woy, kaget 😄', 'Hai, mampir ya? 👀', 'Sapa dong 😊', 'Iya, aku di sini!', 'Awas geli 😆'],
+      ['Halo juga 😄', 'Jangan diusik zZ', 'Kenapa, bos? 😴', 'Ih, kaget aku!', 'Hmm, ada apa? 👀']
     ],
     cheer: [
-      ['Halo juga! \uD83C\uDF89', 'Asyik! \uD83D\uDE06', 'Yeay, disapa! \u2728', 'Semangat! \uD83D\uDCAA'],
-      ['Hehe, halo \uD83D\uDE04', 'Akhirnya diklik \uD83C\uDF89', 'Kaget, tapi senang', 'Hmm, terima kasih \uD83D\uDE0A']
+      ['Halo juga! 🎉', 'Asyik! 🥳', 'Yeay, disapa! ✨', 'Semangat! 💪'],
+      ['Hehe, halo 😄', 'Akhirnya diklik 🎉', 'Kaget tapi senang!', 'Makasih banyak! 😊']
     ],
     bump: [
-      ['Permisi~ \uD83D\uDC4B', 'Eh, maaf \uD83D\uDE05', 'Halo sobat \u2728', 'Ups, tabrakan \uD83D\uDE02'],
-      ['Aduh, kenapa? \uD83D\uDE34', 'Minggir dulu ya', 'Hai, lewat \uD83D\uDC4B', 'Sori, sori \uD83D\uDE05']
+      ['Permisi~ 👋', 'Eh, maaf ya 😅', 'Halo sobat ✨', 'Ups, tabrakan! 😆'],
+      ['Aduh, kenapa? 😴', 'Minggir dulu ya~', 'Hai, lewat dulu! 👋', 'Sori-sori! 😅']
     ]
   };
+
+  let globalSpeaker = null;
+  let conversationChainTimer = 0;
 
   const pets = Array.from(petEls).map((el, index) => ({
     el,
@@ -317,25 +320,27 @@ if (petEls.length === 2 && mascotEnv) {
     x: 0,
     vx: 0,
     dir: index === 0 ? 1 : -1,
-    baseSpeed: index === 0 ? WALK_SPEED : WALK_SPEED * 1.1,
+    // Personality: Pet 1 is an active explorer; Pet 2 is calmer and slightly slower.
+    baseSpeed: index === 0 ? WALK_SPEED : WALK_SPEED * 0.9,
     state: 'IDLE',
     mood: 'idle',
-    timer: index === 0 ? 1 : 1.5,
+    // Stagger initial thinking clocks so they never cycle at the same instant.
+    timer: index === 0 ? 0.8 : 2.2,
     fear: 0,
     react: 0,
-    // The last two lines this pet said, so a new line is never one the user has
-    // just seen. This is what stops the same word repeating on every hover.
     said: [],
     queued: null,
     touched: false,
     speechHandle: 0,
-    placed: false
+    placed: false,
+    // Pupil tracking interpolation
+    targetPupilX: 0,
+    targetPupilY: 0,
+    curPupilX: 0,
+    curPupilY: 0
   }));
 
-  // Picks the next line for a pet, preferring one it has not just spoken. The last
-  // two are excluded rather than only the previous one, because with a short pool
-  // excluding a single line still produced A-B-A-B, which reads as a repeat.
-  const speak = (p, pool) => {
+  const speakSingle = (p, pool) => {
     const options = pool[p.voice] || pool[0];
     const fresh = options.filter(line => !p.said.includes(line));
     const chosen = fresh.length ? pick(fresh) : pick(options);
@@ -349,14 +354,14 @@ if (petEls.length === 2 && mascotEnv) {
   let floorY = 0;
   let bumpCooldown = 0;
   let viewportWidth = window.innerWidth;
+  let scrollVelocity = 0;
+  let lastScrollY = window.scrollY;
 
-  // offsetWidth and offsetHeight are the untransformed box, so measuring while a
-  // pet is squashed by is-scared still reports the real collision size.
   const measure = () => {
     floorY = mascotEnv.getBoundingClientRect().bottom;
     pets.forEach(p => {
-      p.w = p.el.offsetWidth || (p.el.dataset.pet === '2' ? 55 : 66);
-      p.h = p.el.offsetHeight || (p.el.dataset.pet === '2' ? 45 : 54);
+      p.w = p.el.offsetWidth || (p.el.dataset.pet === '2' ? 72 : 86);
+      p.h = p.el.offsetHeight || (p.el.dataset.pet === '2' ? 59 : 70);
     });
   };
 
@@ -378,44 +383,44 @@ if (petEls.length === 2 && mascotEnv) {
       p.el.style.transform = `scaleX(${facing})`;
       p.el.style.setProperty('--facing', facing);
 
-      // Pupils follow the cursor within a small radius. The offset is measured
-      // from the pet's face centre, normalised to about three pixels, and mirrored
-      // on the x axis because the body is flipped by scaleX.
+      // Smooth pupil interpolation following cursor
       if (isMouseActive) {
         const cx = p.x + p.w / 2;
         const cy = floorY - p.h * 0.72;
-        const dx = clamp((mouseX - cx) / 120, -1, 1) * 3;
-        const dy = clamp((mouseY - cy) / 120, -1, 1) * 2.5;
-        p.el.style.setProperty('--pupil-x', `${(dx * facing * -1).toFixed(2)}px`);
-        p.el.style.setProperty('--pupil-y', `${dy.toFixed(2)}px`);
+        const dx = clamp((mouseX - cx) / 140, -1, 1) * 3.5;
+        const dy = clamp((mouseY - cy) / 140, -1, 1) * 3;
+        p.targetPupilX = dx * facing * -1;
+        p.targetPupilY = dy;
       } else {
-        p.el.style.setProperty('--pupil-x', '0px');
-        p.el.style.setProperty('--pupil-y', '0px');
+        p.targetPupilX = 0;
+        p.targetPupilY = scrollVelocity !== 0 ? clamp(scrollVelocity * -0.5, -2.5, 2.5) : 0;
       }
+
+      p.curPupilX += (p.targetPupilX - p.curPupilX) * 0.25;
+      p.curPupilY += (p.targetPupilY - p.curPupilY) * 0.25;
+
+      p.el.style.setProperty('--pupil-x', `${p.curPupilX.toFixed(2)}px`);
+      p.el.style.setProperty('--pupil-y', `${p.curPupilY.toFixed(2)}px`);
     });
   };
 
-  // The single gate for every spoken line.
-  //
-  // `p.react` is armed for the whole life of a message and then for REACT_GAP
-  // after it clears. Arming it only at the start left a dead window: the bubble
-  // had gone but the pet was still counting down, so the next hover arrived the
-  // instant it unlocked and drew the same line again. Holding the lock across
-  // both phases means a new line can only begin once the previous one is finished
-  // and a short pause has passed, which is what makes the text feel varied.
-  const say = (p, pool, mood) => {
+  const sayText = (p, text, mood) => {
     if (mascotPaused || !p.bubble) return false;
-    if (p.react > 0) return false;
+    if (p.react > 0 || globalSpeaker !== null) return false;
+
+    globalSpeaker = p;
     p.react = SPEECH_MS / 1000 + REACT_GAP;
-    p.bubble.textContent = speak(p, pool);
+    p.bubble.textContent = text;
     p.el.classList.add('has-speech');
     setMood(p, mood);
+
     window.clearTimeout(p.speechHandle);
     p.speechHandle = window.setTimeout(() => {
       p.el.classList.remove('has-speech');
       p.el.classList.remove('is-jumping');
       setMood(p, p.state === 'SCARED' ? 'alarmed' : 'idle');
-      // A line still queued by the cooldown shows as soon as the pause is over.
+      globalSpeaker = null;
+
       if (p.queued) {
         const next = p.queued;
         p.queued = null;
@@ -425,13 +430,45 @@ if (petEls.length === 2 && mascotEnv) {
     return true;
   };
 
-  // The face is the readable part of the reaction, so the mood is written as a
-  // class and the eyes are drawn from CSS. The orbiting icon swaps its glyph with
-  // the mood, so the pet carries a visible prop that changes, not just a face.
+  const say = (p, pool, mood) => {
+    if (mascotPaused || !p.bubble) return false;
+    if (p.react > 0 || globalSpeaker !== null) return false;
+    return sayText(p, speakSingle(p, pool), mood);
+  };
+
+  // Organic conversational call-and-response between the pair
+  const triggerConversation = (initiatorIndex = 0) => {
+    if (mascotPaused || globalSpeaker !== null) return;
+    const speaker = pets[initiatorIndex];
+    const listener = pets[initiatorIndex === 0 ? 1 : 0];
+    if (speaker.react > 0 || listener.react > 0) return;
+
+    const topic = pick(conversations);
+    const leadText = pick(topic.lead);
+    const replyText = pick(topic.reply);
+
+    if (sayText(speaker, leadText, 'happy')) {
+      // Listener acknowledges by pausing and looking towards speaker
+      listener.dir = speaker.x > listener.x ? 1 : -1;
+      listener.state = 'IDLE';
+      listener.vx = 0;
+      setMood(listener, 'curious');
+
+      window.clearTimeout(conversationChainTimer);
+      conversationChainTimer = window.setTimeout(() => {
+        if (!mascotPaused && listener.state !== 'SCARED') {
+          sayText(listener, replyText, 'happy');
+        }
+      }, SPEECH_MS + 600);
+    }
+  };
+
   const moodGlyphs = {
     happy: ['</>', '{ }', '\u2726', '#'],
     alarmed: ['!', '\u26A0', '!?', '\u203C'],
     sleepy: ['zZ', '\u263E', '~', '. . .'],
+    curious: ['?', '👀', '\u2726', '🔍'],
+    excited: ['⚡', '🎉', '</>', '✨'],
     idle: ['</>', '{ }', '#', '\u25CB']
   };
 
@@ -449,36 +486,31 @@ if (petEls.length === 2 && mascotEnv) {
     if (p.mood !== 'alarmed') setMood(p, 'idle');
   };
 
-  // Panic is a moving state, not a freeze: the pet keeps travelling away from the
-  // cursor while it yelps, so it never stands still mid-reaction. `reverse` flips
-  // the hush away from a click or focus rather than from the pointer position.
+  const pauseLook = (p, seconds) => {
+    p.state = 'PAUSE_LOOK';
+    p.timer = seconds;
+    p.vx = 0;
+    setMood(p, 'curious');
+  };
+
   const startle = (p, pool, reverse = false) => {
     p.state = 'SCARED';
     p.timer = SCARED_FOR;
     p.fear = SCARED_FOR;
     p.dir = reverse ? (p.dir > 0 ? -1 : 1) : ((p.x + p.w / 2) > mouseX ? 1 : -1);
     p.vx = p.dir * SCARED_SPEED;
-    // Cheer reactions (click/focus) are joyful, not panicked, so the mood is
-    // excited. Proximity reactions are alarmed.
-    const isCheer = pool === lines.cheer;
+    const isCheer = pool === standaloneLines.cheer;
     const mood = isCheer ? 'excited' : 'alarmed';
     setMood(p, mood);
     if (!say(p, pool, mood)) p.queued = { pool, mood };
   };
 
-  // Distance from the pointer to the nearest edge of the pet box, so touching a
-  // paw counts as contact while standing two body-widths away does not.
   const pointerGap = (p, px, py) => {
     const dx = Math.max(p.x - px, 0, px - (p.x + p.w));
     const dy = Math.max((floorY - p.h) - py, 0, py - floorY);
     return Math.hypot(dx, dy);
   };
 
-  // Idempotent by construction: both positions are recomputed from their shared
-  // midpoint, so running it twice cannot push anyone further. The old version
-  // subtracted a fixed 1px gap from a raw difference, which could walk off the
-  // left edge; the wall clamp then snapped it back to zero, the next frame
-  // collided again, and that loop is exactly the stutter that was reported.
   const resolveBump = () => {
     const [a, b] = pets;
     const [near, far] = a.x <= b.x ? [a, b] : [b, a];
@@ -511,49 +543,73 @@ if (petEls.length === 2 && mascotEnv) {
     }
 
     if (bumpCooldown <= 0) {
-      bumpCooldown = 3.0;
-      say(Math.random() < 0.5 ? near : far, lines.bump, 'happy');
+      bumpCooldown = 3.5;
+      say(Math.random() < 0.5 ? near : far, standaloneLines.bump, 'happy');
     }
   };
+
+  let scrollDecayTimer = 0;
+  window.addEventListener('scroll', () => {
+    const currentY = window.scrollY;
+    scrollVelocity = (currentY - lastScrollY) * 0.12;
+    lastScrollY = currentY;
+    window.clearTimeout(scrollDecayTimer);
+    scrollDecayTimer = window.setTimeout(() => { scrollVelocity = 0; }, 100);
+  }, { passive: true });
 
   const update = dt => {
     bumpCooldown = Math.max(0, bumpCooldown - dt);
 
-    pets.forEach(p => {
+    pets.forEach((p, idx) => {
       p.fear = Math.max(0, p.fear - dt);
       p.react = Math.max(0, p.react - dt);
       p.timer -= dt;
 
       if (p.timer <= 0) {
         if (p.state === 'IDLE') {
-          if (Math.random() > 0.3) p.dir *= -1;
-          walk(p, 3 + Math.random() * 5);
+          // 40% chance to look around before continuing walk
+          if (Math.random() < 0.4) {
+            pauseLook(p, 1.2 + Math.random() * 1.5);
+          } else {
+            if (Math.random() > 0.35) p.dir *= -1;
+            walk(p, p.voice === 0 ? (3 + Math.random() * 4) : (2 + Math.random() * 3));
+          }
+        } else if (p.state === 'PAUSE_LOOK') {
+          // Finished looking around, now step forward
+          if (Math.random() > 0.45) p.dir *= -1;
+          walk(p, 2.5 + Math.random() * 3.5);
         } else {
+          // Finished walking: enter rest or snooze
           p.state = 'IDLE';
-          p.timer = 2 + Math.random() * 3;
           p.vx = 0;
-          setMood(p, 'idle');
-          if (Math.random() < GREET_CHANCE) say(p, lines.greet, 'happy');
+
+          // Pet 2 occasionally snoozes; Pet 1 starts a friendly conversation
+          if (p.voice === 1 && Math.random() < 0.3) {
+            p.timer = 3.5 + Math.random() * 3;
+            setMood(p, 'sleepy');
+          } else {
+            p.timer = p.voice === 0 ? (2 + Math.random() * 2.5) : (3 + Math.random() * 3);
+            setMood(p, 'idle');
+            // Trigger conversation occasionally when calm
+            if (globalSpeaker === null && Math.random() < 0.4) {
+              triggerConversation(idx);
+            }
+          }
         }
       }
 
-      // Proximity panic fires on the transition from "out of reach" to "in reach",
-      // never on every frame. The old check re-triggered sixty times a second while
-      // the cursor rested on a pet, which stamped the same line over and over and
-      // is exactly the repetition that was reported.
+      // Proximity panic
       const withinReach = isMouseActive && pointerGap(p, mouseX, mouseY) <= TOUCH_GAP;
       if (withinReach && !p.touched && p.fear <= 0 && p.state !== 'SCARED') {
-        startle(p, lines.touch);
+        startle(p, standaloneLines.touch);
       }
       p.touched = withinReach;
 
-      // A middle distance reads as curiosity rather than alarm: the pet notices
-      // the cursor and widens its eyes without breaking stride. It only applies
-      // when no stronger mood (alarmed, happy) is already active.
-      const curiousReach = isMouseActive && !withinReach && pointerGap(p, mouseX, mouseY) <= TOUCH_GAP * 3.2;
-      if (curiousReach && p.state !== 'SCARED' && p.mood === 'idle') {
+      // Curious gaze when cursor is in vicinity
+      const curiousReach = isMouseActive && !withinReach && pointerGap(p, mouseX, mouseY) <= TOUCH_GAP * 3.5;
+      if (curiousReach && p.state !== 'SCARED' && (p.mood === 'idle' || p.mood === 'sleepy')) {
         setMood(p, 'curious');
-      } else if (!curiousReach && p.mood === 'curious') {
+      } else if (!curiousReach && p.mood === 'curious' && p.state !== 'PAUSE_LOOK') {
         setMood(p, 'idle');
       }
 
@@ -570,7 +626,7 @@ if (petEls.length === 2 && mascotEnv) {
       }
 
       p.el.classList.toggle('is-scared', p.state === 'SCARED');
-      p.el.classList.toggle('is-running', Math.abs(p.vx) > WALK_SPEED * 1.6);
+      p.el.classList.toggle('is-running', Math.abs(p.vx) > WALK_SPEED * 1.5);
     });
 
     resolveBump();
@@ -583,29 +639,21 @@ if (petEls.length === 2 && mascotEnv) {
     isMouseActive = true;
   }, { passive: true });
 
-  // pointerleave on the root fires only when the pointer actually leaves the
-  // document, which a null relatedTarget confirms. The old window mouseout also
-  // fired while the cursor moved between elements, so isMouseActive flickered
-  // off mid-gesture and the pair reacted inconsistently to the same pointer.
   document.documentElement.addEventListener('pointerleave', event => {
     if (!event.relatedTarget) isMouseActive = false;
   });
   window.addEventListener('blur', () => { isMouseActive = false; });
 
   pets.forEach(p => {
-    // A deliberate click is the one action the user chose, so it may interrupt an
-    // already-running greeting. Incidental hover and focus respect the gate.
     p.el.addEventListener('pointerenter', () => {
-      if (isMouseActive && p.state !== 'SCARED') startle(p, lines.touch);
+      if (isMouseActive && p.state !== 'SCARED') startle(p, standaloneLines.touch);
     });
     p.el.addEventListener('focus', () => {
-      if (p.fear <= 0) startle(p, lines.cheer, true);
+      if (p.fear <= 0) startle(p, standaloneLines.cheer, true);
     });
     p.el.addEventListener('click', () => {
       p.fear = 0;
-      // The click startles the pet (mood + direction) but the bubble respects
-      // the three-second gate, so rapid clicks never flicker bubbles.
-      startle(p, lines.cheer, true);
+      startle(p, standaloneLines.cheer, true);
     });
   });
 
