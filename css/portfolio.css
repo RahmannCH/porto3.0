@@ -344,7 +344,7 @@ Components added after the reference-driven pass, kept in their own file so
 .sticker-three { right: 10%; top: -2rem; --tilt: 3deg; }
 .sticker-four { left: 60%; top: -0.5rem; --tilt: -8deg; border-radius: 50%; width: 44px; height: 44px; padding: 0; display: grid; place-items: center; }
 .sticker-five { right: 35%; top: 1.5rem; --tilt: 12deg; border-radius: 50%; width: 40px; height: 40px; padding: 0; display: grid; place-items: center; }
-.sticker-six { left: 5%; top: 2rem; --tilt: -3deg; }
+.sticker-six { left: -1.5%; top: 2rem; --tilt: -3deg; }
 
 /* Dual mascots
 

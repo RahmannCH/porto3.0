@@ -85,9 +85,30 @@ if (motionPreference.matches || !('IntersectionObserver' in window)) {
 // data-sc-progress bar and hero parallax stay inert until this runs.
 if (window.ScrollCraft) window.ScrollCraft.mount();
 
+const clamp = (value, low, high) => (value < low ? low : value > high ? high : value);
+
+// --- Hero Stickers: Letter-Terrain Gravity & Block Physics Engine ---
 const dragItems = Array.from(document.querySelectorAll('[data-draggable]'));
 if (dragItems.length > 0) {
-  const stickers = dragItems.map(el => ({ el, x: 0, y: 0, flipX: 0, tilt: 0, baseCx: 0, baseCy: 0, hw: 0, hh: 0 }));
+  const isDesktop = () => window.innerWidth > 720;
+  const calmMotion = motionPreference.matches;
+
+  const stickers = dragItems.map((el, index) => ({
+    el,
+    index,
+    x: 0,
+    y: 0,
+    vx: 0,
+    vy: 0,
+    tilt: 0,
+    vRot: 0,
+    baseCx: 0,
+    baseCy: 0,
+    hw: 0,
+    hh: 0,
+    isDragging: false,
+    resting: false
+  }));
 
   const updateBases = () => {
     stickers.forEach(s => {
@@ -100,26 +121,90 @@ if (dragItems.length > 0) {
   };
 
   updateBases();
-  window.addEventListener('resize', () => {
-    updateBases();
-    stickers.forEach(clampAndApply);
-  });
 
-  const getBounds = () => window.innerWidth > 720 ? { x: 260, yMin: -35, yMax: 50 } : { x: 100, yMin: -25, yMax: 40 };
+  // Terrain calculation directly upon the visible letterforms of "MUHAMMAD"
+  const getLetterFloor = (xViewport) => {
+    const h1 = document.querySelector('#hero-title');
+    if (!h1 || !h1.firstChild) return { y: 250, slope: 0 };
+    let wr;
+    try {
+      const range = document.createRange();
+      range.setStart(h1.firstChild, 0);
+      range.setEnd(h1.firstChild, Math.min(8, h1.firstChild.length || 8));
+      wr = range.getBoundingClientRect();
+    } catch (_) {
+      wr = h1.getBoundingClientRect();
+    }
 
-  const clampAndApply = (s) => {
-    const b = getBounds();
-    s.x = Math.max(-b.x, Math.min(b.x, s.x));
-    s.y = Math.max(b.yMin, Math.min(b.yMax, s.y));
-    s.el.style.setProperty('--drag-x', `${s.x}px`);
-    s.el.style.setProperty('--drag-y', `${s.y}px`);
-    if (s.flipX) s.el.style.setProperty('--flip-x', `${s.flipX}deg`);
-    if (s.tilt) s.el.style.setProperty('--tilt', `${s.tilt}deg`);
+    const hr = h1.getBoundingClientRect();
+    // Top cap elevation of visible "MUHAMMAD" uppercase glyphs
+    const capTop = hr.top + 18;
+
+    if (xViewport < wr.left - 30 || xViewport > wr.right + 30) {
+      return { y: capTop + 25, slope: 0 };
+    }
+
+    const u = clamp((xViewport - wr.left) / Math.max(1, wr.width), 0, 1);
+    const letterIndex = Math.min(7, Math.floor(u * 8));
+    const localU = (u * 8) - letterIndex;
+
+    let dy = 0;
+    let slope = 0;
+    switch (letterIndex) {
+      case 0: // M
+      case 4: // M
+      case 5: // M
+        dy = Math.sin(localU * Math.PI) * 7.5;
+        slope = Math.cos(localU * Math.PI) * 0.16;
+        break;
+      case 1: // U
+        dy = Math.sin(localU * Math.PI) * 5.0;
+        slope = Math.cos(localU * Math.PI) * 0.12;
+        break;
+      case 2: // H
+        dy = Math.sin(localU * Math.PI) * 3.0;
+        slope = Math.cos(localU * Math.PI) * 0.08;
+        break;
+      case 3: // A
+      case 6: // A
+        dy = -4.0 + Math.abs(localU - 0.5) * 8.0;
+        slope = (localU > 0.5 ? 0.18 : -0.18);
+        break;
+      case 7: // D
+        dy = Math.sin(localU * Math.PI) * 3.5;
+        slope = (localU - 0.5) * 0.14;
+        break;
+    }
+
+    return { y: capTop + dy, slope };
   };
 
-  const resolveCollisions = (activeSticker) => {
-    for (let iter = 0; iter < 4; iter++) {
-      let hasCollision = false;
+  const GRAVITY = 1350;
+  const RESTITUTION_FLOOR = 0.24; // Solid wooden/plastic block bounce
+  const RESTITUTION_STICKER = 0.30;
+  const FRICTION_FLOOR = 0.78;
+
+  let physicsRunning = false;
+  let lastTime = 0;
+
+  const wakePhysics = () => {
+    if (!physicsRunning) {
+      physicsRunning = true;
+      lastTime = performance.now();
+      requestAnimationFrame(physicsStep);
+    }
+  };
+
+  const applyStyle = (s) => {
+    const px = Math.abs(s.x) < 0.05 ? '0px' : (Number.isInteger(s.x) ? `${s.x}px` : `${s.x.toFixed(1)}px`);
+    const py = Math.abs(s.y) < 0.05 ? '0px' : (Number.isInteger(s.y) ? `${s.y}px` : `${s.y.toFixed(1)}px`);
+    s.el.style.setProperty('--drag-x', px);
+    s.el.style.setProperty('--drag-y', py);
+    s.el.style.setProperty('--tilt', `${s.tilt.toFixed(1)}deg`);
+  };
+
+  const resolveStickerCollisions = () => {
+    for (let iter = 0; iter < 3; iter++) {
       for (let i = 0; i < stickers.length; i++) {
         for (let j = i + 1; j < stickers.length; j++) {
           const A = stickers[i];
@@ -133,103 +218,258 @@ if (dragItems.length > 0) {
           let dy = by - ay;
           if (Math.abs(dx) < 0.01 && Math.abs(dy) < 0.01) { dx = (j - i); dy = 1; }
 
-          const rx = A.hw + B.hw + 10;
-          const ry = A.hh + B.hh + 10;
+          const rx = A.hw + B.hw;
+          const ry = A.hh + B.hh;
           const nx = dx / rx;
           const ny = dy / ry;
           const distSq = nx * nx + ny * ny;
 
           if (distSq < 1.0) {
-            hasCollision = true;
-            const dist = Math.sqrt(distSq);
-            const overlap = 1.0 - dist;
+            const dist = Math.sqrt(distSq) || 0.001;
+            const overlap = (1.0 - dist) * 0.5;
             const sepX = (nx / dist) * rx * overlap;
             const sepY = (ny / dist) * ry * overlap;
-            const impact = Math.hypot(sepX, sepY);
 
-            if (A === activeSticker) {
-              B.x += sepX;
-              B.y += sepY;
-              if (impact > 14) {
-                B.flipX = (B.flipX || 0) + (Math.random() > 0.5 ? 180 : -180);
-                B.tilt = (B.tilt || 0) + (sepX > 0 ? 15 : -15);
-              }
-              clampAndApply(B);
-            } else if (B === activeSticker) {
+            // Positional separation
+            if (A.isDragging) {
+              B.x += sepX * 2;
+              B.y += sepY * 2;
+              B.resting = false;
+            } else if (B.isDragging) {
+              A.x -= sepX * 2;
+              A.y -= sepY * 2;
+              A.resting = false;
+            } else {
               A.x -= sepX;
               A.y -= sepY;
-              if (impact > 14) {
-                A.flipX = (A.flipX || 0) + (Math.random() > 0.5 ? 180 : -180);
-                A.tilt = (A.tilt || 0) + (sepX > 0 ? -15 : 15);
+              B.x += sepX;
+              B.y += sepY;
+              A.resting = false;
+              B.resting = false;
+            }
+
+            // Impulse exchange
+            const normX = dx / Math.hypot(dx, dy);
+            const normY = dy / Math.hypot(dx, dy);
+            const relVel = (A.vx - B.vx) * normX + (A.vy - B.vy) * normY;
+
+            if (relVel > 0) {
+              const impulse = (1 + RESTITUTION_STICKER) * relVel * 0.5;
+              if (!A.isDragging) {
+                A.vx -= impulse * normX;
+                A.vy -= impulse * normY;
+                A.vRot -= impulse * 0.15;
               }
-              clampAndApply(A);
-            } else {
-              A.x -= sepX * 0.5;
-              A.y -= sepY * 0.5;
-              B.x += sepX * 0.5;
-              B.y += sepY * 0.5;
-              clampAndApply(A);
-              clampAndApply(B);
+              if (!B.isDragging) {
+                B.vx += impulse * normX;
+                B.vy += impulse * normY;
+                B.vRot += impulse * 0.15;
+              }
             }
           }
         }
       }
-      if (!hasCollision) break;
     }
   };
 
+  const physicsStep = (now) => {
+    if (!physicsRunning) return;
+    const dt = Math.min((now - lastTime) / 1000, 0.035);
+    lastTime = now;
+
+    if (!isDesktop()) {
+      // Mobile: keep in resting flow
+      physicsRunning = false;
+      return;
+    }
+
+    let allSleeping = true;
+
+    stickers.forEach(s => {
+      if (s.isDragging) {
+        allSleeping = false;
+        return;
+      }
+
+      // Apply gravity
+      s.vy += GRAVITY * dt;
+      s.vx *= Math.pow(0.96, dt * 60);
+      s.vy *= Math.pow(0.98, dt * 60);
+      s.vRot *= Math.pow(0.92, dt * 60);
+
+      s.x += s.vx * dt;
+      s.y += s.vy * dt;
+      s.tilt += s.vRot * dt;
+
+      // Letter terrain floor collision
+      const curX = s.baseCx + s.x;
+      const curY = s.baseCy + s.y;
+      const terrain = getLetterFloor(curX);
+      const bottomY = curY + s.hh;
+
+      if (bottomY >= terrain.y) {
+        // Rest on top of letter
+        s.y = (terrain.y - s.hh) - s.baseCy;
+
+        // Block-like thud bounce
+        if (s.vy > 0) {
+          if (s.vy > 60) {
+            s.vy = -s.vy * RESTITUTION_FLOOR;
+          } else {
+            s.vy = 0;
+            s.resting = true;
+          }
+          s.vx *= FRICTION_FLOOR;
+          if (Math.abs(s.vx) < 1.0) s.vx = 0;
+
+          // Align tilt with letter terrain slope
+          const targetTilt = Math.atan2(terrain.slope, 1) * (180 / Math.PI) * 0.7;
+          s.tilt += (targetTilt - s.tilt) * 0.3;
+          s.vRot *= 0.5;
+        }
+      } else {
+        s.resting = false;
+      }
+
+      // Horizontal boundary restraint
+      const field = document.querySelector('.sticker-field');
+      const maxDistX = field ? field.offsetWidth * 0.48 : 300;
+      if (s.x < -maxDistX) { s.x = -maxDistX; s.vx = Math.abs(s.vx) * 0.3; }
+      if (s.x > maxDistX) { s.x = maxDistX; s.vx = -Math.abs(s.vx) * 0.3; }
+
+      // Sleep test
+      if (Math.abs(s.vx) > 0.6 || Math.abs(s.vy) > 0.6 || Math.abs(s.vRot) > 0.8 || !s.resting) {
+        allSleeping = false;
+      }
+    });
+
+    resolveStickerCollisions();
+    stickers.forEach(applyStyle);
+
+    if (allSleeping) {
+      physicsRunning = false;
+    } else {
+      requestAnimationFrame(physicsStep);
+    }
+  };
+
+  // Initial Drop Entrance: start suspended in air, then drop onto "MUHAMMAD"
+  if (isDesktop() && !calmMotion) {
+    stickers.forEach((s, i) => {
+      s.x = 0;
+      s.y = -90 - (i % 3) * 35 - Math.random() * 15; // Suspended above
+      s.vx = 0;
+      s.vy = 25 + Math.random() * 35;
+      s.tilt = (Math.random() - 0.5) * 12;
+      s.vRot = (Math.random() - 0.5) * 18;
+      applyStyle(s);
+    });
+    wakePhysics();
+  }
+
+  // Pointer Drag & Velocity Throwing
   stickers.forEach(s => {
-    let pointer = null;
-    let origin = { x: 0, y: 0 };
+    let pointerId = null;
+    let startClient = { x: 0, y: 0 };
+    let startOrigin = { x: 0, y: 0 };
+    let lastTrackTime = 0;
+    let lastTrackPos = { x: 0, y: 0 };
 
     s.el.addEventListener('pointerdown', event => {
       if (event.button !== 0) return;
       updateBases();
-      pointer = { x: event.clientX, y: event.clientY, id: event.pointerId };
-      origin = { x: s.x, y: s.y };
-      s.el.setPointerCapture(event.pointerId);
+      pointerId = event.pointerId;
+      startClient = { x: event.clientX, y: event.clientY };
+      startOrigin = { x: s.x, y: s.y };
+      lastTrackPos = { x: event.clientX, y: event.clientY };
+      lastTrackTime = performance.now();
+      s.isDragging = true;
+      s.resting = false;
+      s.vx = 0;
+      s.vy = 0;
+      s.vRot = 0;
+      s.el.setPointerCapture(pointerId);
       s.el.classList.add('is-dragging');
+      wakePhysics();
     });
 
     s.el.addEventListener('pointermove', event => {
-      if (!pointer || event.pointerId !== pointer.id) return;
-      s.x = origin.x + event.clientX - pointer.x;
-      s.y = origin.y + event.clientY - pointer.y;
-      clampAndApply(s);
-      resolveCollisions(s);
+      if (pointerId === null || event.pointerId !== pointerId) return;
+      const now = performance.now();
+      const dt = Math.max(0.001, (now - lastTrackTime) / 1000);
+
+      s.x = startOrigin.x + (event.clientX - startClient.x);
+      s.y = startOrigin.y + (event.clientY - startClient.y);
+
+      // Track instantaneous toss velocity
+      s.vx = (event.clientX - lastTrackPos.x) / dt;
+      s.vy = (event.clientY - lastTrackPos.y) / dt;
+
+      lastTrackPos = { x: event.clientX, y: event.clientY };
+      lastTrackTime = now;
+
+      applyStyle(s);
+      resolveStickerCollisions();
     });
 
     const releasePointer = event => {
-      if (!pointer || event.pointerId !== pointer.id) return;
-      pointer = null;
+      if (pointerId === null || event.pointerId !== pointerId) return;
+      pointerId = null;
+      s.isDragging = false;
       s.el.classList.remove('is-dragging');
+
+      // Cap throw velocity so items don't fly offscreen
+      s.vx = clamp(s.vx, -700, 700);
+      s.vy = clamp(s.vy, -600, 600);
+      s.vRot = clamp(s.vx * 0.18, -45, 45);
+
+      wakePhysics();
     };
 
     s.el.addEventListener('pointerup', releasePointer);
     s.el.addEventListener('pointercancel', releasePointer);
 
+    // Keyboard accessibility & Home reset
     s.el.addEventListener('keydown', event => {
       const dirs = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] };
       if (event.key === 'Home') {
         event.preventDefault();
         stickers.forEach(st => {
-          st.x = 0; st.y = 0; st.flipX = 0; st.tilt = 0;
-          st.el.style.removeProperty('--flip-x');
+          st.x = 0;
+          st.y = 0;
+          st.vx = 0;
+          st.vy = 0;
+          st.tilt = 0;
+          st.vRot = 0;
+          st.resting = true;
+          st.el.style.setProperty('--drag-x', '0px');
+          st.el.style.setProperty('--drag-y', '0px');
           st.el.style.removeProperty('--tilt');
-          clampAndApply(st);
         });
-        resolveCollisions(null);
+        physicsRunning = false;
         return;
       }
+
       const [dx, dy] = dirs[event.key] ?? [];
       if (dx === undefined) return;
       event.preventDefault();
       updateBases();
       s.x += dx;
       s.y += dy;
-      clampAndApply(s);
-      resolveCollisions(s);
+      s.vx = 0;
+      s.vy = 0;
+      s.vRot = 0;
+      s.resting = true;
+      applyStyle(s);
+      resolveStickerCollisions();
     });
+  });
+
+  window.addEventListener('resize', () => {
+    updateBases();
+    if (isDesktop()) {
+      wakePhysics();
+    }
   });
 }
 
