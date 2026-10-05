@@ -946,30 +946,94 @@ document.addEventListener('keydown', (e) => {
 cliClose?.addEventListener('click', () => toggleCli({ restoreFocus: true }));
 cliTrigger?.addEventListener('click', () => toggleCli({ restoreFocus: true }));
 
+const cliHistory = [];
+let historyIndex = -1;
+let currentDraft = '';
+
 cliInput?.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    const cmd = cliInput.value.trim().toLowerCase();
+  if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (cliHistory.length === 0) return;
+    if (historyIndex === -1) {
+      currentDraft = cliInput.value;
+      historyIndex = cliHistory.length - 1;
+    } else if (historyIndex > 0) {
+      historyIndex -= 1;
+    }
+    cliInput.value = cliHistory[historyIndex] || '';
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (historyIndex === -1) return;
+    if (historyIndex < cliHistory.length - 1) {
+      historyIndex += 1;
+      cliInput.value = cliHistory[historyIndex];
+    } else {
+      historyIndex = -1;
+      cliInput.value = currentDraft;
+    }
+  } else if (e.key === 'Enter') {
+    const rawCmd = cliInput.value.trim();
+    const cmd = rawCmd.toLowerCase();
     cliInput.value = '';
+    historyIndex = -1;
+    currentDraft = '';
     if (!cmd) return;
+
+    cliHistory.push(rawCmd);
+    if (cliHistory.length > 50) cliHistory.shift();
 
     const pCmd = document.createElement('p');
     pCmd.className = 'cli-cmd';
-    pCmd.textContent = `~ $ ${cmd}`;
+    pCmd.textContent = `~ $ ${rawCmd}`;
     cliOutput.appendChild(pCmd);
 
     const pRes = document.createElement('p');
-    switch (cmd) {
+    const [action, ...args] = cmd.split(' ');
+
+    switch (action) {
       case 'help':
-        pRes.innerHTML = 'Perintah: <strong>whoami</strong>, <strong>projects</strong>, <strong>contact</strong>, <strong>clear</strong>, <strong>exit</strong>';
+        pRes.innerHTML = 'Perintah: <strong>whoami</strong>, <strong>projects</strong>, <strong>skills</strong>, <strong>theme [dark|light|toggle]</strong>, <strong>contact</strong>, <strong>print</strong>, <strong>pet</strong>, <strong>clear</strong>, <strong>exit</strong>';
         break;
       case 'whoami':
-        pRes.textContent = 'Muhammad Nur Rahman, Mahasiswa S1 Ilmu Komputer ULM & Full-stack Developer.';
+        pRes.textContent = 'Muhammad Nur Rahman — Mahasiswa S1 Ilmu Komputer ULM & Full-stack Developer.';
         break;
       case 'projects':
-        pRes.innerHTML = '1. Zadify (Al-Quran AI)<br>2. CodeChrome (Keyboard Dashboard)<br>3. Game Farm 2.0 (Canvas Engine)<br>4. VirtualPet TeKom (DFA Automata)';
+        pRes.innerHTML = '1. Zadify (Al-Quran Workspace & AI)<br>2. CodeChrome (Keyboard-first Browser Dashboard)<br>3. Game Farm 2.0 (Canvas 2D Engine)<br>4. VirtualPet TeKom (DFA Automata Simulator)';
         break;
+      case 'skills':
+      case 'capabilities':
+        pRes.innerHTML = '• Web: TypeScript, JavaScript, React, Next.js, PHP, UI/UX<br>• Systems: Jaringan Komputer, Infrastruktur, Keamanan Siber<br>• Media: HTML5 Canvas, 3D Web, Web Audio, Desain Grafis';
+        break;
+      case 'theme': {
+        const target = args[0];
+        const current = document.documentElement.dataset.theme;
+        const nextTheme = (target === 'light' || target === 'dark') ? target : (current === 'dark' ? 'light' : 'dark');
+        document.documentElement.classList.add('theme-transition');
+        document.documentElement.dataset.theme = nextTheme;
+        updateThemeButton(nextTheme);
+        try { localStorage.setItem('rahman-portfolio-theme', nextTheme); } catch (_) {}
+        setTimeout(() => document.documentElement.classList.remove('theme-transition'), 250);
+        pRes.textContent = `Tema website dialihkan ke: ${nextTheme}`;
+        break;
+      }
+      case 'cv':
+      case 'print':
+        pRes.textContent = 'Membuka dialog cetak / simpan CV ke PDF...';
+        setTimeout(() => window.print(), 250);
+        break;
+      case 'pet':
+      case 'mascot': {
+        const petEl = document.getElementById('pet-1');
+        if (petEl) {
+          petEl.click();
+          pRes.textContent = 'Menyapa maskot! ✨';
+        } else {
+          pRes.textContent = 'Maskot sedang tidak aktif.';
+        }
+        break;
+      }
       case 'contact':
-        pRes.textContent = 'Email: Rahmannch19@gmail.com | GitHub: github.com/RahmannCH';
+        pRes.textContent = 'Email: Rahmannch19@gmail.com | GitHub: github.com/RahmannCH | Instagram: @mangch._';
         break;
       case 'clear':
         cliOutput.innerHTML = '';

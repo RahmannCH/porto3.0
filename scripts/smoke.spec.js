@@ -146,6 +146,31 @@ test('cli drawer opens from the footer, closes on Escape, and restores focus', a
   await expect(trigger).toBeFocused();
 });
 
+test('cli drawer executes interactive commands and supports arrow history', async ({ page }) => {
+  await page.goto(baseURL);
+  const trigger = page.locator('#footer-cli-btn');
+  const input = page.locator('#cli-input');
+  const output = page.locator('#cli-output');
+
+  await trigger.click();
+  await input.fill('skills');
+  await input.press('Enter');
+  await expect(output).toContainText('Web: TypeScript');
+
+  await input.fill('theme light');
+  await input.press('Enter');
+  await expect(output).toContainText('Tema website dialihkan ke: light');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+
+  // History navigation with ArrowUp
+  await input.press('ArrowUp');
+  expect(await input.inputValue()).toBe('theme light');
+  await input.press('ArrowUp');
+  expect(await input.inputValue()).toBe('skills');
+
+  await page.keyboard.press('Escape');
+});
+
 test('unknown path returns 404 instead of portfolio page', async ({ request }) => {
   const response = await request.get(`${baseURL}/missing-route`);
   expect(response.status()).toBe(404);
