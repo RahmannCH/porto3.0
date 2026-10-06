@@ -538,6 +538,14 @@ Components added after the reference-driven pass, kept in their own file so
 .walking-mascot i { left: calc(17px * var(--unit)); }
 .walking-mascot b { right: calc(17px * var(--unit)); animation-delay: 0.18s; }
 
+.walking-mascot.is-walking {
+  animation: pet-waddle 0.36s ease-in-out infinite alternate;
+}
+
+.walking-mascot.is-running {
+  animation: pet-waddle 0.16s ease-in-out infinite alternate;
+}
+
 .walking-mascot.is-running i,
 .walking-mascot.is-running b,
 .walking-mascot.is-scared i,

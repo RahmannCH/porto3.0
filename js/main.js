@@ -434,7 +434,19 @@ if (dragItems.length > 0) {
       const dirs = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] };
       if (event.key === 'Home') {
         event.preventDefault();
-        window.__forceStickersSettle();
+        stickers.forEach(st => {
+          st.x = 0;
+          st.y = 0;
+          st.vx = 0;
+          st.vy = 0;
+          st.tilt = 0;
+          st.vRot = 0;
+          st.resting = true;
+          st.el.style.setProperty('--drag-x', '0px');
+          st.el.style.setProperty('--drag-y', '0px');
+          st.el.style.removeProperty('--tilt');
+        });
+        physicsRunning = false;
         return;
       }
 
@@ -454,17 +466,26 @@ if (dragItems.length > 0) {
   });
 
   window.__forceStickersSettle = () => {
-    stickers.forEach(st => {
-      st.x = 0;
-      st.y = 0;
-      st.vx = 0;
-      st.vy = 0;
-      st.tilt = 0;
-      st.vRot = 0;
-      st.resting = true;
-      st.el.style.setProperty('--drag-x', '0px');
-      st.el.style.setProperty('--drag-y', '0px');
-      st.el.style.removeProperty('--tilt');
+    if (!isDesktop()) return;
+    updateBases();
+    stickers.forEach(s => {
+      const curX = s.baseCx + s.x;
+      const terrain = getLetterFloor(curX);
+      const targetY = (terrain.y - s.hh) - s.baseCy;
+      if (s.y < targetY) s.y = targetY;
+      s.vx = 0;
+      s.vy = 0;
+      s.tilt = Math.atan2(terrain.slope, 1) * (180 / Math.PI) * 0.7;
+      s.vRot = 0;
+      s.resting = true;
+    });
+    for (let i = 0; i < 15; i++) resolveStickerCollisions();
+    stickers.forEach(s => {
+      const curX = s.baseCx + s.x;
+      const terrain = getLetterFloor(curX);
+      s.y = (terrain.y - s.hh) - s.baseCy;
+      s.tilt = Math.atan2(terrain.slope, 1) * (180 / Math.PI) * 0.7;
+      applyStyle(s);
     });
     physicsRunning = false;
   };
@@ -648,7 +669,8 @@ if (petEls.length === 2 && mascotEnv) {
         const cy = floorY - p.h * 0.72;
         const dx = clamp((mouseX - cx) / 140, -1, 1) * 3.5;
         const dy = clamp((mouseY - cy) / 140, -1, 1) * 3;
-        p.targetPupilX = dx * facing * -1;
+        // Pupil follows cursor. Invert when body is mirrored with scaleX(-1) so world gaze matches.
+        p.targetPupilX = dx * facing;
         p.targetPupilY = dy;
       } else {
         p.targetPupilX = 0;
@@ -752,16 +774,25 @@ if (petEls.length === 2 && mascotEnv) {
     setMood(p, 'curious');
   };
 
-  const startle = (p, pool, reverse = false) => {
+  const startle = (p, pool) => {
     p.state = 'SCARED';
     p.timer = SCARED_FOR;
     p.fear = SCARED_FOR;
-    p.dir = reverse ? (p.dir > 0 ? -1 : 1) : ((p.x + p.w / 2) > mouseX ? 1 : -1);
+    p.dir = ((p.x + p.w / 2) > mouseX ? 1 : -1);
     p.vx = p.dir * SCARED_SPEED;
-    const isCheer = pool === standaloneLines.cheer;
-    const mood = isCheer ? 'excited' : 'alarmed';
-    setMood(p, mood);
-    if (!say(p, pool, mood)) p.queued = { pool, mood };
+    setMood(p, 'alarmed');
+    if (!say(p, pool, 'alarmed')) p.queued = { pool, mood: 'alarmed' };
+  };
+
+  const cheer = (p, pool) => {
+    p.state = 'CHEER';
+    p.timer = 1.5;
+    p.fear = SCARED_FOR;
+    // Face the viewer (or stay as is), stop walking
+    p.vx = 0;
+    setMood(p, 'excited');
+    p.el.classList.add('is-jumping');
+    if (!say(p, pool, 'excited')) p.queued = { pool, mood: 'excited' };
   };
 
   const pointerGap = (p, px, py) => {
@@ -886,6 +917,7 @@ if (petEls.length === 2 && mascotEnv) {
 
       p.el.classList.toggle('is-scared', p.state === 'SCARED');
       p.el.classList.toggle('is-running', Math.abs(p.vx) > WALK_SPEED * 1.5);
+      p.el.classList.toggle('is-walking', p.state === 'WALK' && Math.abs(p.vx) > 0.1);
     });
 
     resolveBump();
@@ -905,14 +937,14 @@ if (petEls.length === 2 && mascotEnv) {
 
   pets.forEach(p => {
     p.el.addEventListener('pointerenter', () => {
-      if (isMouseActive && p.state !== 'SCARED') startle(p, standaloneLines.touch);
+      if (isMouseActive && p.state !== 'SCARED' && p.state !== 'CHEER') startle(p, standaloneLines.touch);
     });
     p.el.addEventListener('focus', () => {
-      if (p.fear <= 0) startle(p, standaloneLines.cheer, true);
+      if (p.fear <= 0) cheer(p, standaloneLines.cheer);
     });
     p.el.addEventListener('click', () => {
       p.fear = 0;
-      startle(p, standaloneLines.cheer, true);
+      cheer(p, standaloneLines.cheer);
     });
   });
 
