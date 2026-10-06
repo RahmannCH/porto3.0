@@ -125,6 +125,22 @@ test('draggable hero labels have keyboard move and reset controls', async ({ pag
   await expect(sticker).toHaveCSS('--drag-x', '0px');
 });
 
+test('mobile resize resets sticker physics offsets', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(baseURL);
+  await page.waitForTimeout(1500); // Wait for gravity to pull them down
+  
+  const sticker = page.locator('[data-draggable]').first();
+  const desktopY = await sticker.evaluate(el => parseFloat(el.style.getPropertyValue('--drag-y') || '0'));
+  expect(Math.abs(desktopY)).toBeGreaterThan(10);
+  
+  await page.setViewportSize({ width: 480, height: 800 });
+  await page.waitForTimeout(300); // Allow resize event to fire
+  
+  const mobileY = await sticker.evaluate(el => parseFloat(el.style.getPropertyValue('--drag-y') || '0'));
+  expect(mobileY).toBe(0);
+});
+
 test('reduced motion leaves reveal content visible and pauses mascot', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto(baseURL);
@@ -169,6 +185,20 @@ test('cli drawer executes interactive commands and supports arrow history', asyn
   expect(await input.inputValue()).toBe('skills');
 
   await page.keyboard.press('Escape');
+});
+
+test('case study modal opens, displays architecture, and closes on Escape', async ({ page }) => {
+  await page.goto(baseURL);
+  const btn = page.locator('.button-case-study').first();
+  const modal = page.locator('#case-study-modal');
+
+  await btn.click();
+  await expect(modal).toBeVisible();
+  await expect(page.locator('#modal-title')).toContainText('Zadify');
+  await expect(page.locator('#modal-architecture-diagram svg')).toBeVisible();
+
+  await page.keyboard.press('Escape');
+  await expect(modal).not.toBeVisible();
 });
 
 test('unknown path returns 404 instead of portfolio page', async ({ request }) => {

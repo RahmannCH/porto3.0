@@ -941,3 +941,10 @@ Components added after the reference-driven pass, kept in their own file so
     animation: none;
   }
 }
+
+/* Mascot is omitted on narrow screens where it obstructs content */
+@media (max-width: 480px) {
+  .mascot-environment {
+    display: none !important;
+  }
+}

@@ -434,19 +434,7 @@ if (dragItems.length > 0) {
       const dirs = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] };
       if (event.key === 'Home') {
         event.preventDefault();
-        stickers.forEach(st => {
-          st.x = 0;
-          st.y = 0;
-          st.vx = 0;
-          st.vy = 0;
-          st.tilt = 0;
-          st.vRot = 0;
-          st.resting = true;
-          st.el.style.setProperty('--drag-x', '0px');
-          st.el.style.setProperty('--drag-y', '0px');
-          st.el.style.removeProperty('--tilt');
-        });
-        physicsRunning = false;
+        window.__forceStickersSettle();
         return;
       }
 
@@ -465,10 +453,41 @@ if (dragItems.length > 0) {
     });
   });
 
+  window.__forceStickersSettle = () => {
+    stickers.forEach(st => {
+      st.x = 0;
+      st.y = 0;
+      st.vx = 0;
+      st.vy = 0;
+      st.tilt = 0;
+      st.vRot = 0;
+      st.resting = true;
+      st.el.style.setProperty('--drag-x', '0px');
+      st.el.style.setProperty('--drag-y', '0px');
+      st.el.style.removeProperty('--tilt');
+    });
+    physicsRunning = false;
+  };
+
   window.addEventListener('resize', () => {
     updateBases();
     if (isDesktop()) {
       wakePhysics();
+    } else {
+      // Mobile uses relative flex-wrap layout; reset desktop translation offsets
+      physicsRunning = false;
+      stickers.forEach(s => {
+        s.x = 0;
+        s.y = 0;
+        s.vx = 0;
+        s.vy = 0;
+        s.tilt = 0;
+        s.vRot = 0;
+        s.resting = true;
+        s.el.style.setProperty('--drag-x', '0px');
+        s.el.style.setProperty('--drag-y', '0px');
+        s.el.style.removeProperty('--tilt');
+      });
     }
   });
 }
@@ -1091,6 +1110,12 @@ modal?.addEventListener('cancel', (e) => {
   e.preventDefault();
   closeCaseStudy();
 });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && modal && (modal.open || modal.hasAttribute('open'))) {
+    e.preventDefault();
+    closeCaseStudy();
+  }
+});
 
 document.querySelector('#current-year').textContent = new Date().getFullYear();
 
@@ -1107,6 +1132,9 @@ if (snapBtn) {
       setTimeout(() => setSnapLabel(snapOriginal), 2000);
       return;
     }
+    // Settle scattering stickers instantly so they render cleanly in the capture
+    if (window.__forceStickersSettle) window.__forceStickersSettle();
+
     try {
       snapBtn.disabled = true;
       setSnapLabel('Menyusun...');
