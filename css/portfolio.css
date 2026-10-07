@@ -519,37 +519,36 @@ Components added after the reference-driven pass, kept in their own file so
 }
 
 /* Legs. Two small rounded feet that peek out from under the body and rest on
-   the platform line. They are slightly wider at the bottom, like a cartoon
-   animal's paws, and their colour matches the body so they read as part of the
-   same form rather than detached boots. */
+   the platform line. Styled like tiny cartoon shoes with a dark outline and
+   a blue accent sole. The step animation only plays when moving. */
 .walking-mascot i,
 .walking-mascot b {
   position: absolute;
-  bottom: calc(-8px * var(--unit));
-  width: calc(19px * var(--unit));
-  height: calc(16px * var(--unit));
-  border-radius: calc(9px * var(--unit)) calc(9px * var(--unit)) calc(7px * var(--unit)) calc(7px * var(--unit));
+  bottom: calc(-6px * var(--unit));
+  width: calc(16px * var(--unit));
+  height: calc(15px * var(--unit));
+  border-radius: calc(8px * var(--unit)) calc(8px * var(--unit)) calc(5px * var(--unit)) calc(5px * var(--unit));
   background: var(--shell);
-  border-bottom: calc(3px * var(--unit)) solid var(--accent-strong);
+  border: 1.5px solid var(--ink);
+  box-shadow: inset 0 calc(-3.5px * var(--unit)) 0 var(--accent-strong);
   animation: step-alive 0.36s ease-in-out infinite alternate;
+  animation-play-state: paused;
   z-index: -1;
 }
 
-.walking-mascot i { left: calc(17px * var(--unit)); }
-.walking-mascot b { right: calc(17px * var(--unit)); animation-delay: 0.18s; }
+.walking-mascot i { left: calc(15px * var(--unit)); }
+.walking-mascot b { right: calc(15px * var(--unit)); animation-delay: 0.18s; }
 
-.walking-mascot.is-walking {
-  animation: pet-waddle 0.36s ease-in-out infinite alternate;
-}
-
-.walking-mascot.is-running {
-  animation: pet-waddle 0.16s ease-in-out infinite alternate;
+.walking-mascot.is-walking i,
+.walking-mascot.is-walking b {
+  animation-play-state: running;
 }
 
 .walking-mascot.is-running i,
 .walking-mascot.is-running b,
 .walking-mascot.is-scared i,
 .walking-mascot.is-scared b {
+  animation-play-state: running;
   animation-duration: 0.13s !important;
 }
 
@@ -572,12 +571,12 @@ Components added after the reference-driven pass, kept in their own file so
 }
 
 /* Orbiting icon and particles around the pet. The icon is a tech glyph that
-   dangles above the head; the dots are ambient particles that float upward.
-   Together they give the pet a visible aura instead of a bare body. */
+   persistently hovers alongside the pet's body, revealing its identity aura.
+   The dots are ambient particles that constantly float upward. */
 .pet-orbit {
   position: absolute;
-  top: calc(-4px * var(--unit));
-  left: 50%;
+  top: 50%;
+  left: 0;
   width: 0;
   height: 0;
   pointer-events: none;
@@ -585,8 +584,8 @@ Components added after the reference-driven pass, kept in their own file so
 
 .orbit-icon {
   position: absolute;
-  bottom: calc(34px * var(--unit));
-  left: calc(100% + 4px);
+  top: calc(-12px * var(--unit));
+  left: calc(-26px * var(--unit));
   display: grid;
   width: calc(28px * var(--unit));
   height: calc(28px * var(--unit));
@@ -597,35 +596,59 @@ Components added after the reference-driven pass, kept in their own file so
   color: var(--accent-strong);
   font: 700 calc(10px * var(--unit)) var(--mono, monospace);
   line-height: 1;
-  opacity: 0;
-  transform: translateX(-6px) scale(0.6);
-  transition: opacity 0.25s ease-out, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  z-index: 5;
-}
-
-.walking-mascot.has-speech .orbit-icon {
   opacity: 1;
-  transform: translateX(0) scale(1);
-  animation: orbit-dangle 3s ease-in-out 0.3s infinite;
+  transform: scaleX(var(--facing, 1)) scale(1);
+  animation: orbit-dangle 3.2s ease-in-out infinite;
+  z-index: 5;
 }
 
 .orbit-dot {
   position: absolute;
-  width: calc(6px * var(--unit));
-  height: calc(6px * var(--unit));
+  width: calc(5px * var(--unit));
+  height: calc(5px * var(--unit));
   border-radius: 50%;
   background: var(--accent-strong);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 70%, transparent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 70%, transparent);
+  animation: orbit-float 2.2s ease-out infinite;
+}
+
+.orbit-dot:nth-child(2) { top: calc(6px * var(--unit)); left: calc(-34px * var(--unit)); animation-delay: 0s; }
+.orbit-dot:nth-child(3) { top: calc(-16px * var(--unit)); left: calc(-24px * var(--unit)); animation-delay: 0.7s; }
+.orbit-dot:nth-child(4) { top: calc(18px * var(--unit)); left: calc(-28px * var(--unit)); animation-delay: 1.4s; }
+
+/* The contextual reaction badge pops up near the pet's shoulder to visually
+   express an emotion (greeting, alarm, sleep) only when speaking. It stays
+   strictly away from the speech bubble territory. */
+.reaction-badge {
+  position: absolute;
+  top: calc(8px * var(--unit));
+  left: calc(100% + 4px);
+  display: grid;
+  width: calc(34px * var(--unit));
+  height: calc(34px * var(--unit));
+  place-items: center;
+  font-size: calc(24px * var(--unit));
+  line-height: 1;
   opacity: 0;
+  transform: scaleX(var(--facing, 1)) translateY(6px) scale(0.6);
+  transition: opacity 0.25s ease-out, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  pointer-events: none;
+  z-index: 6;
 }
 
-.walking-mascot.has-speech .orbit-dot {
-  animation: orbit-float 1.8s ease-out infinite;
+.walking-mascot.has-speech .reaction-badge {
+  opacity: 1;
+  transform: scaleX(var(--facing, 1)) translateY(0) scale(1);
+  animation: badge-bounce 1.8s ease-in-out infinite;
 }
 
-.orbit-dot:nth-child(2) { bottom: calc(32px * var(--unit)); left: calc(100% + 18px); animation-delay: 0s; }
-.orbit-dot:nth-child(3) { bottom: calc(46px * var(--unit)); left: calc(100% + 10px); animation-delay: 0.6s; }
-.orbit-dot:nth-child(4) { bottom: calc(20px * var(--unit)); left: calc(100% + 22px); animation-delay: 1.2s; }
+.walking-mascot[data-reaction="wave"] .reaction-badge {
+  animation: mascot-wave 0.5s ease-in-out infinite alternate !important;
+}
+
+.walking-mascot[data-reaction="bounce"] .reaction-badge {
+  animation: badge-bounce 0.8s ease-in-out infinite !important;
+}
 
 @keyframes pet-jump {
   0%, 100% { translate: 0 0; }

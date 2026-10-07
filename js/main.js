@@ -587,13 +587,13 @@ if (petEls.length === 2 && mascotEnv) {
     ]
   };
 
-  let globalSpeaker = null;
   let conversationChainTimer = 0;
 
   const pets = Array.from(petEls).map((el, index) => ({
     el,
     bubble: el.querySelector('.speech-bubble'),
     orbitIcon: el.querySelector('.orbit-icon'),
+    reactionBadge: el.querySelector('.reaction-badge'),
     voice: el.dataset.pet === '2' ? 1 : 0,
     w: 0,
     h: 0,
@@ -687,11 +687,37 @@ if (petEls.length === 2 && mascotEnv) {
 
   const sayText = (p, text, mood) => {
     if (mascotPaused || !p.bubble) return false;
-    if (p.react > 0 || globalSpeaker !== null) return false;
+    // Allow overlapping independent user reactions, but standard cooldown still applies
+    if (p.react > 0) return false;
 
-    globalSpeaker = p;
     p.react = SPEECH_MS / 1000 + REACT_GAP;
     p.bubble.textContent = text;
+    
+    // Assign a contextual reaction emoji based on the text or mood
+    let reactionType = 'bounce';
+    if (p.reactionBadge) {
+      if (text.includes('alam') || text.includes('alo') || text.includes('Hai') || text.includes('meet')) {
+        p.reactionBadge.textContent = '👋';
+        reactionType = 'wave';
+      } else if (mood === 'alarmed' || text.includes('kaget') || text.includes('tabrak') || text.includes('Awas')) {
+        p.reactionBadge.textContent = pick(['💦', '❗']);
+        reactionType = 'bounce';
+      } else if (mood === 'excited' || text.includes('Asyik') || text.includes('Yeay') || text.includes('Semangat')) {
+        p.reactionBadge.textContent = pick(['✨', '🎉']);
+        reactionType = 'bounce';
+      } else if (mood === 'sleepy' || text.includes('Ngantuk') || text.includes('rehat')) {
+        p.reactionBadge.textContent = '💤';
+        reactionType = 'bounce';
+      } else if (mood === 'curious') {
+        p.reactionBadge.textContent = pick(['❓', '🔍']);
+        reactionType = 'bounce';
+      } else {
+        p.reactionBadge.textContent = pick(['💬', '✨', '💡']);
+        reactionType = 'bounce';
+      }
+      p.el.dataset.reaction = reactionType;
+    }
+
     p.el.classList.add('has-speech');
     setMood(p, mood);
 
@@ -699,8 +725,8 @@ if (petEls.length === 2 && mascotEnv) {
     p.speechHandle = window.setTimeout(() => {
       p.el.classList.remove('has-speech');
       p.el.classList.remove('is-jumping');
+      delete p.el.dataset.reaction;
       setMood(p, p.state === 'SCARED' ? 'alarmed' : 'idle');
-      globalSpeaker = null;
 
       if (p.queued) {
         const next = p.queued;
@@ -713,13 +739,13 @@ if (petEls.length === 2 && mascotEnv) {
 
   const say = (p, pool, mood) => {
     if (mascotPaused || !p.bubble) return false;
-    if (p.react > 0 || globalSpeaker !== null) return false;
+    if (p.react > 0) return false;
     return sayText(p, speakSingle(p, pool), mood);
   };
 
   // Organic conversational call-and-response between the pair
   const triggerConversation = (initiatorIndex = 0) => {
-    if (mascotPaused || globalSpeaker !== null) return;
+    if (mascotPaused) return;
     const speaker = pets[initiatorIndex];
     const listener = pets[initiatorIndex === 0 ? 1 : 0];
     if (speaker.react > 0 || listener.react > 0) return;
@@ -729,11 +755,9 @@ if (petEls.length === 2 && mascotEnv) {
     const replyText = pick(topic.reply);
 
     if (sayText(speaker, leadText, 'happy')) {
-      // Listener acknowledges by pausing and looking towards speaker
+      // Listener safely pauses to listen without triggering its own idle timer early
       listener.dir = speaker.x > listener.x ? 1 : -1;
-      listener.state = 'IDLE';
-      listener.vx = 0;
-      setMood(listener, 'curious');
+      pauseLook(listener, (SPEECH_MS + 600) / 1000);
 
       window.clearTimeout(conversationChainTimer);
       conversationChainTimer = window.setTimeout(() => {
@@ -881,7 +905,7 @@ if (petEls.length === 2 && mascotEnv) {
             p.timer = p.voice === 0 ? (2 + Math.random() * 2.5) : (3 + Math.random() * 3);
             setMood(p, 'idle');
             // Trigger conversation occasionally when calm
-            if (globalSpeaker === null && Math.random() < 0.4) {
+            if (pets[0].react <= 0 && pets[1].react <= 0 && Math.random() < 0.4) {
               triggerConversation(idx);
             }
           }
