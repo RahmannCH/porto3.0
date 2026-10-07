@@ -584,8 +584,8 @@ Components added after the reference-driven pass, kept in their own file so
 
 .orbit-icon {
   position: absolute;
-  top: calc(-12px * var(--unit));
-  left: calc(-26px * var(--unit));
+  top: calc(-8px * var(--unit));
+  left: calc(-28px * var(--unit));
   display: grid;
   width: calc(28px * var(--unit));
   height: calc(28px * var(--unit));
@@ -612,17 +612,17 @@ Components added after the reference-driven pass, kept in their own file so
   animation: orbit-float 2.2s ease-out infinite;
 }
 
-.orbit-dot:nth-child(2) { top: calc(6px * var(--unit)); left: calc(-34px * var(--unit)); animation-delay: 0s; }
-.orbit-dot:nth-child(3) { top: calc(-16px * var(--unit)); left: calc(-24px * var(--unit)); animation-delay: 0.7s; }
-.orbit-dot:nth-child(4) { top: calc(18px * var(--unit)); left: calc(-28px * var(--unit)); animation-delay: 1.4s; }
+.orbit-dot:nth-child(2) { top: calc(8px * var(--unit)); left: calc(-36px * var(--unit)); animation-delay: 0s; }
+.orbit-dot:nth-child(3) { top: calc(-4px * var(--unit)); left: calc(-22px * var(--unit)); animation-delay: 0.7s; }
+.orbit-dot:nth-child(4) { top: calc(20px * var(--unit)); left: calc(-30px * var(--unit)); animation-delay: 1.4s; }
 
 /* The contextual reaction badge pops up near the pet's shoulder to visually
    express an emotion (greeting, alarm, sleep) only when speaking. It stays
    strictly away from the speech bubble territory. */
 .reaction-badge {
   position: absolute;
-  top: calc(8px * var(--unit));
-  left: calc(100% + 4px);
+  top: calc(18px * var(--unit));
+  left: calc(100% + 8px);
   display: grid;
   width: calc(34px * var(--unit));
   height: calc(34px * var(--unit));

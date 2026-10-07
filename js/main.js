@@ -559,31 +559,31 @@ if (petEls.length === 2 && mascotEnv) {
   // Call-and-response dialogues: Pet 1 leads, Pet 2 replies with organic continuity.
   const conversations = [
     {
-      lead: ['Salam! 👋', 'Nice to meet you ✨', 'Yuk intip proyek 🚀', 'Halo developer! 💻'],
-      reply: ['Hai, santai dulu ☕', 'Keren nih websitenya!', 'Lanjut scroll ya ✨', 'Siap eksplorasi! 🚀']
+      lead: ['Salam!', 'Nice to meet you', 'Yuk intip proyek', 'Halo developer!'],
+      reply: ['Hai, santai dulu', 'Keren nih websitenya!', 'Lanjut scroll ya', 'Siap eksplorasi!']
     },
     {
-      lead: ['Cek CV-ku di atas 📄', 'Frontend-nya rapi ya ✨', 'Kode rapi, hati tenang 🧘', 'TypeScript mantap ⚡'],
-      reply: ['Udah tak baca barusan! 👍', 'Animasi-nya mulus juga 🎯', 'Setuju banget! 💯', 'Full-stack ready! 🔥']
+      lead: ['Cek CV-ku di atas', 'Frontend-nya rapi ya', 'Kode rapi, hati tenang', 'TypeScript mantap'],
+      reply: ['Udah tak baca barusan!', 'Animasi-nya mulus juga', 'Setuju banget!', 'Full-stack ready!']
     },
     {
-      lead: ['Ngantuk nih zZ 😴', 'Haus, butuh kopi ☕', 'Capek jalan terus 🐾'],
-      reply: ['Istirahat dulu bentar~', 'Sama nih, rehat dulu', 'Semangat, bentar lagi! 💪']
+      lead: ['Ngantuk nih zZ', 'Haus, butuh kopi', 'Capek jalan terus'],
+      reply: ['Istirahat dulu bentar~', 'Sama nih, rehat dulu', 'Semangat, bentar lagi!']
     }
   ];
 
   const standaloneLines = {
     touch: [
-      ['Eh, halo! 👋', 'Woy, kaget 😄', 'Hai, mampir ya? 👀', 'Sapa dong 😊', 'Iya, aku di sini!', 'Awas geli 😆'],
-      ['Halo juga 😄', 'Jangan diusik zZ', 'Kenapa, bos? 😴', 'Ih, kaget aku!', 'Hmm, ada apa? 👀']
+      ['Eh, halo!', 'Woy, kaget', 'Hai, mampir ya?', 'Sapa dong', 'Iya, aku di sini!', 'Awas geli'],
+      ['Halo juga', 'Jangan diusik', 'Kenapa, bos?', 'Ih, kaget aku!', 'Hmm, ada apa?']
     ],
     cheer: [
-      ['Halo juga! 🎉', 'Asyik! 🥳', 'Yeay, disapa! ✨', 'Semangat! 💪'],
-      ['Hehe, halo 😄', 'Akhirnya diklik 🎉', 'Kaget tapi senang!', 'Makasih banyak! 😊']
+      ['Halo juga!', 'Asyik!', 'Yeay, disapa!', 'Semangat!'],
+      ['Hehe, halo', 'Akhirnya diklik', 'Kaget tapi senang!', 'Makasih banyak!']
     ],
     bump: [
-      ['Permisi~ 👋', 'Eh, maaf ya 😅', 'Halo sobat ✨', 'Ups, tabrakan! 😆'],
-      ['Aduh, kenapa? 😴', 'Minggir dulu ya~', 'Hai, lewat dulu! 👋', 'Sori-sori! 😅']
+      ['Permisi~', 'Eh, maaf ya', 'Halo sobat', 'Ups, tabrakan!'],
+      ['Aduh, kenapa?', 'Minggir dulu ya~', 'Hai, lewat dulu!', 'Sori-sori!']
     ]
   };
 
