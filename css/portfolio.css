@@ -740,12 +740,14 @@ Components added after the reference-driven pass, kept in their own file so
   align-items: center;
   overflow: visible !important;
   z-index: 5;
+  perspective: 1200px;
 }
 
 .id-card-sway {
   position: relative;
   display: block;
   width: 100%;
+  transform-style: preserve-3d;
 }
 
 .id-card-pendulum {
@@ -756,6 +758,7 @@ Components added after the reference-driven pass, kept in their own file so
   display: flex;
   flex-direction: column;
   align-items: center;
+  transform-style: preserve-3d;
 }
 
 .lanyard-run,
@@ -821,6 +824,30 @@ Components added after the reference-driven pass, kept in their own file so
   z-index: 4;
 }
 
+/* Shark enamel pin clamped onto the lanyard ribbon above the metal hook */
+.lanyard-shark-pin {
+  position: absolute;
+  top: -38px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-4deg);
+  width: 48px;
+  height: 48px;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
+  pointer-events: auto;
+  cursor: grab;
+  z-index: 6;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.lanyard-shark-pin:hover {
+  transform: translateX(-50%) rotate(8deg) scale(1.12);
+}
+
+.lanyard-shark-pin:active {
+  cursor: grabbing;
+  transform: translateX(-50%) rotate(-12deg) scale(0.95);
+}
+
 .metal-clip-svg {
   width: 100%;
   height: 100%;
@@ -831,7 +858,9 @@ Components added after the reference-driven pass, kept in their own file so
   position: relative;
   width: 260px;
   height: 375px;
-  transform: translateY(var(--drop, 0px));
+  transform: translateY(var(--drop, 0px)) rotateX(var(--rot-x, 0deg)) rotateY(var(--rot-y, 0deg));
+  transform-style: preserve-3d;
+  will-change: transform;
   border-radius: 18px;
   background: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.12);
@@ -844,7 +873,7 @@ Components added after the reference-driven pass, kept in their own file so
   margin: 0;
   display: flex;
   flex-direction: column;
-  transition: box-shadow 0.2s;
+  transition: box-shadow 0.2s, transform 0.05s ease-out;
 }
 
 /* Depth cue while held: the card is lifted toward the viewer, so its shadow

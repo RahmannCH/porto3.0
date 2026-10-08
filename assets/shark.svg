@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <!-- Metallic Enamel Rim Gradient -->
+    <linearGradient id="silver-rim" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="25%" stop-color="#B0B5BC"/>
+      <stop offset="50%" stop-color="#E2E6EA"/>
+      <stop offset="75%" stop-color="#7B828C"/>
+      <stop offset="100%" stop-color="#3A3F47"/>
+    </linearGradient>
+    <!-- Shark Skin Gradient -->
+    <linearGradient id="shark-skin" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#586574"/>
+      <stop offset="60%" stop-color="#445160"/>
+      <stop offset="100%" stop-color="#323C47"/>
+    </linearGradient>
+    <!-- White Belly Gradient -->
+    <linearGradient id="shark-belly" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#E5ECF2"/>
+    </linearGradient>
+    <!-- Mouth Interior -->
+    <linearGradient id="mouth-bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#821C26"/>
+      <stop offset="100%" stop-color="#4F0A11"/>
+    </linearGradient>
+    <!-- Tongue -->
+    <linearGradient id="tongue-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F27A8A"/>
+      <stop offset="100%" stop-color="#D94358"/>
+    </linearGradient>
+    <!-- Eye Iris -->
+    <radialGradient id="iris-glow" cx="40%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#72C9E8"/>
+      <stop offset="60%" stop-color="#1E6582"/>
+      <stop offset="100%" stop-color="#0E2D3B"/>
+    </radialGradient>
+    <!-- Gloss Shine -->
+    <linearGradient id="gloss-shine" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.6"/>
+      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <!-- Drop Shadow Filter for Enamel Pin Thickness -->
+    <filter id="pin-depth" x="-15%" y="-15%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <!-- Enamel Pin Base with Metallic Outline -->
+  <g filter="url(#pin-depth)">
+    <!-- Base Silhouette Outline (Silver Edge) -->
+    <path d="M 60 8 C 38 8 20 28 18 52 C 14 56 6 68 8 76 C 10 82 20 80 24 76 C 28 92 42 108 60 108 C 78 108 92 92 96 76 C 100 80 110 82 112 76 C 114 68 106 56 102 52 C 100 28 82 8 60 8 Z" fill="url(#silver-rim)" stroke="#23272D" stroke-width="1.5"/>
+
+    <!-- Dorsal Fin Background -->
+    <path d="M 60 9 C 64 2 74 1 82 10 C 76 16 70 20 66 22 Z" fill="url(#shark-skin)" stroke="#23272D" stroke-width="1.2"/>
+
+    <!-- Main Shark Head & Body (Dark Grey-Blue) -->
+    <path d="M 60 11 C 40 11 23 29 21 52 C 18 57 10 67 11 73 C 12 77 19 76 23 73 C 27 88 41 105 60 105 C 79 105 93 88 97 73 C 101 76 108 77 109 73 C 110 67 102 57 99 52 C 97 29 80 11 60 11 Z" fill="url(#shark-skin)"/>
+
+    <!-- White Belly / Lower Jaw -->
+    <path d="M 22 56 C 28 42 42 38 60 38 C 78 38 92 42 98 56 C 96 78 88 104 60 104 C 32 104 24 78 22 56 Z" fill="url(#shark-belly)" stroke="#23272D" stroke-width="1"/>
+
+    <!-- Mouth Cavity -->
+    <path d="M 36 58 C 42 76 78 76 84 58 C 76 65 44 65 36 58 Z" fill="url(#mouth-bg)" stroke="#23272D" stroke-width="1.2"/>
+
+    <!-- Tongue -->
+    <path d="M 46 66 C 52 61 68 61 74 66 C 68 73 52 73 46 66 Z" fill="url(#tongue-grad)"/>
+
+    <!-- Sharp Upper Teeth -->
+    <path d="M 38 59 L 41 63 L 44 59 L 47 64 L 50 59 L 53 64 L 56 59 L 59 64 L 62 59 L 65 64 L 68 59 L 71 64 L 74 59 L 77 64 L 80 59 L 82 61" fill="#FFFFFF" stroke="#23272D" stroke-width="0.8" stroke-linejoin="round"/>
+
+    <!-- Sharp Lower Teeth -->
+    <path d="M 43 70 L 46 66 L 49 71 L 52 67 L 55 72 L 58 67 L 61 72 L 64 67 L 67 72 L 70 67 L 73 71 L 76 67 L 77 69" fill="#FFFFFF" stroke="#23272D" stroke-width="0.8" stroke-linejoin="round"/>
+
+    <!-- Left Eye (Big Cute Eye) -->
+    <ellipse cx="38" cy="36" rx="8" ry="10" fill="#23272D"/>
+    <ellipse cx="38" cy="36" rx="6.5" ry="8.5" fill="url(#iris-glow)"/>
+    <ellipse cx="38" cy="36" rx="4.5" ry="6" fill="#0B1319"/>
+    <!-- Eye Sparkles -->
+    <circle cx="36" cy="33" r="2.8" fill="#FFFFFF"/>
+    <circle cx="41" cy="39" r="1.4" fill="#FFFFFF"/>
+
+    <!-- Right Eye (Winking / Scar Detail from Reference) -->
+    <ellipse cx="82" cy="38" rx="7.5" ry="6.5" fill="#23272D"/>
+    <ellipse cx="82" cy="38" rx="6" ry="5" fill="url(#iris-glow)"/>
+    <ellipse cx="82" cy="38" rx="4" ry="3.5" fill="#0B1319"/>
+    <!-- Right Eye Highlights -->
+    <circle cx="80" cy="36" r="2.2" fill="#FFFFFF"/>
+    <circle cx="84" cy="40" r="1.1" fill="#FFFFFF"/>
+    <!-- Cute Cheek / Eye Notch Mark -->
+    <path d="M 88 33 L 93 35 M 90 32 L 91 38" stroke="#D1606E" stroke-width="1.2" stroke-linecap="round"/>
+
+    <!-- Cute Gill Marks -->
+    <path d="M 23 66 Q 26 69 23 72" fill="none" stroke="#23272D" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M 20 68 Q 23 71 20 74" fill="none" stroke="#23272D" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M 97 66 Q 94 69 97 72" fill="none" stroke="#23272D" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M 100 68 Q 97 71 100 74" fill="none" stroke="#23272D" stroke-width="1.2" stroke-linecap="round"/>
+
+    <!-- Cute Nose Dots -->
+    <circle cx="56" cy="45" r="1" fill="#23272D"/>
+    <circle cx="64" cy="45" r="1" fill="#23272D"/>
+
+    <!-- Enamel Gloss Highlight Overlay -->
+    <path d="M 60 14 C 44 14 30 26 28 44 C 36 34 50 30 68 32 C 78 33 86 38 90 42 C 90 26 76 14 60 14 Z" fill="url(#gloss-shine)"/>
+  </g>
+</svg>

@@ -1576,13 +1576,13 @@ if (lanyardAnchor && lanyardPivot && lanyardCard) {
   const CORD_SPAN = GRIP_Y - HOOK_Y;
   const HANGING_LENGTH = CARD_HALF - HOOK_Y;
 
-  const GRAVITY = 1800;
-  const CORD_STIFFNESS = 200;
-  const RADIAL_DAMPING = 6.5;
-  const ANGULAR_DAMPING = 1.4;
+  const GRAVITY = 1250;
+  const CORD_STIFFNESS = 180;
+  const RADIAL_DAMPING = 8.5;
+  const ANGULAR_DAMPING = 2.4;
   const MAX_STRETCH = 54;
   const MAX_COMPRESSION = 34;
-  const ANGLE_LIMIT = 1.08;
+  const ANGLE_LIMIT = 0.95;
   const ANGLE_SLEEP = 0.0015;
   const EDGE_GAP = 8;
   const STEP = 1 / 240;
@@ -1643,11 +1643,17 @@ if (lanyardAnchor && lanyardPivot && lanyardCard) {
 
   const render = () => {
     const drop = clamp(length - HANGING_LENGTH, -MAX_COMPRESSION, MAX_STRETCH);
+    // 3D Perspective mapping
+    const rotY = clamp(angleRate * -9 + angle * -14, -28, 28);
+    const rotX = clamp(lengthRate * -0.02 - Math.abs(angleRate) * 1.8, -18, 22);
+
     lanyardPivot.style.transform = `rotate(${-angle}rad)`;
     lanyardRun.style.transform = `rotate(${angle}rad)`;
     lanyardElastic.style.height = `${CORD_SPAN + drop}px`;
     lanyardElastic.style.setProperty('--stretch', (drop / MAX_STRETCH).toFixed(3));
     lanyardPivot.style.setProperty('--drop', `${drop.toFixed(2)}px`);
+    lanyardPivot.style.setProperty('--rot-y', `${rotY.toFixed(2)}deg`);
+    lanyardPivot.style.setProperty('--rot-x', `${rotX.toFixed(2)}deg`);
   };
 
   const settle = () => {
@@ -1755,8 +1761,9 @@ if (lanyardAnchor && lanyardPivot && lanyardCard) {
     const now = performance.now();
     const dt = Math.max(0.008, (now - pointerAt) / 1000);
     pointerAt = now;
-    angleRate = clamp(blend(angleRate, (target.angle - angle) / dt, 0.55), -6, 6);
-    lengthRate = clamp(blend(lengthRate, (target.length - length) / dt, 0.55), -680, 980);
+    // Smoother drag tracking with dampened velocity injection
+    angleRate = clamp(blend(angleRate, (target.angle - angle) / dt, 0.4), -4.5, 4.5);
+    lengthRate = clamp(blend(lengthRate, (target.length - length) / dt, 0.4), -450, 650);
     angle = target.angle;
     length = target.length;
     render();
