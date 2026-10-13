@@ -14,8 +14,8 @@ colors:
   line-dark: '#2A323B'
   line-light: '#D7E0E6'
 typography:
-  display: system sans stack
-  body: system sans stack
+  display: Outfit variable, system-ui fallback
+  body: Outfit variable, system-ui fallback
   mono: system monospace
 ---
 
@@ -47,7 +47,7 @@ These twelve values are the single source of truth for colour. The scroll animat
 
 ## 3. Type and spacing
 
-- Use system sans fonts with robust fallbacks; no external font request required for core rendering. The stack must begin at `system-ui` rather than naming a substitute face: naming Arial as a stand-in for Helvetica is what produces the generic default this system exists to avoid.
+- Use the Outfit variable font (weights 300–800) as the primary face, self-hosted as two subsetted woff2 files under `assets/fonts/` with `font-display: swap` and `system-ui` kept directly after it in the stack, so the page makes zero third-party requests and core rendering never blocks on the network. The stack must never fall back to a named Arial/Helvetica substitute first: that is what produces the generic default this system exists to avoid.
 - Display name: fluid 52–132px, tight but readable line-height, no clipped descenders.
 - Section title: fluid 40–80px. Body: 16px minimum where practical, line-height 1.65–1.85. Metadata: 10–13px only when nonessential.
 - 4px spacing base; common rhythm 8, 12, 16, 24, 32, 48, 64, 96.

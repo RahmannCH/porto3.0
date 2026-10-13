@@ -685,7 +685,7 @@ Components added after the reference-driven pass, kept in their own file so
   text-overflow: ellipsis;
   opacity: 0;
   pointer-events: none;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 6px 16px rgba(6, 16, 28, 0.3);
   transform: translateX(-50%) translateY(4px) scaleX(var(--facing, 1)) scale(0.85);
   transform-origin: bottom center;
   transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease-out;
@@ -832,7 +832,7 @@ Components added after the reference-driven pass, kept in their own file so
   transform: translateX(-50%) rotate(-4deg);
   width: 48px;
   height: 48px;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
+  filter: drop-shadow(0 4px 6px rgba(6, 16, 28, 0.5));
   pointer-events: auto;
   cursor: grab;
   z-index: 6;
@@ -864,7 +864,7 @@ Components added after the reference-driven pass, kept in their own file so
   border-radius: 18px;
   background: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.12);
-  box-shadow: 0 28px 55px rgba(0, 0, 0, 0.4), 0 10px 20px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 28px 55px rgba(6, 16, 28, 0.45), 0 10px 20px rgba(6, 16, 28, 0.3);
   cursor: grab;
   user-select: none;
   touch-action: none;
@@ -880,7 +880,7 @@ Components added after the reference-driven pass, kept in their own file so
    spreads. This is the only state change on drag. */
 .id-card-body.is-held {
   cursor: grabbing;
-  box-shadow: 0 35px 65px rgba(0, 0, 0, 0.5), 0 12px 25px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 35px 65px rgba(6, 16, 28, 0.5), 0 12px 25px rgba(6, 16, 28, 0.32);
 }
 
 .card-hole {
@@ -989,7 +989,7 @@ Components added after the reference-driven pass, kept in their own file so
   }
   .id-card-body {
     transform: none !important;
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35), 0 8px 16px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 18px 40px rgba(6, 16, 28, 0.38), 0 8px 16px rgba(6, 16, 28, 0.24);
   }
   .id-card-sway {
     animation: none;
@@ -1007,4 +1007,98 @@ Components added after the reference-driven pass, kept in their own file so
   .mascot-environment {
     display: none !important;
   }
+}
+
+/* ---- Awwwards pass: marquee band, inline heading media, pinned journey ---- */
+
+.tech-marquee {
+  overflow: hidden;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 1.15rem 0;
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll 38s linear infinite;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+.marquee-list {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font: 600 0.78rem/1 var(--mono);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.marquee-list li::after {
+  content: "/";
+  margin-inline: 1.6rem;
+  color: var(--subtle);
+}
+
+@keyframes marquee-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.inline-media {
+  display: inline-block;
+  width: 1.7em;
+  height: 0.66em;
+  margin-inline: 0.1em;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: url("../assets/zadify-preview.jpg") center 32% / cover no-repeat;
+  filter: grayscale(1) contrast(1.15);
+  vertical-align: 0.04em;
+  transition: filter 0.4s ease;
+}
+
+.inline-media:hover {
+  filter: grayscale(0) contrast(1.05);
+}
+
+@media (min-width: 1040px) {
+  .journey {
+    display: grid;
+    grid-template-columns: minmax(260px, 0.42fr) minmax(0, 1fr);
+    column-gap: 3.5rem;
+    align-items: start;
+  }
+  .journey .section-heading {
+    position: sticky;
+    top: 7rem;
+    margin-bottom: 0;
+  }
+  .journey .section-heading h2 {
+    max-width: 100%;
+    font-size: clamp(2.2rem, 3.2vw, 3rem);
+    text-wrap: pretty;
+  }
+  .timeline {
+    margin-left: 0;
+  }
+}
+
+.site-nav a.is-current {
+  color: var(--ink);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.scrub-word {
+  transition: opacity 0.18s linear;
 }

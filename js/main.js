@@ -1845,3 +1845,58 @@ if (lanyardAnchor && lanyardPivot && lanyardCard) {
   measureHook();
   render();
 }
+/* Current-section indicator for the header navigation */
+(() => {
+  const spyLinks = Array.from(document.querySelectorAll('.site-nav a[href^="#"]'));
+  const spySections = spyLinks
+    .map((link) => document.querySelector(link.getAttribute('href')))
+    .filter(Boolean);
+  if (!spySections.length || !('IntersectionObserver' in window)) return;
+  const observer = new IntersectionObserver((entries) => {
+    const visible = entries.find((entry) => entry.isIntersecting);
+    if (!visible) return;
+    spyLinks.forEach((link) => {
+      const current = link.getAttribute('href') === '#' + visible.target.id;
+      link.classList.toggle('is-current', current);
+      if (current) link.setAttribute('aria-current', 'true');
+      else link.removeAttribute('aria-current');
+    });
+  }, { rootMargin: '-45% 0px -50% 0px', threshold: 0 });
+  spySections.forEach((section) => observer.observe(section));
+})();
+
+/* Scroll-scrubbed word reveal on the about paragraph */
+(() => {
+  const paragraph = document.querySelector('.about-content > p');
+  if (!paragraph || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const parts = paragraph.textContent.split(/(\s+)/);
+  paragraph.textContent = '';
+  const words = parts
+    .map((part) => {
+      if (!part.trim()) {
+        paragraph.append(part);
+        return null;
+      }
+      const span = document.createElement('span');
+      span.className = 'scrub-word';
+      span.textContent = part;
+      paragraph.append(span);
+      return span;
+    })
+    .filter(Boolean);
+  if (!words.length) return;
+  let finished = false;
+  const update = () => {
+    if (finished) return;
+    const rect = paragraph.getBoundingClientRect();
+    const progress = Math.min(1, Math.max(0, (innerHeight * 0.9 - rect.top) / (innerHeight * 0.5)));
+    words.forEach((word, index) => {
+      const start = (index / words.length) * 0.6;
+      const local = Math.min(1, Math.max(0, (progress - start) / 0.4));
+      word.style.opacity = String(0.12 + 0.88 * local);
+    });
+    if (progress >= 1) finished = true;
+  };
+  addEventListener('scroll', update, { passive: true });
+  update();
+})();

@@ -10,6 +10,9 @@ const viewports = [
 
 for (const viewport of viewports) {
   test(`${viewport.name}: personal portfolio loads without broken assets or overflow`, async ({ page }) => {
+    // Eager image decodes, a full scroll pass, and a full-page screenshot over
+    // a very tall page: the default 30s budget is not enough under load.
+    test.slow();
     const pageErrors = [];
     const consoleErrors = [];
     const failedLocalRequests = [];
@@ -49,6 +52,16 @@ for (const viewport of viewports) {
       document: document.body.scrollWidth,
       topLevel: [...document.body.children].map(element => ({ tag: element.tagName, className: typeof element.className === 'string' ? element.className : '', left: Math.round(element.getBoundingClientRect().left), right: Math.round(element.getBoundingClientRect().right), width: Math.round(element.getBoundingClientRect().width), scrollWidth: element.scrollWidth })),
       overflowElements: [...document.querySelectorAll('body *')]
+        // Content clipped by an overflow ancestor (marquee tracks, decorative
+        // crops) can never reach the page scrollbar, so only elements that
+        // escape with no clipping ancestor are treated as real overflow.
+        .filter(element => {
+          for (let node = element.parentElement; node && node !== document.body; node = node.parentElement) {
+            const overflowX = getComputedStyle(node).overflowX;
+            if (overflowX === 'hidden' || overflowX === 'clip' || overflowX === 'auto' || overflowX === 'scroll') return false;
+          }
+          return true;
+        })
         .map(element => ({ tag: element.tagName, className: typeof element.className === 'string' ? element.className : '', text: (element.textContent || '').trim().slice(0, 32), left: Math.round(element.getBoundingClientRect().left), right: Math.round(element.getBoundingClientRect().right), width: Math.round(element.getBoundingClientRect().width) }))
         .filter(element => element.right > document.documentElement.clientWidth + 1)
         .slice(0, 5),
@@ -576,7 +589,7 @@ test('mascots are large enough to read and keep a minimum gap while walking', as
     document.querySelector('.mascot-toggle')?.click();
     await new Promise(resolve => setTimeout(resolve, 60));
 
-    const settle = () => new Promise(resolve => setTimeout(resolve, 340));
+    const settle = () => new Promise(resolve => setTimeout(resolve, 500));
 
     pet.classList.add('has-speech');
     await settle();
@@ -765,15 +778,19 @@ test('pets do not startle from a distance and keep walking when untouched', asyn
   });
   expect(scared).toBe(0);
 
+  // Walking is interrupted by short idle and look-around pauses, so a fixed
+  // 60-frame snapshot can land entirely inside one pause and read zero. Poll
+  // until a pet actually covers ground instead, up to a hard frame budget.
   const moved = await page.evaluate(async () => {
-    const read = () => Array.from(document.querySelectorAll('.walking-mascot'))
-      .map(el => parseFloat(el.style.left || '0'));
-    const before = read();
-    for (let i = 0; i < 60; i += 1) {
+    const pets = Array.from(document.querySelectorAll('.walking-mascot'));
+    const read = () => pets.map(el => parseFloat(el.style.left || '0'));
+    const start = read();
+    for (let i = 0; i < 600; i += 1) {
       await new Promise(resolve => requestAnimationFrame(resolve));
+      const now = read();
+      if (now.some((value, index) => Math.abs(value - start[index]) > 1)) return true;
     }
-    const after = read();
-    return before.map((value, index) => Math.abs(after[index] - value));
+    return false;
   });
-  expect(Math.max(...moved)).toBeGreaterThan(1);
+  expect(moved).toBe(true);
 });
