@@ -122,15 +122,18 @@ if (dragItems.length > 0) {
 
   updateBases();
 
-  // Terrain calculation directly upon the visible letterforms of "MUHAMMAD"
+  // Terrain calculation directly upon the visible letterforms of "MUHAMMAD".
+  // The name is split across spans for the nickname emphasis, so the text node
+  // lives inside the first span rather than being h1.firstChild directly.
   const getLetterFloor = (xViewport) => {
     const h1 = document.querySelector('#hero-title');
     if (!h1 || !h1.firstChild) return { y: 250, slope: 0 };
+    const source = h1.querySelector('span')?.firstChild ?? h1.firstChild;
     let wr;
     try {
       const range = document.createRange();
-      range.setStart(h1.firstChild, 0);
-      range.setEnd(h1.firstChild, Math.min(8, h1.firstChild.length || 8));
+      range.setStart(source, 0);
+      range.setEnd(source, Math.min(8, source.length || 8));
       wr = range.getBoundingClientRect();
     } catch (_) {
       wr = h1.getBoundingClientRect();
