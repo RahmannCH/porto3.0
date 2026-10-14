@@ -794,3 +794,80 @@ test('pets do not startle from a distance and keep walking when untouched', asyn
   });
   expect(moved).toBe(true);
 });
+
+test('light-theme text and primary button meet WCAG AA contrast', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(baseURL);
+
+  // Flip to light via the real toggle so computed values reflect shipped CSS.
+  await page.locator('.theme-toggle').click();
+  await page.waitForTimeout(250);
+
+  const result = await page.evaluate(() => {
+    const parse = color => color.match(/[\d.]+/g).map(Number);
+    const lum = ([r, g, b]) => {
+      const lin = v => {
+        const s = v / 255;
+        return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+      };
+      return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+    };
+    const ratio = (fg, bg) => {
+      const l1 = lum(parse(fg));
+      const l2 = lum(parse(bg));
+      return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+    };
+    const resolve = value => {
+      const probe = document.createElement('div');
+      probe.style.color = value;
+      document.body.append(probe);
+      const rgb = getComputedStyle(probe).color;
+      probe.remove();
+      return rgb;
+    };
+    const rootStyle = getComputedStyle(document.documentElement);
+    const bgRgb = resolve(rootStyle.getPropertyValue('--bg').trim());
+    const subtleRgb = resolve(rootStyle.getPropertyValue('--subtle').trim());
+    const btn = document.querySelector('.button-primary');
+    const btnStyle = getComputedStyle(btn);
+    return {
+      subtleVsBg: ratio(subtleRgb, bgRgb),
+      btnText: btnStyle.color,
+      btnBg: btnStyle.backgroundColor,
+    };
+  });
+
+  // AA for normal text is 4.5:1; --subtle was 4.45 before the fix.
+  expect(result.subtleVsBg).toBeGreaterThanOrEqual(4.5);
+  // Primary button is large/bold UI text (AA large = 3:1, we hold to 4.5).
+  const btnRatio = await page.evaluate(({ fg, bgv }) => {
+    const parse = color => color.match(/[\d.]+/g).map(Number);
+    const lum = ([r, g, b]) => {
+      const lin = v => {
+        const s = v / 255;
+        return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+      };
+      return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+    };
+    const l1 = lum(parse(fg));
+    const l2 = lum(parse(bgv));
+    return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+  }, { fg: result.btnText, bgv: result.btnBg });
+  expect(btnRatio).toBeGreaterThanOrEqual(4.5);
+});
+
+test('disabled controls visibly dim via the global :disabled rule', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(baseURL);
+
+  const opacity = await page.evaluate(() => {
+    const btn = document.getElementById('snap-btn');
+    btn.disabled = true;
+    const value = parseFloat(getComputedStyle(btn).opacity);
+    btn.disabled = false;
+    return value;
+  });
+  // Global rule is opacity:.45 — anything at or above 1 means the state is invisible.
+  expect(opacity).toBeLessThan(1);
+  expect(opacity).toBeGreaterThan(0);
+});

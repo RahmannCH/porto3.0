@@ -37,7 +37,7 @@ Components added after the reference-driven pass, kept in their own file so
   color: var(--muted);
   font: inherit;
   font-size: 0.72rem;
-  font-weight: 650;
+  font-weight: 600;
   text-align: left;
   cursor: pointer;
   transition: color 0.18s, background-color 0.18s;
@@ -120,7 +120,7 @@ Components added after the reference-driven pass, kept in their own file so
   background: none;
   font: inherit;
   font-size: 0.74rem;
-  font-weight: 750;
+  font-weight: 700;
   text-align: left;
   cursor: pointer;
 }
@@ -225,6 +225,21 @@ Components added after the reference-driven pass, kept in their own file so
   pointer-events: none;
 }
 
+@keyframes skeleton-sweep {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+.stack-photo[data-loading="true"] {
+  background: linear-gradient(100deg, var(--surface-raised) 40%, color-mix(in srgb, var(--line) 55%, var(--surface-raised)) 50%, var(--surface-raised) 60%);
+  background-size: 200% 100%;
+  animation: skeleton-sweep 1.4s ease-in-out infinite;
+}
+
+.stack-photo[data-loading="true"] img {
+  opacity: 0;
+}
+
 /* When a photo has not been supplied yet the card says so on its face rather
    than borrowing an unrelated image and captioning it as documentation. The
    image still occupies the frame, so dropping the real file in is the only step
@@ -266,7 +281,7 @@ Components added after the reference-driven pass, kept in their own file so
 
 .stack-caption strong {
   font-size: 0.86rem;
-  font-weight: 750;
+  font-weight: 700;
   letter-spacing: -0.01em;
 }
 
@@ -310,6 +325,12 @@ Components added after the reference-driven pass, kept in their own file so
 
 .stack-nav:active {
   transform: scale(0.94);
+}
+
+.stack-nav:disabled {
+  border-color: var(--line);
+  color: var(--muted);
+  transform: none;
 }
 
 .stack-counter {
@@ -931,7 +952,7 @@ Components added after the reference-driven pass, kept in their own file so
   transform: translate(-50%, -50%);
   font-family: var(--display);
   font-size: 50px;
-  font-weight: 850;
+  font-weight: 800;
   letter-spacing: -0.04em;
   color: rgba(0, 0, 0, 0.06);
   text-transform: uppercase;
@@ -999,6 +1020,17 @@ Components added after the reference-driven pass, kept in their own file so
 @media (prefers-reduced-motion: reduce) {
   .id-card-sway {
     animation: none;
+  }
+  .marquee-track {
+    animation: none !important;
+  }
+  .stack-photo[data-loading="true"] {
+    animation: none !important;
+    background: var(--surface-raised);
+  }
+  .scrub-word {
+    transition: none !important;
+    opacity: 1 !important;
   }
 }
 

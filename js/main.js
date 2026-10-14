@@ -1172,6 +1172,23 @@ document.addEventListener('keydown', (e) => {
     closeCaseStudy();
   }
 });
+// Native <dialog>.showModal() already traps Tab; the attribute-based fallback
+// does not, so cycle focus manually when the modal is open without a shadow.
+modal?.addEventListener('keydown', (e) => {
+  if (e.key !== 'Tab' || !modal || !(modal.open || modal.hasAttribute('open'))) return;
+  if (typeof modal.showModal === 'function' && modal.open) return;
+  const focusables = modal.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])');
+  if (!focusables.length) return;
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault();
+    first.focus();
+  }
+});
 
 document.querySelector('#current-year').textContent = new Date().getFullYear();
 
@@ -1181,8 +1198,10 @@ const snapLabel = snapBtn?.querySelector('.snap-label');
 if (snapBtn) {
   const snapOriginal = snapLabel?.textContent ?? '';
   const setSnapLabel = text => { if (snapLabel) snapLabel.textContent = text; };
+  let snapBusy = false;
 
   snapBtn.addEventListener('click', async () => {
+    if (snapBusy) return;
     if (!window.snapdom) {
       setSnapLabel('Belum siap');
       setTimeout(() => setSnapLabel(snapOriginal), 2000);
@@ -1192,8 +1211,10 @@ if (snapBtn) {
     if (window.__forceStickersSettle) window.__forceStickersSettle();
 
     try {
+      snapBusy = true;
       snapBtn.disabled = true;
-      setSnapLabel('Menyusun...');
+      snapBtn.setAttribute('aria-busy', 'true');
+      setSnapLabel('Memproses...');
       const captureResult = await window.snapdom(document.querySelector('#main'), {
         exclude: ['.mascot-dock', '.mascot-environment', '.project-image', '.all-projects', '.text-link', '.project-links'],
         backgroundColor: document.documentElement.dataset.theme === 'light' ? '#F6F8FA' : '#0B0D10'
@@ -1203,7 +1224,9 @@ if (snapBtn) {
     } catch (e) {
       setSnapLabel('Gagal');
     } finally {
+      snapBusy = false;
       snapBtn.disabled = false;
+      snapBtn.removeAttribute('aria-busy');
       setTimeout(() => setSnapLabel(snapOriginal), 2000);
     }
   });
@@ -1411,13 +1434,22 @@ document.querySelectorAll('[data-stack-gallery]').forEach(gallery => {
       card.setAttribute('data-missing', 'true');
       return;
     }
+    const photo = image.closest('.stack-photo');
     const settle = () => {
       const loaded = image.complete && image.naturalWidth > 0;
       card.setAttribute('data-missing', loaded ? 'false' : 'true');
+      if (photo) photo.removeAttribute('data-loading');
     };
     image.addEventListener('load', settle);
     image.addEventListener('error', settle);
-    settle();
+    if (image.complete && image.naturalWidth > 0) {
+      settle();
+    } else {
+      if (photo) photo.setAttribute('data-loading', 'true');
+      if (typeof image.decode === 'function') {
+        image.decode().then(settle).catch(settle);
+      }
+    }
   };
   cards.forEach(flagPhoto);
 

@@ -36,12 +36,12 @@ Keep the static HTML/CSS/JS architecture. No UI framework, CMS, form backend, an
 | Raised surface | `#1A2027` | `#EAF0F4` | Selected controls and panels |
 | Ink | `#F4F6F8` | `#14191E` | Main text |
 | Muted | `#A4ADB8` | `#4F5C67` | Paragraphs and secondary text |
-| Subtle | `#7C8793` | `#667582` | Metadata; verify contrast |
+| Subtle | `#7C8793` | `#5A6875` | Metadata; verify contrast |
 | Line | `#2A323B` | `#D7E0E6` | Dividers and control borders |
 | Accent | `#A9E2F6` | `#397B99` | Focus, links, selected labels |
 | Accent strong | `#67B9D8` | `#286A87` | Accent text and interactive states |
 
-Accent never communicates status by color alone. Any future error/success state needs semantic text/icon and accessible contrast. Keep same hierarchy and palette logic in both themes. Verify body text contrast ≥4.5:1 and large text ≥3:1 against actual surfaces.
+Accent never communicates status by color alone. Any future error/success state needs semantic text/icon and accessible contrast. Keep same hierarchy and palette logic in both themes. Verify body text contrast ≥4.5:1 and large text ≥3:1 against actual surfaces. In the light theme the primary button inverts to white text on Accent strong (`#286A87`) because dark text on Accent (`#397B99`) measured 3.84:1 and failed AA; a regression test asserts both the subtle token and the primary button clear 4.5:1.
 
 These twelve values are the single source of truth for colour. The scroll animation engine ships its own six (`--sc-canvas`, `--sc-surface`, `--sc-ink`, `--sc-ink-soft`, `--sc-accent`, `--sc-accent-ink`) in `css/scrollcraft.css`, and they must mirror this table in both themes rather than carry an independent palette. Two palettes on one page means the progress bar, selection and caret disagree with every other component. A test asserts `--sc-accent` equals `--accent` in both themes.
 
