@@ -36,11 +36,11 @@ Components added after the reference-driven pass, kept in their own file so
   background: none;
   color: var(--muted);
   font: inherit;
-  font-size: 0.72rem;
+  font-size: var(--fs-label);
   font-weight: 600;
   text-align: left;
   cursor: pointer;
-  transition: color 0.18s, background-color 0.18s;
+  transition: color var(--dur-fast), background-color var(--dur-fast);
 }
 
 .hero-print small {
@@ -309,7 +309,7 @@ Components added after the reference-driven pass, kept in their own file so
   background: var(--surface);
   color: var(--ink);
   cursor: pointer;
-  transition: border-color 0.18s, color 0.18s, transform 0.18s;
+  transition: border-color var(--dur-fast), color var(--dur-fast), transform var(--dur-fast);
 }
 
 .stack-nav svg {
@@ -1132,5 +1132,5 @@ Components added after the reference-driven pass, kept in their own file so
 }
 
 .scrub-word {
-  transition: opacity 0.18s linear;
+  transition: opacity var(--dur-fast) linear;
 }

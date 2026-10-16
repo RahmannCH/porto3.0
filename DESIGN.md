@@ -40,13 +40,20 @@ Keep the static HTML/CSS/JS architecture. No UI framework, CMS, form backend, an
 | Line | `#2A323B` | `#D7E0E6` | Dividers and control borders |
 | Accent | `#A9E2F6` | `#397B99` | Focus, links, selected labels |
 | Accent strong | `#67B9D8` | `#286A87` | Accent text and interactive states |
+| Accent deep | — | `#1E5269` | Primary button hover in light theme |
 
 Accent never communicates status by color alone. Any future error/success state needs semantic text/icon and accessible contrast. Keep same hierarchy and palette logic in both themes. Verify body text contrast ≥4.5:1 and large text ≥3:1 against actual surfaces. In the light theme the primary button inverts to white text on Accent strong (`#286A87`) because dark text on Accent (`#397B99`) measured 3.84:1 and failed AA; a regression test asserts both the subtle token and the primary button clear 4.5:1.
 
-These twelve values are the single source of truth for colour. The scroll animation engine ships its own six (`--sc-canvas`, `--sc-surface`, `--sc-ink`, `--sc-ink-soft`, `--sc-accent`, `--sc-accent-ink`) in `css/scrollcraft.css`, and they must mirror this table in both themes rather than carry an independent palette. Two palettes on one page means the progress bar, selection and caret disagree with every other component. A test asserts `--sc-accent` equals `--accent` in both themes.
+These values are the single source of truth for colour. The scroll animation engine ships its own six (`--sc-canvas`, `--sc-surface`, `--sc-ink`, `--sc-ink-soft`, `--sc-accent`, `--sc-accent-ink`) in `css/scrollcraft.css`, and they must mirror this table in both themes rather than carry an independent palette. Two palettes on one page means the progress bar, selection and caret disagree with every other component. A test asserts `--sc-accent` equals `--accent` in both themes.
 
-## 3. Type and spacing
+## 3. Type, spacing, and motion tokens
 
+All tokens are formally declared in `:root` and wired across CSS:
+
+- **Typography**: `--fs-meta-sm` (`.59rem`), `--fs-meta` (`.66rem`), `--fs-label` (`.72rem`), `--fs-body-sm` (`.81rem`), `--fs-body` (`.88rem`), `--fs-lead` (`.98rem`). Display uses fluid clamps. Weights restricted to 400, 600, 700, 800 (Outfit variable range).
+- **Spacing**: `--space-1` (`4px`) through `--space-24` (`96px`) on 4px base; `--section-y` (`clamp(7.5rem, 12vw, 11rem)`).
+- **Containers**: `--container-section` (`1240px`), `--container-header` (`1320px`), `--container-hero` (`1520px`).
+- **Motion**: `--dur-snap` (`.16s`), `--dur-fast` (`.18s`), `--dur-med` (`.3s`), `--dur-slow` (`.7s`), `--ease-out` (`cubic-bezier(.22,1,.36,1)`).
 - Use the Outfit variable font (weights 300–800) as the primary face, self-hosted as two subsetted woff2 files under `assets/fonts/` with `font-display: swap` and `system-ui` kept directly after it in the stack, so the page makes zero third-party requests and core rendering never blocks on the network. The stack must never fall back to a named Arial/Helvetica substitute first: that is what produces the generic default this system exists to avoid.
 - Display name: fluid 52–132px, tight but readable line-height, no clipped descenders.
 - Section title: fluid 40–80px. Body: 16px minimum where practical, line-height 1.65–1.85. Metadata: 10–13px only when nonessential.
