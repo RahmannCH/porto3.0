@@ -2288,7 +2288,17 @@ if (lanyardAnchor && lanyardPivot && lanyardCard) {
     return copied;
   };
 
-  emailLink.addEventListener('click', () => {
+// A pointer click is the fast path: it copies. Keyboard and assistive-tech
+  // activation reports detail 0, and those visitors cannot hold a modifier, so
+  // they keep the mail client untouched — a copy shortcut is not a good enough
+  // reason to take the mailto away from anyone. A modified click means the
+  // visitor wants the normal behaviour.
+  const wantsMailClient = event =>
+    event.detail === 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+
+  emailLink.addEventListener('click', event => {
+    if (wantsMailClient(event)) return;
+    event.preventDefault();
     writeToClipboard(address).then(copied => {
       announce(copied ? `${address} tersalin` : address);
     });

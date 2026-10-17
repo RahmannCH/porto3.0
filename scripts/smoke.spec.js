@@ -932,23 +932,41 @@ test('Ctrl+K opens the developer console and stays out of the way while typing',
   await expect(page.locator('#footer-cli-btn')).toBeFocused();
 });
 
-test('the email row copies its address without giving up the mailto link', async ({ page, context }) => {
+test('the email row copies on a pointer click but keeps the mailto for everyone else', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.goto(baseURL);
 
   const email = page.locator('.contact-links a[href^="mailto:"]');
-  // The copy is additive. The href stays a mailto and the default is never
-  // cancelled, so a visitor with a mail client configured still gets it.
+  // The copy is a shortcut, not a replacement. The href stays a mailto, and two
+  // paths still open the mail client: a modified click, and keyboard or
+  // assistive-tech activation, which reports detail 0 and cannot hold a modifier.
   await expect(email).toHaveAttribute('href', 'mailto:Rahmannch19@gmail.com');
+  await expect(email).toHaveAttribute('title', /Enter/);
+
+  // Recorded after the page's own handler has run, so this observes whether the
+  // default was actually cancelled rather than guessing from the clipboard.
+  await page.evaluate(() => {
+    window.__mailtoAllowed = null;
+    document.addEventListener('click', event => {
+      window.__mailtoAllowed = !event.defaultPrevented;
+    });
+  });
 
   await email.click();
   const toast = page.locator('#copy-toast');
   await expect(toast).toHaveClass(/is-shown/);
   await expect(toast).toContainText('Rahmannch19@gmail.com');
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('Rahmannch19@gmail.com');
+  expect(await page.evaluate(() => window.__mailtoAllowed), 'pointer click should not open the mail client').toBe(false);
 
   // The toast has to leave on its own rather than sit over the page for good.
   await expect(toast).not.toHaveClass(/is-shown/, { timeout: 5000 });
+
+  // Keyboard activation keeps the mailto. Without this the copy shortcut would
+  // be taking a link away from anyone who cannot hold a modifier key.
+  await email.focus();
+  await page.keyboard.press('Enter');
+  expect(await page.evaluate(() => window.__mailtoAllowed), 'Enter should open the mail client').toBe(true);
 });
 
 test('the journey timeline fills as it is scrolled, with no scroll listener', async ({ page }) => {
