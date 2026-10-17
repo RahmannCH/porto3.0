@@ -1000,33 +1000,39 @@ test('the tech marquee answers the scroll and settles back to its resting pace',
 });
 
 test('the footer QR stays legible enough to be read by a camera', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(baseURL);
 
   const code = page.locator('.footer-qr');
   await expect(code).toHaveAttribute('href', 'https://github.com/RahmannCH');
   await expect(code).toHaveAttribute('aria-label', /GitHub/);
 
-  const plate = await code.locator('svg').evaluate(el => {
-    const rect = el.getBoundingClientRect();
-    return {
-      width: rect.width,
+  // Checked at every width the suite runs, not just the widest one: at 768 the
+  // row was tight enough that flex-shrink quietly took the mark from 104px to
+  // 86px, which passed a desktop-only assertion while putting the code back
+  // below the size it can be read at.
+  for (const width of [1440, 768, 390, 320]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.waitForTimeout(150);
+
+    const plate = await code.locator('svg').evaluate(el => ({
+      width: Math.round(el.getBoundingClientRect().width),
       radius: getComputedStyle(el).borderRadius,
       background: getComputedStyle(el).backgroundColor,
       fill: getComputedStyle(el.querySelector('path')).fill,
-    };
-  });
+    }));
 
-  // 29 modules plus a two-module quiet zone is 33 units across, so this width is
-  // what keeps each module near 3px. Below roughly 60px the code stops decoding.
-  expect(plate.width, 'QR is too small to scan off a screen').toBeGreaterThanOrEqual(90);
-  // The plate is white in both columns, so the modules must be near-black in
-  // both columns too: inheriting currentColor gave them muted grey on white.
-  expect(plate.fill).toBe('rgb(20, 25, 30)');
-  expect(plate.background).toBe('rgb(255, 255, 255)');
-  // A rounded plate clips the white field exactly where the finder patterns sit.
-  expect(plate.radius, 'rounded corners break the finder patterns').toBe('0px');
+    // 29 modules plus a two-module quiet zone is 33 units across, so this width
+    // is what keeps each module near 3px. Below roughly 60px it stops decoding.
+    expect(plate.width, `QR is too small to scan at ${width}px`).toBeGreaterThanOrEqual(90);
+    // The plate is white in both columns, so the modules must be near-black in
+    // both columns too: inheriting currentColor gave them muted grey on white.
+    expect(plate.fill, `QR modules lost contrast at ${width}px`).toBe('rgb(20, 25, 30)');
+    expect(plate.background, `QR plate lost its light field at ${width}px`).toBe('rgb(255, 255, 255)');
+    // A rounded plate clips the white field exactly where the finder patterns sit.
+    expect(plate.radius, 'rounded corners break the finder patterns').toBe('0px');
+  }
 
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.emulateMedia({ media: 'print' });
   await expect(code).toBeHidden();
 });
