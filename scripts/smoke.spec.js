@@ -871,3 +871,179 @@ test('disabled controls visibly dim via the global :disabled rule', async ({ pag
   expect(opacity).toBeLessThan(1);
   expect(opacity).toBeGreaterThan(0);
 });
+
+/* The tests below guard the pointer and scroll effects added after the design
+   passes. Each one pins a specific defect that was found and fixed, rather than
+   asserting that the feature exists: presence checks pass happily on an effect
+   that is invisible, miscoloured, or too small to work. */
+
+test('the ID card caption follows the theme instead of a fixed near-black', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(baseURL);
+
+  // .card-bottom is a figcaption inside .hero-portrait, so the caption chip is
+  // painted by that rule with var(--surface). The label used to carry a
+  // hardcoded #111111, which in the dark column is black type on a black chip:
+  // the role line measured 1.04:1 and could not be read at all.
+  for (const theme of ['dark', 'light']) {
+    await page.evaluate(value => { document.documentElement.dataset.theme = value; }, theme);
+    await page.waitForTimeout(200);
+
+    const measured = await page.locator('.card-role').evaluate(el => {
+      const parse = colour => colour.match(/[\d.]+/g).map(Number);
+      const luminance = ([r, g, b]) => {
+        const channel = v => {
+          const s = v / 255;
+          return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+        };
+        return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+      };
+      const foreground = luminance(parse(getComputedStyle(el).color));
+      const background = luminance(parse(getComputedStyle(el.parentElement).backgroundColor));
+      return {
+        ratio: (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05),
+        text: el.textContent.trim(),
+      };
+    });
+
+    expect(measured.text, 'the role label went missing').toBe('FULL-STACK DEVELOPER');
+    expect(measured.ratio, `caption is unreadable in the ${theme} theme`).toBeGreaterThanOrEqual(4.5);
+  }
+});
+
+test('Ctrl+K opens the developer console and stays out of the way while typing', async ({ page }) => {
+  await page.goto(baseURL);
+  const drawer = page.locator('#cli-drawer');
+  const input = page.locator('#cli-input');
+
+  await page.keyboard.press('Control+k');
+  await expect(drawer).toHaveAttribute('aria-hidden', 'false');
+  await expect(input).toBeFocused();
+
+  // Typing must not be hijacked: the shortcut has to stand down while a field
+  // has focus, or it turns into a key that cannot be entered.
+  await input.fill('help');
+  await page.keyboard.press('Control+k');
+  await expect(drawer).toHaveAttribute('aria-hidden', 'false');
+  await expect(input).toHaveValue('help');
+
+  await page.keyboard.press('Escape');
+  await expect(drawer).toHaveAttribute('aria-hidden', 'true');
+  await expect(page.locator('#footer-cli-btn')).toBeFocused();
+});
+
+test('the email row copies its address without giving up the mailto link', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto(baseURL);
+
+  const email = page.locator('.contact-links a[href^="mailto:"]');
+  // The copy is additive. The href stays a mailto and the default is never
+  // cancelled, so a visitor with a mail client configured still gets it.
+  await expect(email).toHaveAttribute('href', 'mailto:Rahmannch19@gmail.com');
+
+  await email.click();
+  const toast = page.locator('#copy-toast');
+  await expect(toast).toHaveClass(/is-shown/);
+  await expect(toast).toContainText('Rahmannch19@gmail.com');
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('Rahmannch19@gmail.com');
+
+  // The toast has to leave on its own rather than sit over the page for good.
+  await expect(toast).not.toHaveClass(/is-shown/, { timeout: 5000 });
+});
+
+test('the journey timeline fills as it is scrolled, with no scroll listener', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(baseURL);
+  const fill = page.locator('.timeline-progress');
+
+  // Driven by animation-timeline: view(), so the element's own animation
+  // timeline is the proof it is reading scroll rather than a scroll handler.
+  await expect(fill).toHaveCSS('animation-timeline', 'view()');
+  const atRest = await fill.evaluate(el => new DOMMatrix(getComputedStyle(el).transform).a);
+  expect(atRest, 'the fill should start undrawn').toBeLessThan(0.1);
+
+  await page.locator('#journey').scrollIntoViewIfNeeded();
+  await expect.poll(async () => fill.evaluate(el => new DOMMatrix(getComputedStyle(el).transform).a))
+    .toBeGreaterThan(0.2);
+});
+
+test('the tech marquee answers the scroll and settles back to its resting pace', async ({ page }) => {
+  await page.goto(baseURL);
+  const track = page.locator('.marquee-track');
+  const rate = () => track.evaluate(el => el.getAnimations()[0]?.playbackRate ?? 1);
+  expect(await rate()).toBe(1);
+
+  await page.evaluate(() => scrollBy({ top: 900, behavior: 'instant' }));
+  // Driven through the Web Animations API so the running animation is never
+  // restarted; a restarted marquee would jump rather than lean into the scroll.
+  await expect.poll(rate, { timeout: 3000 }).not.toBe(1);
+
+  await expect.poll(rate, { timeout: 4000 }).toBe(1);
+});
+
+test('the footer QR stays legible enough to be read by a camera', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(baseURL);
+
+  const code = page.locator('.footer-qr');
+  await expect(code).toHaveAttribute('href', 'https://github.com/RahmannCH');
+  await expect(code).toHaveAttribute('aria-label', /GitHub/);
+
+  const plate = await code.locator('svg').evaluate(el => {
+    const rect = el.getBoundingClientRect();
+    return {
+      width: rect.width,
+      radius: getComputedStyle(el).borderRadius,
+      background: getComputedStyle(el).backgroundColor,
+      fill: getComputedStyle(el.querySelector('path')).fill,
+    };
+  });
+
+  // 29 modules plus a two-module quiet zone is 33 units across, so this width is
+  // what keeps each module near 3px. Below roughly 60px the code stops decoding.
+  expect(plate.width, 'QR is too small to scan off a screen').toBeGreaterThanOrEqual(90);
+  // The plate is white in both columns, so the modules must be near-black in
+  // both columns too: inheriting currentColor gave them muted grey on white.
+  expect(plate.fill).toBe('rgb(20, 25, 30)');
+  expect(plate.background).toBe('rgb(255, 255, 255)');
+  // A rounded plate clips the white field exactly where the finder patterns sit.
+  expect(plate.radius, 'rounded corners break the finder patterns').toBe('0px');
+
+  await page.emulateMedia({ media: 'print' });
+  await expect(code).toBeHidden();
+});
+
+test('reduced motion removes the pointer effects instead of shortening them', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(baseURL);
+
+  await page.locator('.project-image').first().scrollIntoViewIfNeeded();
+  await page.locator('.button-primary').hover();
+  await page.waitForTimeout(500);
+
+  const state = await page.evaluate(() => {
+    const cover = document.querySelector('.project-image');
+    const button = document.querySelector('.button-primary');
+    const glow = document.querySelector('.hero-glow');
+    return {
+      glow: getComputedStyle(glow).display,
+      glowLit: glow.classList.contains('is-lit'),
+      coverTransform: getComputedStyle(cover).transform,
+      tilting: cover.classList.contains('is-tilting'),
+      buttonTransform: getComputedStyle(button).transform,
+      magnet: button.classList.contains('is-magnet'),
+      marqueeAnimations: document.querySelector('.marquee-track').getAnimations().length,
+      kicker: document.querySelector('.section-kicker').textContent.trim(),
+    };
+  });
+
+  expect(state.glow).toBe('none');
+  expect(state.glowLit).toBe(false);
+  expect(state.coverTransform).toBe('none');
+  expect(state.tilting).toBe(false);
+  expect(state.buttonTransform).toBe('none');
+  expect(state.magnet).toBe(false);
+  expect(state.marqueeAnimations).toBe(0);
+  expect(state.kicker, 'a scrambled kicker must land on its real text').toBe('karya pilihan');
+});
