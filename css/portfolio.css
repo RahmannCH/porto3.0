@@ -1302,3 +1302,173 @@ html[data-theme="light"] .hero-glow.is-lit {
     display: none;
   }
 }
+
+/* ============================================================================
+   Scroll-native and keyboard affordances
+   ----------------------------------------------------------------------------
+The journey fill is scroll-driven CSS, so it costs no scroll listener and
+   stays correct when JavaScript never runs. It sits behind @supports: without
+   support the timeline rule simply reads as a drawn line, which is what it
+   looked like before. The clipboard toast, the footer QR, and the container
+   queries are ordinary progressive additions.
+   ========================================================================== */
+
+/* --- Journey fill ---------------------------------------------------------- */
+/* The timeline already carries a top rule. The progress element sits on that
+   same line and scales across it, so the fill needs no new track and the
+   layout does not move by a pixel. */
+.timeline {
+  position: relative;
+}
+
+.timeline-progress {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: var(--accent-strong);
+  transform-origin: left center;
+  pointer-events: none;
+}
+
+@supports (animation-timeline: view()) {
+  .timeline-progress {
+    animation: timeline-draw linear both;
+    animation-timeline: view();
+    animation-range: cover 12% cover 88%;
+  }
+}
+
+@keyframes timeline-draw {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* --- Container queries ----------------------------------------------------- */
+/* Both grids are sized by their parent, so inline-size containment changes
+   nothing about their layout; it only lets the cards inside respond to how wide
+   the grid itself ended up, which is a different question from how wide the
+   window is. The viewport media queries stay for the cases they were written
+   for. */
+.project-grid {
+  container-type: inline-size;
+  container-name: project-grid;
+}
+
+@container project-grid (max-width: 640px) {
+  .project-featured {
+    grid-template-columns: 1fr;
+    gap: 0.7rem;
+  }
+
+  .project-featured .project-copy {
+    padding: 0;
+  }
+}
+
+.contact-links {
+  container-type: inline-size;
+  container-name: contact-links;
+}
+
+@container contact-links (max-width: 460px) {
+  .contact-links a {
+    grid-template-columns: 64px 1fr auto;
+  }
+}
+
+/* --- Footer QR and CLI shortcut ------------------------------------------- */
+/* The code is drawn in currentColor so it follows the theme, but a scanner
+   wants dark modules on a light field, so the mark keeps its own white plate
+   in both columns rather than trusting an inverted QR to be read. */
+.footer-qr {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 44px;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color var(--dur-fast);
+}
+
+.footer-qr:hover {
+  color: var(--accent-strong);
+}
+
+.footer-qr svg {
+  /* 29 modules plus a two-module quiet zone is 33 units across. This width puts
+     each module near 3.3px, which is what it takes to decode off a screen: at
+     92px the modules were ~2.4px and the mark looked right while failing to
+     scan, and at 40px it was pure decoration. */
+  width: 104px;
+  height: 104px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  /* Square, deliberately. A rounded plate clips the corners of the white field
+     and lets the page behind show through exactly where the three finder
+     patterns sit, which is enough to stop a camera reading the code. */
+  border-radius: 0;
+  background: #ffffff;
+}
+
+/* The plate is white in both columns, so the modules have to be near-black in
+   both columns too. Inheriting currentColor gave them the muted grey of the
+   link, which against white is around 2:1 and effectively unscannable. A CSS
+   declaration outranks the fill attribute on the path. */
+.footer-qr svg path {
+  fill: #14191e;
+}
+
+.footer-qr span {
+  font: 600 0.62rem/1 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.footer-cli-btn {
+  gap: 0.5rem;
+}
+
+.footer-cli-btn kbd {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.1rem 0.32rem;
+  color: var(--subtle);
+  font: 600 0.62rem/1 var(--mono);
+}
+
+.footer-cli-btn:hover kbd {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+}
+
+/* --- Clipboard toast ------------------------------------------------------- */
+/* Fixed, so confirming a copy never reflows the contact rows it is reporting
+   on, and polite, so the confirmation is announced without interrupting. */
+.copy-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.6rem;
+  z-index: 90;
+  margin: 0;
+  padding: 0.65rem 1.05rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-raised);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+  font: 600 var(--fs-meta)/1 var(--mono);
+  opacity: 0;
+  transform: translate(-50%, 1rem);
+  pointer-events: none;
+  transition: opacity var(--dur-fast), transform var(--dur-fast);
+}
+
+.copy-toast.is-shown {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}

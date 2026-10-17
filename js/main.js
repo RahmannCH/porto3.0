@@ -1311,6 +1311,15 @@ document.addEventListener('keydown', (e) => {
     toggleCli({ restoreFocus: true });
     return;
   }
+  // Ctrl/Cmd+K is the convention command palettes are opened with, and it is the
+  // shortcut most people already try before hunting for a backtick. It is left
+  // alone while a field has focus so it cannot swallow typing.
+  const paletteKey = (e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'k';
+  if (paletteKey && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+    e.preventDefault();
+    toggleCli();
+    return;
+  }
   if (e.key === '`' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
     e.preventDefault();
     toggleCli();
@@ -2229,4 +2238,97 @@ if (lanyardAnchor && lanyardPivot && lanyardCard) {
     hero.addEventListener('pointerleave', stop);
     hero.addEventListener('pointercancel', stop);
   })();
+})();
+
+/* Copy the address out of the contact row.
+   The row is a real mailto link and stays one: nothing here cancels it, so a
+   visitor with a mail client configured still gets their composer. The copy is
+   the part that was missing, because the address is long and people retype it.
+   If the clipboard is unavailable the address is shown in the toast instead, so
+   the confirmation is never a lie about what happened. */
+(() => {
+  const emailLink = document.querySelector('.contact-links a[href^="mailto:"]');
+  const toast = document.getElementById('copy-toast');
+  if (!emailLink || !toast) return;
+
+  const href = emailLink.getAttribute('href') || '';
+  const address = decodeURIComponent(href.replace(/^mailto:/i, '').split('?')[0]);
+  if (!address) return;
+
+  let hideTimer = 0;
+
+  const announce = message => {
+    toast.textContent = message;
+    toast.classList.add('is-shown');
+    window.clearTimeout(hideTimer);
+    hideTimer = window.setTimeout(() => {
+      toast.classList.remove('is-shown');
+    }, 2600);
+  };
+
+  const writeToClipboard = async text => {
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        // Permission denied or an insecure context: use the selection path.
+      }
+    }
+    const scratch = document.createElement('textarea');
+    scratch.value = text;
+    scratch.setAttribute('readonly', '');
+    scratch.style.position = 'fixed';
+    scratch.style.top = '0';
+    scratch.style.opacity = '0';
+    document.body.append(scratch);
+    scratch.select();
+    const copied = document.execCommand('copy');
+    scratch.remove();
+    return copied;
+  };
+
+  emailLink.addEventListener('click', () => {
+    writeToClipboard(address).then(copied => {
+      announce(copied ? `${address} tersalin` : address);
+    });
+  });
+})();
+
+/* The tech marquee answers the scroll. Playback rate is changed through the
+   Web Animations API rather than by touching animation-duration, so the running
+   animation is never restarted and a track paused by :hover stays paused. */
+(() => {
+  const track = document.querySelector('.marquee-track');
+  if (!track || motionPreference.matches) return;
+
+  let previousY = scrollY;
+  let velocity = 0;
+  let frame = 0;
+  let settleTimer = 0;
+
+  const setRate = rate => {
+    track.getAnimations().forEach(animation => {
+      animation.updatePlaybackRate(rate);
+    });
+  };
+
+  const tick = () => {
+    frame = 0;
+    velocity *= 0.9;
+    const boost = Math.min(Math.abs(velocity) / 900, 2.4);
+    setRate(Math.sign(velocity) * (1 + boost) || 1);
+    if (Math.abs(velocity) > 4) frame = window.requestAnimationFrame(tick);
+  };
+
+  addEventListener('scroll', () => {
+    velocity = scrollY - previousY;
+    previousY = scrollY;
+    if (!frame) frame = window.requestAnimationFrame(tick);
+    window.clearTimeout(settleTimer);
+    settleTimer = window.setTimeout(() => {
+      velocity = 0;
+      setRate(1);
+    }, 140);
+  }, { passive: true });
 })();

@@ -96,6 +96,16 @@ Four pointer-driven effects, all of which write CSS custom properties rather tha
 - Section kickers scramble once as they enter view and settle on their real text. The `h1` is never scrambled, because it is the profile name.
 - All of it is decoration: gated on `(pointer: fine)`, removed outright under `prefers-reduced-motion`, and the glow is hidden in print alongside the other screen ornaments.
 
+### Scroll-native and keyboard affordances
+
+- The journey timeline carries a scroll-driven fill: an accent rule draws across the timeline's existing top border via `animation-timeline: view()`, so the section records how far it has been read. Behind `@supports`; without support it reads as a plain drawn rule. No scroll listener and no layout shift.
+- The project grid and the contact list are `container-type: inline-size` containers, so their cards respond to how wide the grid itself is rather than to how wide the window is. The viewport media queries stay for the cases they were written for.
+- `Ctrl`/`Cmd`+`K` opens the CLI drawer alongside the existing backtick, and is suppressed while a field has focus so it cannot swallow typing.
+- Clicking the email row copies the address and confirms it in a polite live region. The row keeps its `mailto:` href and nothing cancels the default, so the mail client still opens; the copy only adds what the address was missing.
+- The footer QR encodes the GitHub profile. It is drawn in near-black on a fixed white plate with square corners in both themes: inheriting `currentColor` gave it muted grey modules on white, and rounded corners clipped the white field exactly where the three finder patterns sit. It is verified by decoding the rendered pixels rather than by reading its attributes.
+- The tech marquee leans into the direction and speed of the scroll through `updatePlaybackRate`, which never restarts the animation and leaves a track paused by `:hover` paused. The rate returns to 1 shortly after scrolling stops.
+- A sticky-heading shadow driven by `@container scroll-state(stuck: top)` was designed and then dropped: the query never matched in the browser this is verified against, and shipping a rule that cannot be exercised is worse than leaving the heading as it was.
+
 ## 6. Assets
 
 - Owner portrait: local `assets/ProfileRahman.jpeg`, meaningful alt text, intrinsic dimensions and stable aspect ratio.
