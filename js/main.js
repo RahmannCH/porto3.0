@@ -16,9 +16,13 @@ const updateThemeButton = theme => {
 
 updateThemeButton(document.documentElement.dataset.theme);
 
-themeButton?.addEventListener('click', () => {
-  const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-  document.documentElement.classList.add('theme-transition');
+// The theme swap is the one interaction a visitor performs most often, so it
+// gets the platform's own transition instead of a blanket colour cross-fade:
+// the new palette is revealed as a circle opening from the button they pressed.
+// Everything the old path did (persist, update the button, ignore a blocked
+// localStorage) still happens, because that work moved into applyTheme rather
+// than being duplicated.
+const applyTheme = theme => {
   document.documentElement.dataset.theme = theme;
   updateThemeButton(theme);
   try {
@@ -26,7 +30,27 @@ themeButton?.addEventListener('click', () => {
   } catch {
     document.documentElement.dataset.theme = theme;
   }
-  window.setTimeout(() => document.documentElement.classList.remove('theme-transition'), 250);
+};
+
+themeButton?.addEventListener('click', () => {
+  const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  const canAnimateSwap = !motionPreference.matches && typeof document.startViewTransition === 'function';
+
+  if (!canAnimateSwap) {
+    document.documentElement.classList.add('theme-transition');
+    applyTheme(theme);
+    window.setTimeout(() => document.documentElement.classList.remove('theme-transition'), 250);
+    return;
+  }
+
+  // The reveal origin is the button itself, so the new palette appears to come
+  // out of the control rather than fading in from nowhere.
+  const bounds = themeButton.getBoundingClientRect();
+  const root = document.documentElement;
+  root.style.setProperty('--vt-x', `${Math.round(bounds.left + bounds.width / 2)}px`);
+  root.style.setProperty('--vt-y', `${Math.round(bounds.top + bounds.height / 2)}px`);
+
+  document.startViewTransition(() => applyTheme(theme));
 });
 
 const closeMenu = ({ restoreFocus = false } = {}) => {
@@ -1934,4 +1958,275 @@ if (lanyardAnchor && lanyardPivot && lanyardCard) {
   };
   addEventListener('scroll', update, { passive: true });
   update();
+})();
+
+/* Pointer-driven signature motion: magnetic hero buttons, kicker text scramble,
+   3D tilt on the project covers, and a soft glow trailing the pointer in the
+   hero. Each effect only writes CSS custom properties, so the hover and :active
+   rules already in the stylesheet keep composing on top of it. */
+(() => {
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const finePointer = matchMedia('(pointer: fine)');
+  const pointerEffectsAllowed = () => finePointer.matches && !reduceMotion.matches;
+  const clamp = (value, limit) => Math.min(limit, Math.max(-limit, value));
+
+  /* Magnetic hero buttons.
+     The lean is clamped so a button can never travel far enough to leave its
+     own hit area, and each frame eases towards the target instead of snapping,
+     which is what gives the button weight rather than gluing it to the cursor. */
+  (() => {
+    const buttons = Array.from(document.querySelectorAll('.hero-actions .button'));
+    if (!buttons.length) return;
+
+    const PULL = 0.28;
+    const MAX_LEAN = 7;
+    const live = new Set();
+    let frame = 0;
+
+    const tick = () => {
+      frame = 0;
+      live.forEach((state) => {
+        const dx = state.targetX - state.x;
+        const dy = state.targetY - state.y;
+        state.x += dx * PULL;
+        state.y += dy * PULL;
+        state.button.style.setProperty('--mx', `${state.x.toFixed(2)}px`);
+        state.button.style.setProperty('--my', `${state.y.toFixed(2)}px`);
+
+        // Leaving the button hands the snap-back back to the stylesheet, so the
+        // only thing left to settle is the last fraction of a pixel.
+        const settled = !state.held && Math.abs(dx) < 0.05 && Math.abs(dy) < 0.05;
+        if (settled) {
+          state.button.style.setProperty('--mx', '0px');
+          state.button.style.setProperty('--my', '0px');
+          state.button.classList.remove('is-magnet');
+          live.delete(state);
+        }
+      });
+      if (live.size) frame = requestAnimationFrame(tick);
+    };
+
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(tick);
+    };
+
+    buttons.forEach((button) => {
+      const state = { button, x: 0, y: 0, targetX: 0, targetY: 0, held: false };
+
+      button.addEventListener('pointerenter', () => {
+        if (!pointerEffectsAllowed()) return;
+        state.held = true;
+        button.classList.add('is-magnet');
+        live.add(state);
+        schedule();
+      });
+
+      button.addEventListener('pointermove', event => {
+        if (!pointerEffectsAllowed()) return;
+        const box = button.getBoundingClientRect();
+        const offsetX = event.clientX - (box.left + box.width / 2);
+        const offsetY = event.clientY - (box.top + box.height / 2);
+        state.targetX = clamp(offsetX * PULL, MAX_LEAN);
+        state.targetY = clamp(offsetY * PULL, MAX_LEAN);
+        schedule();
+      });
+
+      const release = () => {
+        if (!state.held) return;
+        state.held = false;
+        state.targetX = 0;
+        state.targetY = 0;
+        button.classList.remove('is-magnet');
+        live.add(state);
+        schedule();
+      };
+
+      button.addEventListener('pointerleave', release);
+      button.addEventListener('pointercancel', release);
+      button.addEventListener('blur', release);
+    });
+  })();
+
+  /* Text scramble on the section kickers.
+     The real string is read before anything moves and written back on the final
+     frame, and each kicker is unobserved as it fires, so scrolling back up
+     never replays it and assistive tech always reads the finished text. */
+  (() => {
+    const kickers = Array.from(document.querySelectorAll('.section-kicker'));
+    if (!kickers.length || !('IntersectionObserver' in window)) return;
+
+    const GLYPHS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<>/{}[]#*+=';
+    const FRAME_MS = 38;
+    const RESOLVE_EVERY = 2;
+
+    if (reduceMotion.matches) {
+      kickers.forEach(kicker => {
+        kicker.dataset.scramble = 'settled';
+      });
+      return;
+    }
+
+    const decode = kicker => {
+      if (kicker.dataset.scramble) return;
+      kicker.dataset.scramble = 'running';
+      const finalText = kicker.textContent;
+      const letters = Array.from(finalText);
+      let frame = 0;
+
+      const timer = window.setInterval(() => {
+        frame += 1;
+        // Characters lock down left to right: a settled slot keeps its letter
+        // while everything to the right of it is still churning.
+        const resolved = Math.floor(frame / RESOLVE_EVERY);
+        kicker.textContent = letters
+          .map((letter, index) => {
+            if (letter === ' ') return letter;
+            if (index < resolved) return letter;
+            return GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+          })
+          .join('');
+
+        if (resolved >= letters.length) {
+          window.clearInterval(timer);
+          kicker.textContent = finalText;
+          kicker.dataset.scramble = 'settled';
+        }
+      }, FRAME_MS);
+    };
+
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        observer.unobserve(entry.target);
+        decode(entry.target);
+      });
+    }, { threshold: 0.6 });
+
+    kickers.forEach(kicker => observer.observe(kicker));
+  })();
+
+  /* 3D tilt and sheen on the project covers. The rotation is damped per frame
+     and eased back to flat on leave, while --mx/--my feed the sheen's gradient
+     centre. At rest the cover sits at exactly its original transform, so
+     nothing about its layout moves. */
+  (() => {
+    const covers = Array.from(document.querySelectorAll('.project-image'));
+    if (!covers.length || !pointerEffectsAllowed()) return;
+
+    const MAX_TILT = 6;
+    const DAMPING = 0.12;
+
+    covers.forEach(cover => {
+      let rotX = 0;
+      let rotY = 0;
+      let targetX = 0;
+      let targetY = 0;
+      let frame = 0;
+
+      const settle = () => {
+        window.cancelAnimationFrame(frame);
+        frame = 0;
+        rotX = 0;
+        rotY = 0;
+        cover.style.setProperty('--rx', '0deg');
+        cover.style.setProperty('--ry', '0deg');
+        cover.style.setProperty('--mx', '50%');
+        cover.style.setProperty('--my', '50%');
+        cover.classList.remove('is-tilting');
+      };
+
+      const tick = () => {
+        const dx = targetX - rotX;
+        const dy = targetY - rotY;
+        rotX += dx * DAMPING;
+        rotY += dy * DAMPING;
+        cover.style.setProperty('--rx', `${rotX.toFixed(2)}deg`);
+        cover.style.setProperty('--ry', `${rotY.toFixed(2)}deg`);
+
+        if (Math.abs(dx) < 0.01 && Math.abs(dy) < 0.01) settle();
+        else frame = window.requestAnimationFrame(tick);
+      };
+
+      cover.addEventListener('pointerenter', () => {
+        cover.classList.add('is-tilting');
+      });
+
+      cover.addEventListener('pointermove', event => {
+        const box = cover.getBoundingClientRect();
+        const x = (event.clientX - box.left) / box.width;
+        const y = (event.clientY - box.top) / box.height;
+        cover.style.setProperty('--mx', `${(x * 100).toFixed(1)}%`);
+        cover.style.setProperty('--my', `${(y * 100).toFixed(1)}%`);
+        targetY = clamp((x - 0.5) * MAX_TILT * 2, MAX_TILT);
+        targetX = clamp((0.5 - y) * MAX_TILT * 2, MAX_TILT);
+        if (!frame) frame = window.requestAnimationFrame(tick);
+      });
+
+      const release = () => {
+        targetX = 0;
+        targetY = 0;
+        cover.classList.remove('is-tilting');
+        if (!frame) frame = window.requestAnimationFrame(tick);
+      };
+
+      cover.addEventListener('pointerleave', release);
+      cover.addEventListener('pointercancel', release);
+    });
+  })();
+
+  /* Glow trailing the pointer across the hero. It never captures the pointer,
+     so the sticker field and the portrait stay fully draggable on top of it. */
+  (() => {
+    const hero = document.querySelector('.hero');
+    const glow = document.querySelector('.hero-glow');
+    if (!hero || !glow || !pointerEffectsAllowed()) return;
+
+    let x = hero.clientWidth / 2;
+    let y = hero.clientHeight / 2;
+    let targetX = x;
+    let targetY = y;
+    let frame = 0;
+
+    const tick = () => {
+      x += (targetX - x) * 0.09;
+      y += (targetY - y) * 0.09;
+      glow.style.setProperty('--gx', `${x.toFixed(1)}px`);
+      glow.style.setProperty('--gy', `${y.toFixed(1)}px`);
+      frame = window.requestAnimationFrame(tick);
+    };
+
+    const start = () => {
+      if (!frame) frame = window.requestAnimationFrame(tick);
+    };
+
+// pointerenter seeds the position so the glow does not sweep in from the
+    // centre on the way in; pointermove keeps it lit, which is what covers a
+    // theme swap happening while the pointer is already resting in the hero.
+    hero.addEventListener('pointerenter', event => {
+      const box = hero.getBoundingClientRect();
+      targetX = event.clientX - box.left;
+      targetY = event.clientY - box.top;
+      x = targetX;
+      y = targetY;
+      glow.classList.add('is-lit');
+      start();
+    });
+
+    hero.addEventListener('pointermove', event => {
+      const box = hero.getBoundingClientRect();
+      targetX = event.clientX - box.left;
+      targetY = event.clientY - box.top;
+      glow.classList.add('is-lit');
+      start();
+    });
+
+    const stop = () => {
+      window.cancelAnimationFrame(frame);
+      frame = 0;
+      glow.classList.remove('is-lit');
+    };
+
+    hero.addEventListener('pointerleave', stop);
+    hero.addEventListener('pointercancel', stop);
+  })();
 })();

@@ -1134,3 +1134,165 @@ Components added after the reference-driven pass, kept in their own file so
 .scrub-word {
   transition: opacity var(--dur-fast) linear;
 }
+
+/* ============================================================================
+   Signature motion
+   ----------------------------------------------------------------------------
+   Four pointer-driven effects: the theme swap revealed as a circle opening from
+   the toggle, magnetic hero buttons, a glow trailing the pointer in the hero,
+   and a 3D tilt with a sheen on the project covers.
+
+   Every one of them writes CSS custom properties rather than a transform, and
+   that is the entire trick. The hero buttons already lift 2px on hover and
+   scale to .98 while pressed, and each cover's image already scales to 1.06.
+   Declaring the transform once, in terms of variables, lets the pointer offset
+   compose with those rules instead of overwriting them.
+   ========================================================================== */
+
+/* --- Theme swap, revealed from the toggle ---------------------------------- */
+/* The old palette holds still while the new one is uncovered by a circle
+   opening from --vt-x/--vt-y, which main.js sets to the toggle's centre. */
+::view-transition-old(root) {
+  animation: theme-hold .22s var(--ease-out) both;
+}
+
+::view-transition-new(root) {
+  animation: theme-reveal .34s var(--ease-out) both;
+}
+
+@keyframes theme-hold {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes theme-reveal {
+  from {
+    opacity: 0;
+    clip-path: circle(0 at var(--vt-x, 50%) var(--vt-y, 50%));
+  }
+  to {
+    opacity: 1;
+    clip-path: circle(150% at var(--vt-x, 50%) var(--vt-y, 50%));
+  }
+}
+
+/* --- Magnetic hero buttons ------------------------------------------------- */
+.hero-actions .button {
+  --mx: 0px;
+  --my: 0px;
+  --bs: 1;
+  --lift: 0px;
+  transform: translate3d(var(--mx), var(--my), 0) scale(var(--bs)) translateY(var(--lift));
+  transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast), transform .45s var(--ease-out);
+}
+
+/* The hover lift and the press-scale this transform replaces, restated as the
+   variables it now reads. */
+.hero-actions .button-primary:hover {
+  --lift: -2px;
+}
+
+.hero-actions .button:active {
+  --bs: .98;
+  --lift: 0px;
+}
+
+/* While the pointer is on the button the offset is rewritten every frame, so
+   the transform transition is dropped and the button tracks the cursor 1:1.
+   It returns for the snap-back, which is why it is removed on the way out. */
+.hero-actions .button.is-magnet {
+  transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
+}
+
+/* --- Project cover tilt and sheen ------------------------------------------ */
+.project {
+  perspective: 1000px;
+}
+
+.project-image {
+  --rx: 0deg;
+  --ry: 0deg;
+  --mx: 50%;
+  --my: 50%;
+  transform: rotateX(var(--rx)) rotateY(var(--ry));
+  transition: transform .42s var(--ease-out);
+}
+
+.project-image.is-tilting {
+  transition: transform .16s linear;
+}
+
+/* A pseudo-element rather than a node, so it is clipped by the cover's existing
+   overflow:hidden and radius for free. */
+.project-image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(260px circle at var(--mx) var(--my), rgba(255, 255, 255, .3), transparent 60%);
+  mix-blend-mode: soft-light;
+  opacity: 0;
+  transition: opacity var(--dur-fast) ease;
+}
+
+.project-image:hover::after,
+.project-image:focus-visible::after,
+.project-image.is-tilting::after {
+  opacity: 1;
+}
+
+/* --- Hero glow ------------------------------------------------------------- */
+/* Three stops rather than two: a single fade from colour to transparent leaves
+   a visible boundary where the gradient ends, which reads as a drawn ring
+   instead of light. The middle stop is what turns it back into a falloff. */
+.hero-glow {
+  --gx: 50%;
+  --gy: 40%;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(560px circle at var(--gx) var(--gy), color-mix(in srgb, var(--accent) 42%, transparent) 0%, color-mix(in srgb, var(--accent) 15%, transparent) 34%, transparent 72%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  transition: opacity .45s ease;
+}
+
+.hero-glow.is-lit {
+  opacity: .3;
+}
+
+/* A screen blend is invisible on the light column, where the accent has to
+   darken the surface rather than lighten it. */
+html[data-theme="light"] .hero-glow {
+  mix-blend-mode: multiply;
+}
+
+html[data-theme="light"] .hero-glow.is-lit {
+  opacity: .13;
+}
+
+/* --- Reduced motion -------------------------------------------------------- */
+/* These four are decoration, so under a reduced-motion preference they are
+   removed outright rather than shortened. main.js declines to run them too. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+
+  .hero-glow {
+    display: none;
+  }
+
+  .project-image,
+  .project-image::after,
+  .hero-actions .button {
+    transform: none;
+  }
+
+  .project-image::after {
+    display: none;
+  }
+}

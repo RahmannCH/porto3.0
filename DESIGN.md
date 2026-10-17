@@ -85,6 +85,17 @@ Desktop uses asymmetric editorial compositions; mobile collapses to readable sin
 - Mascot is decorative only, can be paused with a labeled button, pauses under reduced motion, and is omitted on narrow screens where it can obstruct content.
 - No scroll hijacking, autoplay media, endlessly cycling project content, or animation that delays the primary action.
 
+### Signature motion
+
+Four pointer-driven effects, all of which write CSS custom properties rather than a transform, so the hover and `:active` rules they sit on top of keep composing instead of being overwritten.
+
+- Theme swap runs through `document.startViewTransition()`, revealing the new palette as a circle opening from the toggle's centre. The previous colour cross-fade remains the fallback for browsers without the API.
+- Hero buttons lean towards the pointer with a clamped offset and damped easing, then hand the snap-back back to the stylesheet on exit.
+- Project covers tilt towards the pointer and carry a sheen that tracks it, both driven by the same coordinates. At rest a cover sits at its original transform, so its layout never moves.
+- A soft glow trails the pointer across the hero. It never captures the pointer, so the sticker field and portrait stay draggable over it.
+- Section kickers scramble once as they enter view and settle on their real text. The `h1` is never scrambled, because it is the profile name.
+- All of it is decoration: gated on `(pointer: fine)`, removed outright under `prefers-reduced-motion`, and the glow is hidden in print alongside the other screen ornaments.
+
 ## 6. Assets
 
 - Owner portrait: local `assets/ProfileRahman.jpeg`, meaningful alt text, intrinsic dimensions and stable aspect ratio.
