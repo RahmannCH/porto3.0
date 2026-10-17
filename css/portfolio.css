@@ -960,6 +960,12 @@ Components added after the reference-driven pass, kept in their own file so
   pointer-events: none;
 }
 
+/* The caption chip is a figcaption inside .hero-portrait, so it is painted by
+   the .hero-portrait figcaption rule: surface-coloured, bordered, overhanging
+   the card at the right. That means the label sits on var(--surface), which is
+   near-white in the light column and near-black in the dark one. The text has
+   to follow the same token, or the hardcoded near-black it used to carry put
+   black type on a black chip and the role disappeared in the dark theme. */
 .card-role {
   position: relative;
   z-index: 1;
@@ -967,7 +973,7 @@ Components added after the reference-driven pass, kept in their own file so
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.08em;
-  color: #111111;
+  color: var(--ink);
   text-align: center;
 }
 
