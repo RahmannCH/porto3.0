@@ -2593,3 +2593,239 @@ const key = `${Math.round(colour.hue / 8)}|${Math.round(colour.lightness / 0.12)
     else image.addEventListener('load', run, { once: true });
   });
 })();
+
+/* ============================================================================
+   Sound
+   ----------------------------------------------------------------------------
+   Interface: createSound({ onToggle }) -> { enabled, toggle, play }.
+
+   Everything else is behind it: the AudioContext and its lifetime, the master
+   gain, the synthesised voices, the ambient pad, the analyser that drives the
+   visual, and the stored preference. Callers only ever name a sound.
+
+   The context is not created until someone asks for sound. A visitor who never
+   presses the button gets no AudioContext, no analyser, no animation frame, and
+   no localStorage write — which matters because autoplay policy would block it
+   anyway, and a muted portfolio should cost nothing.
+   ========================================================================== */
+const createSound = ({ onToggle } = {}) => {
+  const STORAGE_KEY = 'rahman-portfolio-sound';
+  let context = null;
+  let master = null;
+  let analyser = null;
+  let levelData = null;
+  let pad = null;
+  let frame = 0;
+  let enabled = false;
+
+  // Very quiet by default. This is a portfolio, not a listening room: the pad
+  // should be noticed only if someone goes looking for it.
+  const MASTER_LEVEL = 0.14;
+  const PAD_LEVEL = 0.1;
+
+  const read = () => {
+    try {
+      return localStorage.getItem(STORAGE_KEY) === 'on';
+    } catch {
+      return false;
+    }
+  };
+
+  const write = value => {
+    try {
+      localStorage.setItem(STORAGE_KEY, value ? 'on' : 'off');
+    } catch {
+      // A blocked storage just means the choice does not survive the visit.
+    }
+  };
+
+  const buildContext = () => {
+    if (context) return context;
+    const Ctor = window.AudioContext || window.webkitAudioContext;
+    if (!Ctor) return null;
+    context = new Ctor();
+    master = context.createGain();
+    master.gain.value = MASTER_LEVEL;
+    analyser = context.createAnalyser();
+    analyser.fftSize = 256;
+    levelData = new Uint8Array(analyser.fftSize);
+    master.connect(analyser);
+    analyser.connect(context.destination);
+    return context;
+  };
+
+// One envelope, one oscillator. Every voice below is this shape with
+  // different numbers, which is why no audio file is needed anywhere.
+  const voice = ({ type = 'sine', from, to, peak, attack = 0.005, release = 0.12 }) => {
+    if (!context || !master) return;
+    const now = context.currentTime;
+    const osc = context.createOscillator();
+    const env = context.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(from, now);
+    if (to && to !== from) osc.frequency.exponentialRampToValueAtTime(to, now + release);
+    env.gain.setValueAtTime(0.0001, now);
+    env.gain.exponentialRampToValueAtTime(peak, now + attack);
+    env.gain.exponentialRampToValueAtTime(0.0001, now + attack + release);
+    osc.connect(env);
+    env.connect(master);
+    osc.start(now);
+    osc.stop(now + attack + release + 0.02);
+  };
+
+  const SOUNDS = {
+    tap: () => voice({ type: 'triangle', from: 640, to: 520, peak: 0.1, attack: 0.003, release: 0.07 }),
+    open: () => {
+      voice({ type: 'sine', from: 420, to: 700, peak: 0.09, attack: 0.01, release: 0.16 });
+      voice({ type: 'sine', from: 630, to: 1050, peak: 0.05, attack: 0.01, release: 0.2 });
+    },
+    close: () => voice({ type: 'sine', from: 620, to: 380, peak: 0.08, attack: 0.008, release: 0.14 }),
+    copy: () => {
+      voice({ type: 'sine', from: 780, to: 780, peak: 0.08, release: 0.06 });
+      window.setTimeout(() => voice({ type: 'sine', from: 1170, to: 1170, peak: 0.08, release: 0.1 }), 70);
+    },
+    flip: () => voice({ type: 'sine', from: 500, to: 720, peak: 0.07, attack: 0.006, release: 0.13 }),
+    error: () => voice({ type: 'sawtooth', from: 240, to: 170, peak: 0.07, attack: 0.006, release: 0.2 }),
+  };
+
+  const startPad = () => {
+    if (!context || !master || pad) return;
+    const now = context.currentTime;
+    const bus = context.createGain();
+    const filter = context.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 520;
+    filter.Q.value = 0.7;
+
+    // Three detuned voices an octave apart. The detune is the whole character:
+    // the beating between them is what stops it sounding like a test tone.
+    const partials = [110, 110.6, 164.8].map((frequency, index) => {
+      const osc = context.createOscillator();
+      osc.type = index === 2 ? 'triangle' : 'sine';
+      osc.frequency.value = frequency;
+      osc.detune.value = index * 4 - 4;
+      return osc;
+    });
+
+    partials.forEach(osc => {
+      osc.connect(filter);
+      osc.start(now);
+    });
+    filter.connect(bus);
+    bus.connect(master);
+    bus.gain.value = 0;
+    bus.gain.linearRampToValueAtTime(PAD_LEVEL, now + 2.4);
+
+    // A slow sweep on the cutoff so the pad never sits still.
+    const lfo = context.createOscillator();
+    const lfoGain = context.createGain();
+    lfo.frequency.value = 0.05;
+    lfoGain.gain.value = 180;
+    lfo.connect(lfoGain);
+    lfoGain.connect(filter.frequency);
+    lfo.start(now);
+
+    pad = { bus, partials, lfo, lfoGain };
+  };
+
+  const stopPad = () => {
+    if (!pad || !context) return;
+    const now = context.currentTime;
+    pad.bus.gain.cancelScheduledValues(now);
+    pad.bus.gain.setValueAtTime(pad.bus.gain.value, now);
+    pad.bus.gain.linearRampToValueAtTime(0.0001, now + 0.6);
+    const doomed = pad;
+    pad = null;
+    window.setTimeout(() => {
+      doomed.partials.forEach(osc => { try { osc.stop(); } catch { /* already stopped */ } });
+      try { doomed.lfo.stop(); } catch { /* already stopped */ }
+    }, 800);
+  };
+
+  // Drives --audio-level from the real output level, so the visual is tied to
+  // what is actually audible rather than to a timer.
+  const pump = () => {
+    frame = 0;
+    if (!enabled || !analyser) return;
+    analyser.getByteTimeDomainData(levelData);
+    let sum = 0;
+    for (let index = 0; index < levelData.length; index += 1) {
+      const centred = (levelData[index] - 128) / 128;
+      sum += centred * centred;
+    }
+    const rms = Math.sqrt(sum / levelData.length);
+    document.documentElement.style.setProperty('--audio-level', Math.min(1, rms * 4).toFixed(3));
+    frame = window.requestAnimationFrame(pump);
+  };
+
+  const apply = async next => {
+    enabled = next;
+    if (enabled) {
+      buildContext();
+      if (context?.state === 'suspended') await context.resume();
+      startPad();
+      if (!frame && !motionPreference.matches) frame = window.requestAnimationFrame(pump);
+    } else {
+      stopPad();
+      window.cancelAnimationFrame(frame);
+      frame = 0;
+      document.documentElement.style.setProperty('--audio-level', '0');
+      // Suspended rather than closed: keeping the context alive avoids the cost
+      // of rebuilding it, and a suspended one renders nothing.
+      if (context && context.state === 'running') await context.suspend();
+    }
+    write(enabled);
+    onToggle?.(enabled);
+  };
+
+  return {
+    get enabled() { return enabled; },
+    // Sound is opt-in by policy, so a stored preference never turns it on by
+    // itself. A visitor returning to the site still presses the button, and the
+    // button shows what the choice was.
+    toggle: () => apply(!enabled),
+    play: name => {
+      if (!enabled) return;
+      if (!buildContext()) return;
+      if (context.state === 'suspended') context.resume();
+      SOUNDS[name]?.();
+    },
+  };
+};
+
+const soundToggle = document.querySelector('.sound-toggle');
+if (soundToggle) {
+  const sound = createSound({
+    onToggle: on => {
+      soundToggle.setAttribute('aria-pressed', String(on));
+      soundToggle.setAttribute('aria-label', on ? 'Matikan suara antarmuka' : 'Aktifkan suara antarmuka');
+    },
+  });
+
+  soundToggle.addEventListener('click', () => {
+    sound.toggle();
+    if (sound.enabled) sound.play('tap');
+  });
+
+  // A small set of call sites, each naming a sound and nothing else. The module
+  // is a no-op until it is switched on, so none of these cost anything by
+  // default and none of them need to know whether sound exists.
+  document.querySelectorAll('.button, .back-top, .brand, .stack-nav, .project-image').forEach(el => {
+    el.addEventListener('pointerenter', () => sound.play('tap'), { passive: true });
+  });
+document.querySelectorAll('.button-case-study, .footer-cli-btn, .contact-links a').forEach(el => {
+    el.addEventListener('click', () => sound.play('open'));
+  });
+  closeBtn?.addEventListener('click', () => sound.play('close'));
+  backdrop?.addEventListener('click', () => sound.play('close'));
+
+  // Confirming a copy is the one moment a short sound is genuinely useful, and
+  // the toast has no click target of its own to hang a handler on, so the class
+  // it gains is the signal.
+  const toastNode = document.getElementById('copy-toast');
+  if (toastNode) {
+    new MutationObserver(() => {
+      if (toastNode.classList.contains('is-shown')) sound.play('copy');
+    }).observe(toastNode, { attributes: true, attributeFilter: ['class'] });
+  }
+}

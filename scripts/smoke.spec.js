@@ -1333,3 +1333,50 @@ test('print drops the decorative layers that only make sense on screen', async (
   expect(printed.inlineMedia, 'the photo chip prints').toBe('none');
   expect(printed.grain, 'the grain layer prints').toBe('none');
 });
+
+test('sound stays off until it is asked for, and stays controllable', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+  await page.goto(baseURL);
+  await page.waitForTimeout(1000);
+
+  const level = () => page.evaluate(() =>
+    getComputedStyle(document.documentElement).getPropertyValue('--audio-level').trim());
+  const toggle = page.locator('.sound-toggle');
+
+  // Nothing is constructed, nothing is measured, and no preference is written
+  // for a visitor who has not pressed the button.
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  expect(await page.evaluate(() => localStorage.getItem('rahman-portfolio-sound'))).toBeNull();
+  expect(['0', '']).toContain(await level());
+
+  await toggle.click();
+  await page.waitForTimeout(1200);
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  // The level comes from an AnalyserNode reading the real output, so a non-zero
+  // value is proof the pad is audible rather than proof a timer ran.
+  expect(parseFloat(await level())).toBeGreaterThan(0);
+  await expect(toggle).toHaveAttribute('aria-label', /matikan/i);
+
+  // WCAG 1.4.2 asks for a mechanism to control the sound. This is it.
+  await toggle.click();
+  await page.waitForTimeout(600);
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  expect(await page.evaluate(() => localStorage.getItem('rahman-portfolio-sound'))).toBe('off');
+  expect(await level()).toBe('0');
+  expect(pageErrors).toEqual([]);
+});
+
+test('a stored sound preference does not switch itself back on', async ({ page }) => {
+  await page.goto(baseURL);
+  await page.evaluate(() => localStorage.setItem('rahman-portfolio-sound', 'on'));
+  await page.reload();
+  await page.waitForTimeout(1000);
+
+  // Autoplay policy would block it anyway, and a site that starts making noise
+  // at a returning visitor is the behaviour worth refusing to build.
+  await expect(page.locator('.sound-toggle')).toHaveAttribute('aria-pressed', 'false');
+  const level = await page.evaluate(() =>
+    getComputedStyle(document.documentElement).getPropertyValue('--audio-level').trim());
+  expect(['0', '']).toContain(level);
+});

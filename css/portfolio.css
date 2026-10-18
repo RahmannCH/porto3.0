@@ -1470,6 +1470,101 @@ The journey fill is scroll-driven CSS, so it costs no scroll listener and
   border-color: var(--accent);
 }
 
+/* --- Sound -----------------------------------------------------------------
+   The control is a toggle, not a play button, so its state is on aria-pressed
+   and the icon follows that rather than a class: one source of truth means the
+   drawing and the announcement cannot drift apart. */
+.sound-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color var(--dur-fast), color var(--dur-fast), background var(--dur-fast);
+}
+
+.sound-toggle:hover {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+  background: var(--surface-raised);
+}
+
+.sound-toggle[aria-pressed="true"] {
+  color: var(--accent-strong);
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+/* Icon only, at every width. The header row has a hard budget: it was already
+   tight enough that a third visible label pushed it past the edge at 768px and
+   at 320px. The accessible name lives on aria-label, and the icon carries the
+   state, so nothing is lost. */
+.sound-label {
+  display: none;
+}
+
+/* The header row has a hard width budget and adding a fourth control spent it.
+   Below 900px the sound button loses a little of its box and the row tightens
+   its gap, which is what keeps the theme toggle inside the edge at 768px.
+   Below 480px the wordmark goes and only the monogram stays — four controls
+   plus a 145px wordmark cannot coexist in 320px, and the wordmark is repeated
+   in full in the footer anyway. */
+@media (max-width: 900px) {
+  .sound-toggle {
+    min-width: 40px;
+    padding: 0 0.5rem;
+  }
+
+  .header-actions {
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-header .brand > span:not(.brand-mark) {
+    display: none;
+  }
+}
+
+.sound-icon {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+
+/* Muted shows the cross, enabled shows the waves. The hidden one is display:none
+   rather than opacity so it never sits on top of the other. */
+.sound-toggle .sound-on {
+  display: none;
+}
+
+.sound-toggle[aria-pressed="true"] .sound-off {
+  display: none;
+}
+
+.sound-toggle[aria-pressed="true"] .sound-on {
+  display: block;
+}
+
+/* The glow leans into whatever is playing. --audio-level is written by the
+   sound module and stays 0 when sound is off, so the resting value here is the
+   same as it always was. */
+@supports (opacity: calc(1 + var(--audio-level, 0))) {
+  .hero-glow.is-lit {
+    opacity: calc(0.3 + var(--audio-level, 0) * 0.4);
+  }
+
+  html[data-theme="light"] .hero-glow.is-lit {
+    opacity: calc(0.13 + var(--audio-level, 0) * 0.16);
+  }
+}
+
 /* --- Clipboard toast ------------------------------------------------------- */
 /* Fixed, so confirming a copy never reflows the contact rows it is reporting
    on, and polite, so the confirmation is announced without interrupting. */
