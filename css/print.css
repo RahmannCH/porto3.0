@@ -102,7 +102,43 @@
     position: static !important;
     transform: none !important;
     opacity: 1 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
     break-inside: avoid;
+  }
+
+  /* Flattening the deck takes away the two things the on-screen card was
+     measured against: the deck's 4/3 box, and the card being an absolutely
+     positioned fill of it. The caption was absolutely positioned over the
+     photo, so with the card static it resolves against the deck instead and
+     prints in the wrong place — and it brings its dark gradient and its light
+     text with it, onto white paper. On paper it becomes an ordinary block
+     under the picture.
+
+     The photo frame is given its ratio outright rather than left to follow
+     whatever the file happens to be. The activity photos are authored at
+     1200x800, and this keeps the printed gallery evenly framed whatever lands
+     in the slot. */
+  .stack-card[data-slot="0"] .stack-photo {
+    height: auto !important;
+    aspect-ratio: 3 / 2;
+  }
+
+  .stack-card[data-slot="0"] .stack-caption {
+    position: static;
+    inset: auto;
+    padding: 1.4mm 0 0;
+    background: none;
+    color: var(--ink);
+  }
+
+  .stack-card[data-slot="0"] .stack-caption strong {
+    font-size: 9.5pt;
+  }
+
+  .stack-card[data-slot="0"] .stack-caption span {
+    color: var(--subtle);
+    font-size: 8pt;
   }
 
   .stack-card[data-missing="true"] {

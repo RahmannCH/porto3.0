@@ -243,9 +243,26 @@ Components added after the reference-driven pass, kept in their own file so
 /* When a photo has not been supplied yet the card says so on its face rather
    than borrowing an unrelated image and captioning it as documentation. The
    image still occupies the frame, so dropping the real file in is the only step
-   needed later. */
+   needed later.
+
+   A photo that has not arrived should read as space reserved for one rather
+   than as a broken frame, so the treatment borrows from the rest of the page:
+   a quiet accent hatch instead of a loud grey stripe, and a hairline inset
+   frame standing in for the crop. The label keeps the mono/uppercase voice
+   everything else on the site speaks in. */
 .stack-card[data-missing="true"] {
-  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--surface-raised) 92%, var(--line)) 0 12px, var(--surface-raised) 12px 24px);
+  background:
+    repeating-linear-gradient(135deg, color-mix(in srgb, var(--accent) 8%, transparent) 0 1px, transparent 1px 14px),
+    color-mix(in srgb, var(--surface-raised) 86%, var(--bg));
+}
+
+.stack-card[data-missing="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent);
+  border-radius: 10px;
+  pointer-events: none;
 }
 
 .stack-card[data-missing="true"] .stack-photo img {
@@ -260,8 +277,7 @@ Components added after the reference-driven pass, kept in their own file so
   place-items: center;
   padding: 0 1.5rem;
   color: var(--subtle);
-  font-size: 0.72rem;
-  font-weight: 700;
+  font: 700 0.72rem/1.5 var(--mono);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   text-align: center;
