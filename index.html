@@ -40,10 +40,12 @@
       ]
     }
   </script>
-  <script type="module">
-    import { snapdom } from 'https://unpkg.com/@zumer/snapdom@3.2.0/dist/snapdom.mjs';
-    window.snapdom = snapdom;
-  </script>
+  <!-- SnapDOM v3.2.0, self-hosted. The same build that was being fetched from
+       unpkg at runtime was already sitting in js/ unused, which left the page
+       making a third-party request on every load and failing without network.
+       The bundle attaches itself to window.snapdom; main.js already handles
+       the case where it has not loaded yet. -->
+  <script src="js/snapdom.js" defer></script>
   <script src="js/scrollcraft.js" defer></script>
   <script src="js/main.js" defer></script>
 </head>
@@ -261,7 +263,7 @@
             <button class="stack-nav" type="button" data-stack-prev aria-label="Kartu kegiatan sebelumnya">
               <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 5 8 12l7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
-            <div class="stack-counter"><span class="stack-current">1</span> / 6</div>
+            <div class="stack-counter" aria-live="polite"><span class="stack-current">1</span> / 6</div>
             <button class="stack-nav" type="button" data-stack-next aria-label="Kartu kegiatan berikutnya">
               <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
@@ -315,7 +317,10 @@
     </button>
   </div>
 
-  <div id="cli-drawer" class="cli-drawer" aria-hidden="true" role="dialog" aria-label="Developer Console">
+  <!-- inert is in the markup, not just added on first toggle: the drawer ships
+     closed, and without it the two focusable children inside are tabbable
+     inside a subtree that aria-hidden has already declared hidden. -->
+<div id="cli-drawer" class="cli-drawer" aria-hidden="true" role="dialog" aria-label="Developer Console" inert>
     <div class="cli-header">
       <span>Terminal</span>
       <button class="cli-close" type="button" aria-label="Tutup terminal">×</button>

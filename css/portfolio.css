@@ -1497,6 +1497,17 @@ The journey fill is scroll-driven CSS, so it costs no scroll listener and
   transform: translate(-50%, 0);
 }
 
+/* The CLI field is the one genuinely keyboard-driven control on the page, and
+   it ships with outline:none and nothing to replace it — so a keyboard user
+   could not tell it had focus. The drawer focuses the field as it opens, which
+   means the ring is simply always there while it is open, which is correct for
+   a text field. */
+.cli-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 /* ============================================================================
    Per-project identity colour
    ----------------------------------------------------------------------------

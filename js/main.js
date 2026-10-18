@@ -1193,8 +1193,10 @@ function openCaseStudy(key, sourceImage) {
         modalCover.src = sourceImage.currentSrc || sourceImage.src;
       }
     }
+    // Two quick clicks can resolve two preload callbacks, and the second
+    // showModal on an open dialog throws InvalidStateError.
     if (typeof modal.showModal === 'function') {
-      modal.showModal();
+      if (!modal.open) modal.showModal();
     } else {
       modal.setAttribute('open', '');
     }
@@ -1210,7 +1212,7 @@ function openCaseStudy(key, sourceImage) {
   sourceImage.style.viewTransitionName = MORPH_NAME;
 
   preloadImage(sourceImage.currentSrc || sourceImage.src).then(() => {
-    document.startViewTransition(() => {
+    const transition = document.startViewTransition(() => {
       // The name has to move rather than be copied. Two elements carrying
       // project-cover at the same time aborts the transition outright, and the
       // browser reports it as "Animation start failed" rather than saying
@@ -1219,9 +1221,17 @@ function openCaseStudy(key, sourceImage) {
       sourceImage.style.viewTransitionName = '';
       if (modalCover) modalCover.style.viewTransitionName = MORPH_NAME;
       show();
-    }).finished.finally(() => {
-      if (modalCover) modalCover.style.viewTransitionName = '';
     });
+    // A skipped transition rejects both `ready` and `finished`, and neither is
+    // an error worth surfacing: a second click during the image preload is
+    // enough to trigger it, and it only means a newer transition took over.
+    // Left unhandled they surface as unhandled rejections on the page.
+    transition.ready.catch(() => {});
+    transition.finished
+      .catch(() => {})
+      .finally(() => {
+        if (modalCover) modalCover.style.viewTransitionName = '';
+      });
   });
 }
 
@@ -1283,14 +1293,21 @@ const snapBtn = document.getElementById('snap-btn');
 const snapLabel = snapBtn?.querySelector('.snap-label');
 if (snapBtn) {
   const snapOriginal = snapLabel?.textContent ?? '';
-  const setSnapLabel = text => { if (snapLabel) snapLabel.textContent = text; };
+  // The button carries an aria-label, and for assistive tech that label is the
+  // accessible name — it wins over the visible text. So all four states the
+  // button moves through were being shown to sighted users and announced to
+  // nobody. The label is rewritten alongside the visible one instead.
+  const setSnapLabel = (text, description) => {
+    if (snapLabel) snapLabel.textContent = text;
+    if (description) snapBtn.setAttribute('aria-label', description);
+  };
   let snapBusy = false;
 
   snapBtn.addEventListener('click', async () => {
     if (snapBusy) return;
     if (!window.snapdom) {
-      setSnapLabel('Belum siap');
-      setTimeout(() => setSnapLabel(snapOriginal), 2000);
+      setSnapLabel('Belum siap', 'Export belum siap: pustaka SnapDOM gagal dimuat');
+      setTimeout(() => setSnapLabel(snapOriginal, 'Export ringkasan halaman sebagai gambar'), 2000);
       return;
     }
     // Settle scattering stickers instantly so they render cleanly in the capture
@@ -1300,20 +1317,20 @@ if (snapBtn) {
       snapBusy = true;
       snapBtn.disabled = true;
       snapBtn.setAttribute('aria-busy', 'true');
-      setSnapLabel('Memproses...');
+      setSnapLabel('Memproses...', 'Sedang membuat gambar ringkasan halaman');
       const captureResult = await window.snapdom(document.querySelector('#main'), {
         exclude: ['.mascot-dock', '.mascot-environment', '.project-image', '.all-projects', '.text-link', '.project-links'],
         backgroundColor: document.documentElement.dataset.theme === 'light' ? '#F6F8FA' : '#0B0D10'
       });
       await captureResult.download({ format: 'jpg', filename: 'MuhammadNurRahman_Portfolio' });
-      setSnapLabel('Selesai');
+      setSnapLabel('Selesai', 'Gambar ringkasan halaman sudah diunduh');
     } catch (e) {
-      setSnapLabel('Gagal');
+      setSnapLabel('Gagal', 'Gagal membuat gambar ringkasan halaman');
     } finally {
       snapBusy = false;
       snapBtn.disabled = false;
       snapBtn.removeAttribute('aria-busy');
-      setTimeout(() => setSnapLabel(snapOriginal), 2000);
+      setTimeout(() => setSnapLabel(snapOriginal, 'Export ringkasan halaman sebagai gambar'), 2000);
     }
   });
 }
@@ -1358,12 +1375,40 @@ function toggleCli({ restoreFocus = false } = {}) {
   if (!cliDrawer) return;
   const isOpen = cliDrawer.classList.toggle('is-open');
   cliDrawer.setAttribute('aria-hidden', String(!isOpen));
+  // aria-hidden on a subtree that still holds two tabbable children is the
+  // state the spec calls out: a keyboard user tabbing forward out of the page
+  // can land inside a subtree declared hidden from assistive tech. inert takes
+  // the children out of the tab order and out of the a11y tree at the same
+  // time, so both problems go with one attribute.
+  cliDrawer.toggleAttribute('inert', !isOpen);
   if (isOpen) {
     cliInput?.focus();
   } else if (restoreFocus) {
     cliTrigger?.focus();
   }
 }
+
+// The drawer is a dialog that opens over the page, so it keeps focus the way
+// the case-study dialog already does. Without this, Tab from the input escapes
+// straight through into the page behind, which is not visible while it is open.
+cliDrawer?.addEventListener('keydown', (e) => {
+  if (e.key !== 'Tab' || !cliDrawer.classList.contains('is-open')) return;
+  const focusables = cliDrawer.querySelectorAll('a[href], button:not([disabled]), input:not([disabled])');
+  if (!focusables.length) return;
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault();
+    first.focus();
+  }
+});
+
+const isTypingTarget = () =>
+  ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName) ||
+  document.activeElement?.isContentEditable;
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && cliDrawer?.classList.contains('is-open')) {
@@ -1374,12 +1419,12 @@ document.addEventListener('keydown', (e) => {
   // shortcut most people already try before hunting for a backtick. It is left
   // alone while a field has focus so it cannot swallow typing.
   const paletteKey = (e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'k';
-  if (paletteKey && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+  if (paletteKey && !isTypingTarget()) {
     e.preventDefault();
     toggleCli();
     return;
   }
-  if (e.key === '`' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+  if (e.key === '`' && !isTypingTarget()) {
     e.preventDefault();
     toggleCli();
   }
@@ -1480,8 +1525,18 @@ cliInput?.addEventListener('keydown', (e) => {
       case 'clear':
         cliOutput.innerHTML = '';
         return;
-      case 'exit':
-        toggleCli();
+case 'exit':
+        // preventDefault is load-bearing, not tidiness. Closing the drawer hands
+        // focus to the footer trigger, and the Enter keypress that ran this
+        // command then activates whatever now holds focus — so the trigger
+        // receives the click and opens the drawer straight back up. The command
+        // appeared to do nothing at all.
+        e.preventDefault();
+        // Focus has to be handed back deliberately. Closing the drawer makes its
+        // subtree inert, which drops focus to the body; without this the
+        // keyboard user is left at the top of the document with no idea where
+        // they are.
+        toggleCli({ restoreFocus: true });
         return;
       default:
         pRes.textContent = `Perintah tidak dikenal: ${cmd}. Ketik 'help' untuk panduan.`;

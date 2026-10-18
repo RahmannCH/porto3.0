@@ -1249,3 +1249,87 @@ test('reduced motion removes the pointer effects instead of shortening them', as
   expect(state.marqueeAnimations).toBe(0);
   expect(state.kicker, 'a scrambled kicker must land on its real text').toBe('karya pilihan');
 });
+
+test('the page renders in its own font and reaches no third party', async ({ page }) => {
+  const origin = new URL(baseURL).origin;
+  const offOrigin = [];
+  page.on('request', request => {
+    const url = new URL(request.url());
+    if (url.origin !== origin && url.protocol !== 'data:') offOrigin.push(request.url());
+  });
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(baseURL);
+  await page.evaluate(() => document.fonts.ready);
+
+  // scrollcraft.css loads first and sets font-family on body itself, so the
+  // :root token never reached the body text and every paragraph rendered in
+  // system-ui while the self-hosted Outfit went unused.
+  const fonts = await page.evaluate(() => ({
+    body: getComputedStyle(document.body).fontFamily,
+    loaded: [...document.fonts].some(f => f.family.includes('Outfit') && f.status === 'loaded'),
+  }));
+  expect(fonts.body, 'body text is not asking for the brand font').toContain('Outfit');
+  expect(fonts.loaded, 'the Outfit woff2 never loaded').toBe(true);
+
+  // SnapDOM was being fetched from unpkg on every load while a byte-identical
+  // v3.2.0 bundle sat unused in js/.
+  const snapdom = await page.evaluate(() => ({
+    type: typeof window.snapdom,
+    version: window.snapdom?.version ?? null,
+  }));
+  expect(['function', 'object']).toContain(snapdom.type);
+  expect(snapdom.version).toBe('3.2.0');
+  expect(offOrigin, `the page called out: ${offOrigin.join(', ')}`).toEqual([]);
+  expect(pageErrors).toEqual([]);
+});
+
+test('the CLI drawer hides its tabbable children and hands focus back on exit', async ({ page }) => {
+  await page.goto(baseURL);
+  const drawer = page.locator('#cli-drawer');
+
+  // aria-hidden alone leaves two focusable children inside a subtree declared
+  // hidden. inert takes them out of the tab order in the same breath.
+  await expect(drawer).toHaveAttribute('aria-hidden', 'true');
+  expect(await drawer.evaluate(el => el.hasAttribute('inert')),
+    'the closed drawer still holds focusable children').toBe(true);
+
+  await page.locator('#footer-cli-btn').click();
+  await expect(drawer).toHaveAttribute('aria-hidden', 'false');
+  expect(await drawer.evaluate(el => el.hasAttribute('inert'))).toBe(false);
+  await expect(page.locator('#cli-input')).toBeFocused();
+
+  const escapes = await page.evaluate(() => {
+    const drawerNode = document.getElementById('cli-drawer');
+    const focusables = drawerNode.querySelectorAll('a[href], button:not([disabled]), input:not([disabled])');
+    const last = focusables[focusables.length - 1];
+    last.focus();
+    const event = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+    last.dispatchEvent(event);
+    return event.defaultPrevented;
+  });
+  expect(escapes, 'Tab escapes the open drawer into the page behind').toBe(true);
+
+  await page.locator('#cli-input').fill('exit');
+  await page.locator('#cli-input').press('Enter');
+  await expect(drawer).toHaveAttribute('aria-hidden', 'true');
+  // Without preventDefault on the Enter that ran the command, the focus handed
+  // to the trigger is immediately activated by that same keypress and the
+  // drawer opens straight back up.
+  await expect(page.locator('#footer-cli-btn')).toBeFocused();
+});
+
+test('print drops the decorative layers that only make sense on screen', async ({ page }) => {
+  await page.goto(baseURL);
+  await page.emulateMedia({ media: 'print' });
+  const printed = await page.evaluate(() => ({
+    heroRing: getComputedStyle(document.querySelector('.hero'), '::before').display,
+    inlineMedia: getComputedStyle(document.querySelector('.inline-media')).display,
+    grain: getComputedStyle(document.body, '::before').display,
+  }));
+  expect(printed.heroRing, 'the decorative ring prints').toBe('none');
+  expect(printed.inlineMedia, 'the photo chip prints').toBe('none');
+  expect(printed.grain, 'the grain layer prints').toBe('none');
+});
