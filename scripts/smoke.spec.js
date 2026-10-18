@@ -1137,6 +1137,84 @@ test('a project whose screenshot never loads keeps the site accent', async ({ pa
   expect(fallback.colour).not.toBe('');
 });
 
+test('the case study cover travels from the card instead of popping in', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(baseURL);
+  await page.locator('#projects').scrollIntoViewIfNeeded();
+  await page.waitForTimeout(1200);
+
+  await page.evaluate(() => {
+    window.__vt = [];
+    const tick = () => {
+      for (const animation of document.getAnimations()) {
+        const pseudo = animation.effect?.pseudoElement;
+        if (pseudo && pseudo.includes('view-transition')) window.__vt.push(pseudo);
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+
+  await page.locator('.project').first().locator('.button-case-study').click();
+  await page.waitForTimeout(1000);
+
+  const seen = await page.evaluate(() => [...new Set(window.__vt)]);
+  // The named group is the only proof that the object travelled. When this
+  // silently stopped happening, the dialog still opened and every other check
+  // passed; the browser reported it as "Animation start failed" and pointed at
+  // the dialog rather than at the duplicate view-transition-name.
+  expect(seen.some(name => name.includes('project-cover')), 'the cover never got its own group').toBe(true);
+
+  const leftovers = await page.evaluate(() => ({
+    cover: document.getElementById('modal-cover').style.viewTransitionName,
+    cards: [...document.querySelectorAll('.project-image img')]
+      .map(el => el.style.viewTransitionName)
+      .filter(Boolean),
+    open: document.getElementById('case-study-modal').open,
+    src: document.getElementById('modal-cover').getAttribute('src'),
+  }));
+  expect(leftovers.open).toBe(true);
+  expect(leftovers.src).toContain('preview');
+  // A name left on two elements at once cancels the next transition outright.
+  expect(leftovers.cover, 'the cover kept its view-transition-name').toBe('');
+  expect(leftovers.cards, 'a card kept its view-transition-name').toEqual([]);
+
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#case-study-modal')).not.toHaveAttribute('open', '');
+});
+
+test('reduced motion opens the case study without the morph', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(baseURL);
+  await page.locator('#projects').scrollIntoViewIfNeeded();
+  await page.waitForTimeout(800);
+
+  await page.evaluate(() => {
+    window.__vt = [];
+    const tick = () => {
+      for (const animation of document.getAnimations()) {
+        const pseudo = animation.effect?.pseudoElement;
+        if (pseudo && pseudo.includes('view-transition')) window.__vt.push(pseudo);
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+
+  await page.locator('.project').first().locator('.button-case-study').click();
+  await page.waitForTimeout(800);
+
+  const state = await page.evaluate(() => ({
+    transitions: [...new Set(window.__vt)],
+    open: document.getElementById('case-study-modal').open,
+    src: document.getElementById('modal-cover').getAttribute('src'),
+  }));
+  // The morph is decoration. The dialog is the part that has to work.
+  expect(state.open, 'the case study must still open under reduced motion').toBe(true);
+  expect(state.src).toContain('preview');
+  expect(state.transitions).toEqual([]);
+});
+
 test('reduced motion removes the pointer effects instead of shortening them', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.emulateMedia({ reducedMotion: 'reduce' });

@@ -1136,14 +1136,41 @@ const CASE_STUDIES = {
 const modal = document.getElementById('case-study-modal');
 const closeBtn = modal?.querySelector('.modal-close');
 const backdrop = modal?.querySelector('.modal-backdrop');
+const modalCover = modal?.querySelector('.modal-cover');
 let lastFocusedElement = null;
 
-function openCaseStudy(key) {
+/* Shared-element morph between a project card and its case study.
+   The card image and the dialog cover are given the same view-transition-name,
+   so the browser animates the object travelling rather than fading two copies
+   of it. Two details matter and both are easy to get wrong:
+
+   - The cover must be decoded before the transition starts. A view transition
+     snapshots the new state as soon as the callback returns, and that callback
+     cannot await, so an image still decoding would be captured empty.
+   - The name has to be removed afterwards. Two elements sharing one
+     view-transition-name at the same time cancels the transition outright, so
+     the card keeps its name only for the length of the animation. */
+const MORPH_NAME = 'project-cover';
+
+const canMorph = () =>
+  typeof document.startViewTransition === 'function' &&
+  !motionPreference.matches &&
+  typeof modal?.showModal === 'function';
+
+const preloadImage = src => new Promise(resolve => {
+  const probe = new Image();
+  probe.decoding = 'async';
+  probe.onload = () => (probe.decode ? probe.decode().then(resolve, resolve) : resolve());
+  probe.onerror = resolve;
+  probe.src = src;
+});
+
+function openCaseStudy(key, sourceImage) {
   const data = CASE_STUDIES[key];
   if (!data || !modal) return;
-  
+
   lastFocusedElement = document.activeElement;
-  
+
   document.getElementById('modal-kicker').textContent = data.kicker;
   document.getElementById('modal-title').textContent = data.title;
   document.getElementById('modal-problem').textContent = data.problem;
@@ -1159,13 +1186,43 @@ function openCaseStudy(key) {
     }
   }
   document.getElementById('modal-actions').innerHTML = data.actions;
-  
-  if (typeof modal.showModal === 'function') {
-    modal.showModal();
-  } else {
-    modal.setAttribute('open', '');
+
+  const show = () => {
+    if (modalCover && sourceImage) {
+      if (modalCover.getAttribute('src') !== sourceImage.currentSrc) {
+        modalCover.src = sourceImage.currentSrc || sourceImage.src;
+      }
+    }
+    if (typeof modal.showModal === 'function') {
+      modal.showModal();
+    } else {
+      modal.setAttribute('open', '');
+    }
+    closeBtn?.focus();
+  };
+
+  if (!sourceImage || !canMorph()) {
+    show();
+    return;
   }
-  closeBtn?.focus();
+
+  // The name goes on the card so the old snapshot has something to capture.
+  sourceImage.style.viewTransitionName = MORPH_NAME;
+
+  preloadImage(sourceImage.currentSrc || sourceImage.src).then(() => {
+    document.startViewTransition(() => {
+      // The name has to move rather than be copied. Two elements carrying
+      // project-cover at the same time aborts the transition outright, and the
+      // browser reports it as "Animation start failed" rather than saying
+      // anything about the dialog, which is why this looks like a top-layer
+      // problem and is not one.
+      sourceImage.style.viewTransitionName = '';
+      if (modalCover) modalCover.style.viewTransitionName = MORPH_NAME;
+      show();
+    }).finished.finally(() => {
+      if (modalCover) modalCover.style.viewTransitionName = '';
+    });
+  });
 }
 
 function closeCaseStudy() {
@@ -1183,7 +1240,9 @@ function closeCaseStudy() {
 document.querySelectorAll('.button-case-study').forEach(btn => {
   btn.addEventListener('click', () => {
     const key = btn.getAttribute('data-project');
-    openCaseStudy(key);
+    // The card the button belongs to is the origin of the morph.
+    const card = btn.closest('.project');
+    openCaseStudy(key, card?.querySelector('.project-image img') ?? null);
   });
 });
 

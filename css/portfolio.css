@@ -1556,3 +1556,29 @@ html[data-theme="light"] .project-modal {
 .modal-kicker {
   color: var(--pa-ink);
 }
+
+/* ============================================================================
+   Shared-element morph: project card to case study
+   ----------------------------------------------------------------------------
+   The cover takes the same view-transition-name as the card it came from, so
+   the browser animates one object travelling from the grid into the dialog
+   rather than cross-fading two of them. Both halves are optional: with no
+   support, or under reduced motion, the dialog simply opens.
+   ========================================================================== */
+
+.modal-cover {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-bottom: 1.4rem;
+  border-radius: 10px;
+  background: var(--surface-raised);
+  object-fit: cover;
+  aspect-ratio: 16 / 9;
+}
+
+/* Before the dialog has a project loaded the element has no source, and an
+   image with no source is a broken-image box. */
+.modal-cover:not([src]) {
+  display: none;
+}
