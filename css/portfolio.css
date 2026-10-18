@@ -1408,12 +1408,12 @@ The journey fill is scroll-driven CSS, so it costs no scroll listener and
 }
 
 .footer-qr svg {
-  /* 29 modules plus a two-module quiet zone is 33 units across. This width puts
-     each module near 3.3px, which is what it takes to decode off a screen: at
-     92px the modules were ~2.4px and the mark looked right while failing to
-     scan, and at 40px it was pure decoration. */
-  width: 104px;
-  height: 104px;
+  /* A vCard is longer than a URL: 41 modules plus a two-module quiet zone is 45
+     units across, so at this width each module lands near 2.4px. Measured on the
+     rendered page, a code stops decoding somewhere under 1.5px per module, so
+     this leaves real headroom rather than sitting on the line. */
+  width: 120px;
+  height: 120px;
   padding: 5px;
   border: 1px solid var(--line);
   /* Square, deliberately. A rounded plate clips the corners of the white field
