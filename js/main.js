@@ -2342,3 +2342,140 @@ if (lanyardAnchor && lanyardPivot && lanyardCard) {
     }, 140);
   }, { passive: true });
 })();
+
+/* Per-project identity colour.
+   Each card samples its own screenshot once, keeps the pixels that actually
+   carry colour, and averages them into an OKLCH triple written to --pa-l/c/h.
+
+   Two things are deliberate. The palette is sampled at 48px, so a 2560px
+   photograph is never fully decoded into a giant buffer just to find out what
+   colour it is. And the lightness is clamped into a band before it is written:
+   the CSS derives its own per-theme values from these channels, so the only
+   thing that has to be right here is that the hue is real and the lightness is
+   somewhere sensible. Anything that fails — an image still decoding, a canvas
+   that will not hand over pixels — leaves the card on the site accent. */
+(() => {
+  const cards = Array.from(document.querySelectorAll('.project'));
+  if (!cards.length) return;
+
+  const SAMPLE = 48;
+  const MIN_CHROMA = 0.035;
+  const LIGHTNESS_BAND = [0.6, 0.78];
+  const CHROMA_BAND = [0.05, 0.16];
+
+  const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+  const toLinear = channel => {
+    const s = channel / 255;
+    return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  };
+
+  // sRGB to OKLab, then the cylindrical form: lightness is perceptually even
+  // there, which is what makes a fixed band mean the same thing across hues.
+  const toOklch = (r, g, b) => {
+    const lr = toLinear(r);
+    const lg = toLinear(g);
+    const lb = toLinear(b);
+
+    const long = Math.cbrt(0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb);
+    const medium = Math.cbrt(0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb);
+    const short = Math.cbrt(0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb);
+
+    const lightness = 0.2104542553 * long + 0.793617785 * medium - 0.0040720468 * short;
+    const a = 1.9779984951 * long - 2.428592205 * medium + 0.4505937099 * short;
+    const bb = 0.0259040371 * long + 0.7827717662 * medium - 0.808675766 * short;
+
+    const chroma = Math.sqrt(a * a + bb * bb);
+    const hue = (Math.atan2(bb, a) * 180) / Math.PI;
+    return { lightness, chroma, hue: hue < 0 ? hue + 360 : hue };
+  };
+
+  const pickDominant = pixels => {
+    // Bucketed by quantised channels so a gradient in the screenshot averages
+    // instead of picking one arbitrary pixel.
+    const buckets = new Map();
+    for (let index = 0; index < pixels.length; index += 4) {
+      const alpha = pixels[index + 3];
+      if (alpha < 128) continue;
+      const colour = toOklch(pixels[index], pixels[index + 1], pixels[index + 2]);
+      // Greys, near-blacks and blown-out whites are not an identity.
+      if (colour.chroma < MIN_CHROMA) continue;
+      if (colour.lightness < 0.18 || colour.lightness > 0.92) continue;
+const key = `${Math.round(colour.hue / 8)}|${Math.round(colour.lightness / 0.12)}|${Math.round(colour.chroma / 0.06)}`;
+      const bucket = buckets.get(key) ?? { count: 0, l: 0, c: 0, hx: 0, hy: 0, weight: 0 };
+      // More saturated pixels count for more: a small vivid accent is a better
+      // identity than a large muted background.
+      const weight = 1 + colour.chroma * 2;
+      const radians = (colour.hue * Math.PI) / 180;
+      bucket.count += 1;
+      bucket.weight += weight;
+      bucket.l += colour.lightness * weight;
+      bucket.c += colour.chroma * weight;
+      // Hue is circular, so it is averaged as a unit vector. Arithmetic mean
+      // would fold a bucket of 350° and 10° to 180°, which is the one hue
+      // those pixels have nothing to do with.
+      bucket.hx += Math.cos(radians) * weight;
+      bucket.hy += Math.sin(radians) * weight;
+      buckets.set(key, bucket);
+    }
+
+    let best = null;
+    buckets.forEach(bucket => {
+      if (!best || bucket.count > best.count) best = bucket;
+    });
+    if (!best || best.count < 6) return null;
+
+    const hue = ((Math.atan2(best.hy, best.hx) * 180) / Math.PI + 360) % 360;
+    return {
+      lightness: clamp(best.l / best.weight, LIGHTNESS_BAND[0], LIGHTNESS_BAND[1]),
+      chroma: clamp(best.c / best.weight, CHROMA_BAND[0], CHROMA_BAND[1]),
+      hue,
+    };
+  };
+
+  const sample = async image => {
+    const size = SAMPLE;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    if (!context) return null;
+
+    if (typeof createImageBitmap === 'function') {
+      const bitmap = await createImageBitmap(image, { resizeWidth: size, resizeHeight: size });
+      context.drawImage(bitmap, 0, 0, size, size);
+      bitmap.close?.();
+    } else {
+      context.drawImage(image, 0, 0, size, size);
+    }
+
+    const { data } = context.getImageData(0, 0, size, size);
+    return pickDominant(data);
+  };
+
+  const applyTo = (card, colour) => {
+    if (!colour) return;
+    card.style.setProperty('--pa-l', colour.lightness.toFixed(3));
+    card.style.setProperty('--pa-c', colour.chroma.toFixed(3));
+    card.style.setProperty('--pa-h', colour.hue.toFixed(1));
+    card.dataset.accent = 'sampled';
+  };
+
+  cards.forEach(card => {
+    const image = card.querySelector('.project-image img');
+    if (!image) return;
+
+    const run = async () => {
+      try {
+        if (!image.complete) await image.decode().catch(() => {});
+        if (!image.complete || !image.naturalWidth) return;
+        applyTo(card, await sample(image));
+      } catch {
+        // A tainted canvas or a decode that never settles: keep the fallback.
+      }
+    };
+
+    if (image.complete && image.naturalWidth) run();
+    else image.addEventListener('load', run, { once: true });
+  });
+})();

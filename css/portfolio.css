@@ -1480,3 +1480,79 @@ The journey fill is scroll-driven CSS, so it costs no scroll listener and
   opacity: 1;
   transform: translate(-50%, 0);
 }
+
+/* ============================================================================
+   Per-project identity colour
+   ----------------------------------------------------------------------------
+   Each card takes an accent from its own screenshot, so the four projects read
+   as four different pieces of work instead of four rows of one table. The
+   colour arrives as three OKLCH channels and CSS chooses the lightness, so a
+   single extraction serves both theme columns and switching themes never needs
+   a second pass over the images.
+
+   The lightness band below is the whole point. A colour lifted straight out of
+   a photograph is a colour nobody has checked, and the one thing this must not
+   reintroduce is contrast that depends on what is behind it.
+   ========================================================================== */
+
+.project {
+  /* Fallbacks first: a screenshot that has not decoded yet, a blocked canvas,
+     or a browser without OKLCH all leave the card on the site accent rather
+     than leaving it unstyled. */
+  --pa-l: 0.66;
+  --pa-c: 0.11;
+  --pa-h: 214;
+}
+
+/* Dark column: the accent has to sit on a near-black surface, so it lands in
+   the upper lightness band. Its text partner only nudges up from there, and
+   that small offset is deliberate — pushing it further produced a technically
+   valid contrast ratio in near-white, which passed every check while throwing
+   away the one thing the colour was for. */
+html[data-theme="dark"] .project,
+html[data-theme="dark"] .project-modal {
+  --pa-base: oklch(var(--pa-l) var(--pa-c) var(--pa-h));
+  --pa-ink: oklch(min(calc(var(--pa-l) + 0.04), 0.86) var(--pa-c) var(--pa-h));
+}
+
+/* Light column: the same hue, carried down so it reads as ink rather than as a
+   pastel, and its text partner carried down again for contrast on white. */
+html[data-theme="light"] .project,
+html[data-theme="light"] .project-modal {
+  --pa-base: oklch(max(calc(var(--pa-l) - 0.28), 0.28) var(--pa-c) var(--pa-h));
+  --pa-ink: oklch(max(calc(var(--pa-l) - 0.42), 0.20) var(--pa-c) var(--pa-h));
+}
+
+.project-type {
+  color: var(--pa-ink);
+}
+
+.project-number {
+  border-color: color-mix(in srgb, var(--pa-base) 62%, var(--line));
+}
+
+/* The hover ring is decoration around a photograph rather than a text surface,
+   so it carries the raw accent; the relative-colour form below is the softer
+   variant browsers that support it get for free. */
+.project-image {
+  --pa-ring: color-mix(in srgb, var(--pa-base) 55%, transparent);
+}
+
+@supports (color: oklch(from red l c h)) {
+  .project-image {
+    --pa-ring: oklch(from var(--pa-base) calc(c + 0.02) calc(l + 0.06) h / 0.55);
+  }
+}
+
+.project-image:hover,
+.project-image:focus-visible {
+  box-shadow: 0 0 0 2px var(--pa-ring);
+}
+
+.button-case-study:hover {
+  color: var(--pa-ink);
+}
+
+.modal-kicker {
+  color: var(--pa-ink);
+}

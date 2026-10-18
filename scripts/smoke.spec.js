@@ -1037,6 +1037,99 @@ test('the footer QR stays legible enough to be read by a camera', async ({ page 
   await expect(code).toBeHidden();
 });
 
+test('each project samples its own colour and keeps it readable', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(baseURL);
+  await page.locator('#projects').scrollIntoViewIfNeeded();
+  // The screenshots are lazy, so the sampling only happens once they land.
+  await page.waitForTimeout(1500);
+
+  const sampled = await page.evaluate(() =>
+    [...document.querySelectorAll('.project')].map(card => ({
+      title: card.querySelector('h3').textContent.trim(),
+      sampled: card.dataset.accent === 'sampled',
+      l: parseFloat(card.style.getPropertyValue('--pa-l')),
+      h: parseFloat(card.style.getPropertyValue('--pa-h')),
+    })));
+
+  expect(sampled).toHaveLength(4);
+  sampled.forEach(card => {
+    expect(card.sampled, `${card.title} never sampled its screenshot`).toBe(true);
+    // Written straight into the band the stylesheet expects, so a regression in
+    // the clamp shows up here instead of as an unreadable card.
+    expect(card.l).toBeGreaterThanOrEqual(0.6);
+    expect(card.l).toBeLessThanOrEqual(0.78);
+  });
+  // Four different projects must not collapse onto one hue.
+  const hueBuckets = new Set(sampled.map(card => Math.round(card.h / 15)));
+  expect(hueBuckets.size, 'the projects all sampled the same hue').toBeGreaterThan(1);
+
+  // Contrast is measured through a canvas because getComputedStyle hands back
+  // oklch() untouched for these colours, and reading its three channels as
+  // 0-255 numbers would call a legible blue black-on-black.
+  for (const theme of ['dark', 'light']) {
+    await page.evaluate(value => { document.documentElement.dataset.theme = value; }, theme);
+    await page.waitForTimeout(200);
+
+    const ratios = await page.evaluate(() => {
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = 1;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const toRgb = value => {
+        ctx.fillStyle = '#000000';
+        ctx.fillStyle = value;
+        ctx.fillRect(0, 0, 1, 1);
+        const d = ctx.getImageData(0, 0, 1, 1).data;
+        return [d[0], d[1], d[2]];
+      };
+      const luminance = ([r, g, b]) => {
+        const channel = v => {
+          const s = v / 255;
+          return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+        };
+        return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+      };
+      return [...document.querySelectorAll('.project-type')].map(el => {
+        const fg = luminance(toRgb(getComputedStyle(el).color));
+        let node = el.parentElement;
+        let bg = null;
+        while (node) {
+          const parts = (getComputedStyle(node).backgroundColor.match(/[\d.]+/g) || []).map(Number);
+          if (parts.length >= 3 && (parts.length < 4 || parts[3] > 0)) { bg = luminance(toRgb(getComputedStyle(node).backgroundColor)); break; }
+          node = node.parentElement;
+        }
+        if (bg === null) bg = luminance([11, 13, 16]);
+        return Math.round(((Math.max(fg, bg) + 0.05) / (Math.min(fg, bg) + 0.05)) * 100) / 100;
+      });
+    });
+
+    ratios.forEach((ratio, index) => {
+      expect(ratio, `project ${index + 1} label is unreadable in ${theme}`).toBeGreaterThanOrEqual(4.5);
+    });
+  }
+});
+
+test('a project whose screenshot never loads keeps the site accent', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  // The fallback is the whole reason the variables have defaults: an image that
+  // fails, a canvas that refuses pixels, or an early visit must not leave a
+  // card with no accent at all.
+  await page.route('**/*-preview.jpg', route => route.abort());
+  await page.goto(baseURL);
+  await page.waitForTimeout(1000);
+
+  const fallback = await page.evaluate(() => {
+    const card = document.querySelector('.project');
+    return {
+      sampled: card.dataset.accent === 'sampled',
+      colour: getComputedStyle(card.querySelector('.project-type')).color,
+    };
+  });
+  expect(fallback.sampled).toBe(false);
+  expect(fallback.colour).not.toBe('rgb(0, 0, 0)');
+  expect(fallback.colour).not.toBe('');
+});
+
 test('reduced motion removes the pointer effects instead of shortening them', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
