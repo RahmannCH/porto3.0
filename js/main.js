@@ -134,7 +134,55 @@ if (dragItems.length > 0) {
     resting: false
   }));
 
+  // The hero's text metrics and the field width only change on a resize or when
+  // the webfont lands, but the drag loop used to re-read them for every sticker
+  // on every frame — roughly a dozen synchronous layout reads sitting before the
+  // frame's style writes, which is exactly the pattern that forces the engine to
+  // lay the whole page out again. They are measured once instead, inside the
+  // same frame as the sticker bases, so everything shares one coordinate space:
+  // scrolling moves a cached viewport rect and a cached base by the same delta,
+  // and the arithmetic below subtracts them again, so the answer is identical to
+  // measuring live on every frame.
+  const terrainMetrics = {
+    capTop: 0,
+    wrLeft: 0,
+    wrWidth: 1,
+    wrRight: 0,
+    maxDistX: 300,
+    unavailable: true
+  };
+
+  const measureTerrain = () => {
+    const field = document.querySelector('.sticker-field');
+    terrainMetrics.maxDistX = field ? field.offsetWidth * 0.48 : 300;
+
+    const h1 = document.querySelector('#hero-title');
+    if (!h1 || !h1.firstChild) {
+      terrainMetrics.unavailable = true;
+      return;
+    }
+    const source = h1.querySelector('span')?.firstChild ?? h1.firstChild;
+    let wr;
+    try {
+      // The name is split across spans for the nickname emphasis, so the text
+      // node lives inside the first span rather than being h1.firstChild.
+      const range = document.createRange();
+      range.setStart(source, 0);
+      range.setEnd(source, Math.min(8, source.length || 8));
+      wr = range.getBoundingClientRect();
+    } catch (_) {
+      wr = h1.getBoundingClientRect();
+    }
+    const hr = h1.getBoundingClientRect();
+    terrainMetrics.unavailable = false;
+    terrainMetrics.capTop = hr.top + 18;
+    terrainMetrics.wrLeft = wr.left;
+    terrainMetrics.wrWidth = wr.width;
+    terrainMetrics.wrRight = wr.right;
+  };
+
   const updateBases = () => {
+    measureTerrain();
     stickers.forEach(s => {
       const rect = s.el.getBoundingClientRect();
       s.hw = rect.width / 2;
@@ -146,32 +194,34 @@ if (dragItems.length > 0) {
 
   updateBases();
 
+  // A webfont landing rewrites the width of the line the stickers rest on, and
+  // the resize event has no way to know about it. Without this the terrain the
+  // cache holds is the fallback font's, and the stickers settle on the wrong
+  // letterforms for the rest of the visit.
+  //
+  // Only the text metrics get re-measured here, never updateBases(): the bases
+  // are read from live rects, and mid-load the entrance reveal and the swap
+  // between fallback and webfont are still moving them, so a base captured
+  // there is wrong by however far the element had drifted. That wrong baseCy
+  // survives the landing snap and parks stickers in mid-air above the letters.
+  document.fonts?.ready.then(() => {
+    measureTerrain();
+    if (isDesktop()) wakePhysics();
+  }).catch(() => {});
+
   // Terrain calculation directly upon the visible letterforms of "MUHAMMAD".
-  // The name is split across spans for the nickname emphasis, so the text node
-  // lives inside the first span rather than being h1.firstChild directly.
+  // Reads only what measureTerrain captured above — no layout query survives
+  // into the drag loop, because this runs once per sticker per frame.
   const getLetterFloor = (xViewport) => {
-    const h1 = document.querySelector('#hero-title');
-    if (!h1 || !h1.firstChild) return { y: 250, slope: 0 };
-    const source = h1.querySelector('span')?.firstChild ?? h1.firstChild;
-    let wr;
-    try {
-      const range = document.createRange();
-      range.setStart(source, 0);
-      range.setEnd(source, Math.min(8, source.length || 8));
-      wr = range.getBoundingClientRect();
-    } catch (_) {
-      wr = h1.getBoundingClientRect();
-    }
+    if (terrainMetrics.unavailable) return { y: 250, slope: 0 };
 
-    const hr = h1.getBoundingClientRect();
-    // Top cap elevation of visible "MUHAMMAD" uppercase glyphs
-    const capTop = hr.top + 18;
+    const { capTop, wrLeft, wrWidth, wrRight } = terrainMetrics;
 
-    if (xViewport < wr.left - 30 || xViewport > wr.right + 30) {
+    if (xViewport < wrLeft - 30 || xViewport > wrRight + 30) {
       return { y: capTop + 25, slope: 0 };
     }
 
-    const u = clamp((xViewport - wr.left) / Math.max(1, wr.width), 0, 1);
+    const u = clamp((xViewport - wrLeft) / Math.max(1, wrWidth), 0, 1);
     const letterIndex = Math.min(7, Math.floor(u * 8));
     const localU = (u * 8) - letterIndex;
 
@@ -359,8 +409,7 @@ if (dragItems.length > 0) {
       }
 
       // Horizontal boundary restraint
-      const field = document.querySelector('.sticker-field');
-      const maxDistX = field ? field.offsetWidth * 0.48 : 300;
+      const maxDistX = terrainMetrics.maxDistX;
       if (s.x < -maxDistX) { s.x = -maxDistX; s.vx = Math.abs(s.vx) * 0.3; }
       if (s.x > maxDistX) { s.x = maxDistX; s.vx = -Math.abs(s.vx) * 0.3; }
 

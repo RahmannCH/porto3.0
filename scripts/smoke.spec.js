@@ -154,6 +154,56 @@ test('mobile resize resets sticker physics offsets', async ({ page }) => {
   expect(mobileY).toBe(0);
 });
 
+test('a sticker comes to rest on the letterforms, and the floor follows a resize', async ({ page }) => {
+  // The terrain the physics solves against is cached rather than measured on
+  // every frame, so the floor has to be shown to move when the layout does.
+  // Read each sticker's height above the top of the title once it has held the
+  // same value for twenty frames: one frame of agreement is not quiescence, and
+  // reading during the entrance drop reports wherever the sticker happened to
+  // be falling through. The physics parks a resting sticker on the glyph tops,
+  // so the height that settles is the letter relief less the growth the tilt
+  // gives the bounding box, which lands in a band either side of that line.
+  const resting = () => page.evaluate(async () => {
+    const stickers = [...document.querySelectorAll('[data-draggable]')];
+    let previous = null;
+    let stable = 0;
+    for (let i = 0; i < 400 && stable < 20; i += 1) {
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      const current = stickers.map(el => el.style.getPropertyValue('--drag-y'));
+      stable = previous && current.every((value, index) => value === previous[index]) ? stable + 1 : 0;
+      previous = current;
+    }
+    const titleTop = document.querySelector('#hero-title').getBoundingClientRect().top;
+    return {
+      titleTop,
+      gaps: stickers.map(el => el.getBoundingClientRect().bottom - titleTop),
+    };
+  });
+
+  const check = (reading, label) => {
+    // Where each sticker ends up varies with the entrance, because some land on
+    // the word and some end up stacked on a neighbour — so this asks where the
+    // word is rather than where any one sticker is. A sticker stranded over the
+    // title, or one that fell through it, lands tens of pixels away either way.
+    const onWord = reading.gaps.filter(gap => Math.abs(gap) <= 40);
+    expect(
+      onWord.length,
+      `${label}: fewer stickers settled on the word than should have, gaps were ${reading.gaps.map(gap => gap.toFixed(1)).join(', ')}`,
+    ).toBeGreaterThanOrEqual(4);
+  };
+
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(baseURL);
+  const dropped = await resting();
+  check(dropped, 'after the drop');
+
+  await page.setViewportSize({ width: 780, height: 1000 });
+  const resized = await resting();
+  expect(resized.titleTop, 'the title did not move at this width, so this reading proves nothing')
+    .not.toBe(dropped.titleTop);
+  check(resized, 'after the resize');
+});
+
 test('reduced motion leaves reveal content visible and pauses mascot', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto(baseURL);
