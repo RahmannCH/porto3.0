@@ -1554,6 +1554,51 @@ document.addEventListener('keydown', (e) => {
 cliClose?.addEventListener('click', () => toggleCli({ restoreFocus: true }));
 cliTrigger?.addEventListener('click', () => toggleCli({ restoreFocus: true }));
 
+// The dispatcher's word list, kept as data so help and the fuzzy fallback
+// cannot drift apart from what the switch actually accepts.
+const CLI_COMMANDS = [
+  'help', 'whoami', 'projects', 'skills', 'capabilities', 'theme', 'cv', 'print',
+  'pet', 'mascot', 'contact', 'goto', 'privacy', 'clear', 'exit',
+];
+
+const editDistance = (a, b) => {
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i += 1) {
+    const row = [i];
+    for (let j = 1; j <= b.length; j += 1) {
+      row[j] = Math.min(
+        prev[j] + 1,
+        row[j - 1] + 1,
+        prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
+      );
+    }
+    prev = row;
+  }
+  return prev[b.length];
+};
+
+// Nearest entry in a word list, or null when nothing is close enough to be
+// what was meant. A prefix naming exactly one candidate wins outright — that
+// is how `the` reaches `theme`, two edits away. Otherwise a candidate has to
+// be within two edits and within a third of the word typed; looser than that
+// and the correction is really a guess, which is worse than saying nothing.
+const closestOf = (list, typed) => {
+  if (typed.length < 2) return null;
+  const prefixed = list.filter(word => word.startsWith(typed));
+  if (prefixed.length === 1) return prefixed[0];
+  const budget = Math.max(1, Math.min(2, Math.ceil(typed.length / 3)));
+  let best = null;
+  let bestScore = Infinity;
+  for (const word of list) {
+    const score = editDistance(typed, word);
+    if (score < bestScore) {
+      bestScore = score;
+      best = word;
+    }
+  }
+  return bestScore > 0 && bestScore <= budget ? best : null;
+};
+
 const cliHistory = [];
 let historyIndex = -1;
 let currentDraft = '';
@@ -1600,7 +1645,7 @@ cliInput?.addEventListener('keydown', (e) => {
 
     switch (action) {
       case 'help':
-        pRes.innerHTML = 'Perintah: <strong>whoami</strong>, <strong>projects</strong>, <strong>skills</strong>, <strong>theme [dark|light|toggle]</strong>, <strong>contact</strong>, <strong>print</strong>, <strong>pet</strong>, <strong>clear</strong>, <strong>exit</strong>';
+        pRes.innerHTML = 'Perintah: <strong>whoami</strong>, <strong>projects</strong>, <strong>skills</strong>, <strong>goto [home|about|projects|capabilities|journey|contact]</strong>, <strong>theme [dark|light|toggle]</strong>, <strong>contact</strong>, <strong>print</strong>, <strong>pet</strong>, <strong>privacy</strong>, <strong>clear</strong>, <strong>exit</strong>';
         break;
       case 'whoami':
         pRes.textContent = 'Muhammad Nur Rahman — Mahasiswa S1 Ilmu Komputer ULM & Full-stack Developer.';
@@ -1643,6 +1688,41 @@ cliInput?.addEventListener('keydown', (e) => {
       case 'contact':
         pRes.textContent = 'Email: Rahmannch19@gmail.com | GitHub: github.com/RahmannCH | Instagram: @mangch._';
         break;
+      case 'goto': {
+        // The same sections the header links point at, so the drawer can move
+        // the page without knowing anything the navigation does not.
+        const targets = ['home', 'about', 'projects', 'capabilities', 'journey', 'contact'];
+        const wanted = (args[0] || '').toLowerCase();
+        const target = targets.includes(wanted) ? wanted : closestOf(targets, wanted);
+        if (!target) {
+          pRes.textContent = `Tujuan tidak dikenal: ${wanted || '(kosong)'}. Pilihan: ${targets.join(', ')}.`;
+          break;
+        }
+        // The hash rather than scrollIntoView: the address bar then agrees
+        // with where the visitor is, Back steps to where they were, and the
+        // page's own scroll-behavior — including its reduced-motion override
+        // — decides how the jump is animated.
+        location.hash = target;
+        pRes.textContent = `Menuju ${target}...`;
+        break;
+      }
+      case 'privacy': {
+        // Everything this site keeps is in localStorage, and it is only ever
+        // the theme and the sound preference. Clearing is the whole offer: no
+        // identifier, no profile, nothing that outlives the visit by design.
+        let stored = [];
+        try {
+          stored = Object.keys(localStorage);
+          localStorage.clear();
+        } catch (_) {
+          pRes.textContent = 'Penyimpanan lokal tidak dapat diakses.';
+          break;
+        }
+        pRes.textContent = stored.length
+          ? `Data lokal dibersihkan: ${stored.join(', ')}.`
+          : 'Tidak ada data lokal yang tersimpan.';
+        break;
+      }
       case 'clear':
         cliOutput.innerHTML = '';
         return;
@@ -1659,8 +1739,15 @@ case 'exit':
         // they are.
         toggleCli({ restoreFocus: true });
         return;
-      default:
-        pRes.textContent = `Perintah tidak dikenal: ${cmd}. Ketik 'help' untuk panduan.`;
+      default: {
+        // Matched on the first word only: `the light` is one typo, not a
+        // phrase, and the distance over the whole line would hide it.
+        const suggestion = closestOf(CLI_COMMANDS, action);
+        pRes.textContent = suggestion
+          ? `Perintah tidak dikenal: ${cmd}. Maksud kamu '${suggestion}'?`
+          : `Perintah tidak dikenal: ${cmd}. Ketik 'help' untuk panduan.`;
+        break;
+      }
     }
     cliOutput.appendChild(pRes);
     const body = cliDrawer.querySelector('.cli-body');

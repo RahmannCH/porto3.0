@@ -1665,3 +1665,80 @@ test('a case-study URL naming something that is not a project opens nothing', as
     await expect(page.locator('#case-study-modal'), `"${key}" must not open a dialog`).not.toBeVisible();
   }
 });
+
+const openCliAndRun = async (page, command) => {
+  await page.goto(baseURL);
+  await page.locator('#footer-cli-btn').click();
+  const input = page.locator('#cli-input');
+  await input.fill(command);
+  await input.press('Enter');
+  return page.locator('#cli-output');
+};
+
+test('the cli can move the page to a section, including one named badly', async ({ page }) => {
+  await page.goto(baseURL);
+  await page.locator('#footer-cli-btn').click();
+  const input = page.locator('#cli-input');
+  const hash = () => page.evaluate(() => location.hash);
+
+  // The hash rather than a scroll call, so the address bar and the browser's
+  // Back button agree with where the visitor is — the same contract the
+  // header links already keep.
+  await input.fill('goto projects');
+  await input.press('Enter');
+  await expect.poll(hash).toBe('#projects');
+  await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 10000 }).toBeGreaterThan(0);
+
+  // A near miss resolves too; `abot` is one edit from `about` and unique.
+  await input.fill('goto abot');
+  await input.press('Enter');
+  await expect.poll(hash).toBe('#about');
+
+  // A destination nothing resembles is refused rather than guessed at, and
+  // the message lists what would have worked.
+  await input.fill('goto nowhere-at-all');
+  await input.press('Enter');
+  await expect(page.locator('#cli-output')).toContainText('Tujuan tidak dikenal');
+});
+
+test('a typo on a command offers the command it probably meant', async ({ page }) => {
+  const output = await openCliAndRun(page, 'proects');
+  await expect(output, 'one transposed pair must not dead-end').toContainText("Maksud kamu 'projects'");
+  expect(await output.textContent(), 'the offer must not run the command for them').not.toContain('Zadify');
+
+  // Matched on the first word: `the light` is one typo with an argument
+  // after it, and measuring the whole line would bury the typo in the rest.
+  await page.locator('#cli-input').fill('the light');
+  await page.locator('#cli-input').press('Enter');
+  await expect(output).toContainText("Maksud kamu 'theme'");
+
+  // Anything that resembles nothing is still told to ask for help rather
+  // than shown a command the visitor did not type.
+  await page.locator('#cli-input').fill('xyzzy');
+  await page.locator('#cli-input').press('Enter');
+  await expect(output).toContainText("Ketik 'help'");
+});
+
+test('privacy clears every key the site wrote', async ({ page }) => {
+  const output = await openCliAndRun(page, 'theme light');
+  expect(await page.evaluate(() => Object.keys(localStorage)), 'the theme must be stored first')
+    .toEqual(['rahman-portfolio-theme']);
+
+  await page.locator('#cli-input').fill('privacy');
+  await page.locator('#cli-input').press('Enter');
+  expect(await page.evaluate(() => Object.keys(localStorage)), 'privacy must leave nothing behind').toEqual([]);
+  await expect(output).toContainText('Data lokal dibersihkan: rahman-portfolio-theme');
+});
+
+test('the page stores nothing but the theme and the sound preference', async ({ page }) => {
+  await page.goto(baseURL);
+  expect(await page.evaluate(() => Object.keys(localStorage)), 'a fresh visit must write nothing').toEqual([]);
+
+  // Both controls exercised, so anything else the app reaches for — an
+  // identifier, a counter, a flag for later — has had its chance to appear.
+  await page.locator('.theme-toggle').click();
+  await page.locator('.sound-toggle').scrollIntoViewIfNeeded();
+  await page.locator('.sound-toggle').click();
+  await expect.poll(() => page.evaluate(() => Object.keys(localStorage).sort()))
+    .toEqual(['rahman-portfolio-sound', 'rahman-portfolio-theme']);
+});
