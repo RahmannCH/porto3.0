@@ -633,7 +633,6 @@ if (petEls.length === 2 && mascotEnv) {
   const SPEECH_MS = 2500;
   const REACT_GAP = 0.5;
 
-  const clamp = (value, low, high) => (value < low ? low : value > high ? high : value);
   const pick = list => list[Math.floor(Math.random() * list.length)];
 
   // Call-and-response dialogues: Pet 1 leads, Pet 2 replies with organic continuity.
@@ -1247,8 +1246,13 @@ const caseStudyInUrl = () => {
 
 const caseStudyUrl = key => `${location.pathname}?case=${key}${location.hash}`;
 const pageUrl = () => location.pathname + location.hash;
+const ACCENT_CHANNELS = ['--pa-l', '--pa-c', '--pa-h'];
 
-function openCaseStudy(key, sourceImage) {
+// These four are module scope, so they are written as bindings rather than
+// declarations: a function declaration at the top level of a classic script
+// is a property of the global object, and nothing outside this file calls
+// them — no inline handler, no string looked up by name.
+const openCaseStudy = (key, sourceImage) => {
   const data = CASE_STUDIES[key];
   if (!data || !modal) return;
 
@@ -1260,6 +1264,18 @@ function openCaseStudy(key, sourceImage) {
   }
 
   lastFocusedElement = document.activeElement;
+
+  // The accent belongs to the card this case was opened from. The dialog
+  // sits outside the grid, so without carrying the three channels across it
+  // would compute its ink from whatever fallback the stylesheet holds — a
+  // hue no project actually uses — and the kicker would lose the colour it
+  // was given for. A deep link has no card, so it keeps the fallback.
+  const sourceCard = sourceImage?.closest?.('.project');
+  ACCENT_CHANNELS.forEach(channel => {
+    const extracted = sourceCard?.style.getPropertyValue(channel).trim();
+    if (extracted) modal.style.setProperty(channel, extracted);
+    else modal.style.removeProperty(channel);
+  });
 
   document.getElementById('modal-kicker').textContent = data.kicker;
   document.getElementById('modal-title').textContent = data.title;
@@ -1323,9 +1339,9 @@ function openCaseStudy(key, sourceImage) {
         if (modalCover) modalCover.style.viewTransitionName = '';
       });
   });
-}
+};
 
-function dismissCaseStudy() {
+const dismissCaseStudy = () => {
   if (!modal) return;
   if (typeof modal.close === 'function') {
     modal.close();
@@ -1335,9 +1351,9 @@ function dismissCaseStudy() {
   if (lastFocusedElement) {
     lastFocusedElement.focus();
   }
-}
+};
 
-function closeCaseStudy() {
+const closeCaseStudy = () => {
   if (!modal) return;
   if (history.state?.caseStudy) {
     // One entry was pushed for this dialog, so let Back undo it. Closing here
@@ -1351,7 +1367,7 @@ function closeCaseStudy() {
   // the only entry would take the visitor out of the site.
   if (caseStudyInUrl()) history.replaceState(null, '', pageUrl());
   dismissCaseStudy();
-}
+};
 
 document.querySelectorAll('.button-case-study').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -1499,7 +1515,7 @@ const cliInput = document.getElementById('cli-input');
 const cliOutput = document.getElementById('cli-output');
 const cliTrigger = document.getElementById('footer-cli-btn');
 
-function toggleCli({ restoreFocus = false } = {}) {
+const toggleCli = ({ restoreFocus = false } = {}) => {
   if (!cliDrawer) return;
   const isOpen = cliDrawer.classList.toggle('is-open');
   cliDrawer.setAttribute('aria-hidden', String(!isOpen));
@@ -1514,7 +1530,7 @@ function toggleCli({ restoreFocus = false } = {}) {
   } else if (restoreFocus) {
     cliTrigger?.focus();
   }
-}
+};
 
 // The drawer is a dialog that opens over the page, so it keeps focus the way
 // the case-study dialog already does. Without this, Tab from the input escapes
@@ -1668,10 +1684,12 @@ cliInput?.addEventListener('keydown', (e) => {
         const target = args[0];
         const current = document.documentElement.dataset.theme;
         const nextTheme = (target === 'light' || target === 'dark') ? target : (current === 'dark' ? 'light' : 'dark');
+        // The same writer the header toggle uses: persistence, the button's
+        // state, and the fallback when localStorage refuses all travel
+        // together, so a theme set from the drawer and a theme set from the
+        // header can never disagree about what is stored.
         document.documentElement.classList.add('theme-transition');
-        document.documentElement.dataset.theme = nextTheme;
-        updateThemeButton(nextTheme);
-        try { localStorage.setItem('rahman-portfolio-theme', nextTheme); } catch (_) {}
+        applyTheme(nextTheme);
         setTimeout(() => document.documentElement.classList.remove('theme-transition'), 250);
         pRes.textContent = `Tema website dialihkan ke: ${nextTheme}`;
         break;
@@ -1994,7 +2012,6 @@ if (lanyardAnchor && lanyardPivot && lanyardCard) {
   const NEAREST_LENGTH = HANGING_LENGTH - MAX_COMPRESSION;
   const FARTHEST_LENGTH = HANGING_LENGTH + MAX_STRETCH;
 
-  const clamp = (value, low, high) => (value < low ? low : value > high ? high : value);
   const blend = (from, to, ratio) => from + (to - from) * ratio;
 
   let angle = 0;
@@ -2117,7 +2134,10 @@ if (lanyardAnchor && lanyardPivot && lanyardCard) {
     frame = requestAnimationFrame(advance);
   };
 
-  function advance(now) {
+  // A function declaration inside a top-level block still gets a property on
+  // the global object in a classic script, which is how this loop leaked as
+  // `window.advance`. As a binding it stays inside the block it belongs to.
+  const advance = now => {
     frame = requestAnimationFrame(advance);
     const elapsed = (now - clock) / 1000;
     clock = now;
@@ -2137,7 +2157,7 @@ if (lanyardAnchor && lanyardPivot && lanyardCard) {
       return;
     }
     render();
-  }
+  };
 
   lanyardCard.addEventListener('pointerdown', event => {
     if (event.button !== 0) return;
@@ -2306,7 +2326,10 @@ if (lanyardAnchor && lanyardPivot && lanyardCard) {
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
   const finePointer = matchMedia('(pointer: fine)');
   const pointerEffectsAllowed = () => finePointer.matches && !reduceMotion.matches;
-  const clamp = (value, limit) => Math.min(limit, Math.max(-limit, value));
+  // Signed clamp: this one bounds a value about zero rather than inside a
+  // range, so it is a different helper wearing the same name — which is how
+  // it survived the dedupe. It is named for what it does now.
+  const clampSigned = (value, limit) => Math.min(limit, Math.max(-limit, value));
 
   /* Magnetic hero buttons.
      The lean is clamped so a button can never travel far enough to leave its
@@ -2364,8 +2387,8 @@ if (lanyardAnchor && lanyardPivot && lanyardCard) {
         const box = button.getBoundingClientRect();
         const offsetX = event.clientX - (box.left + box.width / 2);
         const offsetY = event.clientY - (box.top + box.height / 2);
-        state.targetX = clamp(offsetX * PULL, MAX_LEAN);
-        state.targetY = clamp(offsetY * PULL, MAX_LEAN);
+        state.targetX = clampSigned(offsetX * PULL, MAX_LEAN);
+        state.targetY = clampSigned(offsetY * PULL, MAX_LEAN);
         schedule();
       });
 
@@ -2495,8 +2518,8 @@ if (lanyardAnchor && lanyardPivot && lanyardCard) {
         const y = (event.clientY - box.top) / box.height;
         cover.style.setProperty('--mx', `${(x * 100).toFixed(1)}%`);
         cover.style.setProperty('--my', `${(y * 100).toFixed(1)}%`);
-        targetY = clamp((x - 0.5) * MAX_TILT * 2, MAX_TILT);
-        targetX = clamp((0.5 - y) * MAX_TILT * 2, MAX_TILT);
+        targetY = clampSigned((x - 0.5) * MAX_TILT * 2, MAX_TILT);
+        targetX = clampSigned((0.5 - y) * MAX_TILT * 2, MAX_TILT);
         if (!frame) frame = window.requestAnimationFrame(tick);
       });
 
@@ -2692,7 +2715,6 @@ if (lanyardAnchor && lanyardPivot && lanyardCard) {
   const LIGHTNESS_BAND = [0.6, 0.78];
   const CHROMA_BAND = [0.05, 0.16];
 
-  const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
   const toLinear = channel => {
     const s = channel / 255;

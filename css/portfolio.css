@@ -1633,7 +1633,13 @@ The journey fill is scroll-driven CSS, so it costs no scroll listener and
    reintroduce is contrast that depends on what is behind it.
    ========================================================================== */
 
-.project {
+/* The dialog is listed beside the card because it lives outside the grid:
+   with only `.project` carrying these, a case study opened from a shared
+   link had no accent channels at all and computed its ink from an empty
+   substitution. The card overrides its own values when the screenshot is
+   read; the dialog takes the same defaults until openCaseStudy copies them. */
+.project,
+.project-modal {
   /* Fallbacks first: a screenshot that has not decoded yet, a blocked canvas,
      or a browser without OKLCH all leave the card on the site accent rather
      than leaving it unstyled. */

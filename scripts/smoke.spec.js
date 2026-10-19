@@ -1830,3 +1830,50 @@ test('reduced motion stops the motion without stopping the page', async ({ page 
   });
   expect(wholeItems, 'the tech strip must still show whole items, not a slice of one').toBeGreaterThanOrEqual(3);
 });
+test('a case study carries the accent of the card it opened from', async ({ page }) => {
+  await page.goto(baseURL);
+  const card = page.locator('.project').first();
+  const cardChannels = await card.evaluate(element => {
+    const styles = getComputedStyle(element);
+    return ['--pa-l', '--pa-c', '--pa-h'].map(name => styles.getPropertyValue(name).trim());
+  });
+  const cardInk = await card.evaluate(element => getComputedStyle(element).getPropertyValue('--pa-ink').trim());
+
+  await card.locator('.button-case-study').click();
+  await expect(page.locator('#case-study-modal')).toBeVisible({ timeout: 10000 });
+
+  // The dialog sits outside the grid, so the channels have to be carried
+  // across with it. Without them the accent rules substitute an empty value,
+  // the ink falls back to plain text, and the kicker keeps a colour no
+  // project was ever given.
+  const opened = await page.evaluate(() => {
+    const dialog = document.querySelector('#case-study-modal');
+    const styles = getComputedStyle(dialog);
+    return {
+      channels: ['--pa-l', '--pa-c', '--pa-h'].map(name => styles.getPropertyValue(name).trim()),
+      ink: getComputedStyle(document.querySelector('.modal-kicker')).color,
+      declared: styles.getPropertyValue('--pa-ink').trim(),
+    };
+  });
+  expect(opened.channels, 'the dialog must hold the channels of the card it came from').toEqual(cardChannels);
+  expect(opened.declared, 'the dialog must resolve an ink of its own').not.toBe('');
+  expect(opened.ink, 'the kicker must paint with that ink').not.toBe('rgb(20, 25, 30)');
+
+  // A shared link has no card to copy from, so it keeps the fallback — but
+  // the fallback has to be a real value, which is what listing the dialog
+  // beside the card in the stylesheet is for.
+  await page.goto(`${baseURL}/?case=zadify`);
+  await expect(page.locator('#case-study-modal')).toBeVisible({ timeout: 10000 });
+  const linked = await page.evaluate(() => getComputedStyle(document.querySelector('#case-study-modal')).getPropertyValue('--pa-ink').trim());
+  expect(linked, 'a case opened from a link must still be given an ink').not.toBe('');
+});
+
+test('the page keeps its helpers off the window object', async ({ page }) => {
+  await page.goto(baseURL);
+  // A function declaration at the top level of a classic script becomes a
+  // property of the global object, which is how a page ends up with a
+  // public API nobody asked for and nobody outside the file calls.
+  const leaked = await page.evaluate(() => ['openCaseStudy', 'dismissCaseStudy', 'closeCaseStudy', 'toggleCli', 'advance']
+    .filter(name => name in window));
+  expect(leaked, 'module scope must not publish itself to window').toEqual([]);
+});
