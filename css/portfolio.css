@@ -450,8 +450,13 @@ Components added after the reference-driven pass, kept in their own file so
   transition: scale 0.16s ease-out;
 }
 
-.pet-1 { --unit: 1; z-index: 3; }
-.pet-2 { --unit: 0.84; z-index: 2; }
+/* The initial left mirrors keepInside()'s placement — same reach, same factors
+   — so first paint already shows each pet where the script is about to put it.
+   Without it the deferred script's write to `left` is a layout shift as large as
+   the distance from the edge of the viewport, because `left: auto` puts a pet at
+   the start of its environment. */
+.pet-1 { --unit: 1; z-index: 3; left: calc((100% - 86px) * 0.22); }
+.pet-2 { --unit: 0.84; z-index: 2; left: calc((100% - 72px) * 0.78); }
 
 /* Expressive eyes.
 

@@ -1498,3 +1498,88 @@ test('a stored sound preference does not switch itself back on', async ({ page }
     getComputedStyle(document.documentElement).getPropertyValue('--audio-level').trim());
   expect(['0', '']).toContain(level);
 });
+
+test('the webfont is preloaded and its fallback keeps the layout still', async ({ page }) => {
+  // A font that only starts fetching once the stylesheet is parsed is a font
+  // that paints in the fallback and then swaps under the reader, and the swap
+  // is what moves the hero and the header. The preload in the head is the fix;
+  // the fallback metrics underneath it cover the visit where the font still
+  // loses the race.
+  await page.addInitScript(() => {
+    window.__cls = 0;
+    try {
+      new PerformanceObserver(list => {
+        for (const entry of list.getEntries()) {
+          if (!entry.hadRecentInput) window.__cls += entry.value;
+        }
+      }).observe({ type: 'layout-shift', buffered: true });
+    } catch { /* layout-shift is unsupported here, so there is nothing to read */ }
+  });
+
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(baseURL, { waitUntil: 'load' });
+
+  const preload = page.locator('link[rel="preload"][as="font"]');
+  await expect(preload, 'the woff2 is not preloaded, so first paint waits on a second round trip').toHaveCount(1);
+  await expect(preload).toHaveAttribute('href', /outfit-latin\.woff2$/);
+  await expect(preload, 'a font preload without crossorigin is fetched twice under a different key')
+    .toHaveAttribute('crossorigin', '');
+
+  await page.waitForTimeout(2500);
+  const reading = await page.evaluate(async () => {
+    await document.fonts.ready;
+    const ctx = document.createElement('canvas').getContext('2d');
+    const advance = (family, weight, size, text) => {
+      ctx.font = `${weight} ${size}px ${family}`;
+      return ctx.measureText(text).width;
+    };
+    // The three strings sit in three different corners of the page, so a
+    // size-adjust tuned for one of them is visible as a drift on the others.
+    return {
+      cls: window.__cls,
+      ratios: [
+        ['MUHAMMAD', 800, 120.96],
+        ['Muhammad Nur Rahman', 700, 12.64],
+        ['Simpan', 700, 11.36],
+      ].map(([text, weight, size]) => ({
+        text,
+        ratio: advance('"Outfit Fallback"', weight, size, text) / advance('"Outfit"', weight, size, text),
+      })),
+    };
+  });
+
+  for (const { text, ratio } of reading.ratios) {
+    expect(ratio, `${text}: the fallback renders at ${ratio.toFixed(3)} of Outfit's width, so the swap would move it`)
+      .toBeGreaterThan(0.97);
+    expect(ratio, `${text}: the fallback renders at ${ratio.toFixed(3)} of Outfit's width, so the swap would move it`)
+      .toBeLessThan(1.03);
+  }
+  expect(reading.cls, `the page shifted by ${reading.cls.toFixed(5)} during load`).toBeLessThan(0.01);
+});
+
+test('the walking pets are placed by the stylesheet before any script runs', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  // Blocked on purpose: with the script out of the way, the position the pets
+  // show is the stylesheet's alone, which is what the very first paint sees.
+  // If it ever falls back to `left: auto`, the script's first write then jumps
+  // a pet across the viewport, and that jump is a layout shift the width of
+  // the page.
+  await page.route('**/js/main.js', route => route.abort());
+  await page.goto(baseURL);
+
+  const placement = await page.evaluate(() => ({
+    viewport: window.innerWidth,
+    pet1: document.querySelector('#pet-1').getBoundingClientRect().left,
+    pet2: document.querySelector('#pet-2').getBoundingClientRect().left,
+  }));
+
+  const expected = {
+    pet1: (placement.viewport - 86) * 0.22,
+    pet2: (placement.viewport - 72) * 0.78,
+  };
+
+  expect(Math.abs(placement.pet1 - expected.pet1), `pet-1 rests at ${placement.pet1.toFixed(1)}px, not ${expected.pet1.toFixed(1)}px`)
+    .toBeLessThan(1);
+  expect(Math.abs(placement.pet2 - expected.pet2), `pet-2 rests at ${placement.pet2.toFixed(1)}px, not ${expected.pet2.toFixed(1)}px`)
+    .toBeLessThan(1);
+});
