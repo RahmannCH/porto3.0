@@ -380,8 +380,13 @@
   }
 
   /* Reveal is a scroll animation. On paper nothing has scrolled, so everything
-     is visible by default and must not be left at opacity 0. */
+     is visible by default and must not be left at opacity 0.
+     A running transition outranks !important in the cascade, so the 0.55s fade
+     on .reveal still plays when the media switches and carries the heading part
+     of the way there — printing at that moment puts a half-faded title on the
+     page. Nothing on paper moves, so the transition is off as well. */
   .reveal {
+    transition: none !important;
     opacity: 1 !important;
     transform: none !important;
   }

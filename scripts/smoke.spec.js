@@ -891,11 +891,33 @@ test('pausing the mascot stops its frame loop instead of idling on it', async ({
 
 test('light-theme text and primary button meet WCAG AA contrast', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
+  // The page takes its theme from the OS when nothing is stored, so without
+  // pinning the scheme this measured whatever the host was set to: on a
+  // light-mode machine it pressed the toggle once, landed on dark, and
+  // checked the dark palette under a name that promised the light one.
+  await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto(baseURL);
+  expect(await page.evaluate(() => document.documentElement.dataset.theme),
+    'the page must start dark, so one press of the toggle reaches light').toBe('dark');
 
   // Flip to light via the real toggle so computed values reflect shipped CSS.
   await page.locator('.theme-toggle').click();
-  await page.waitForTimeout(250);
+
+  // Both ends of the swap are events, not a duration. The palette lands
+  // inside a view transition — which waits on a snapshot of the old state
+  // first — and the button then transitions its own colours over --dur-fast.
+  // The old fixed 250ms timed out during that snapshot under load, so the
+  // button still carried its dark-theme colour while --bg had already
+  // flipped, and the test reported a ratio the shipped CSS never produces.
+  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme), {
+    message: 'the toggle must land on the light theme',
+    timeout: 10000,
+  }).toBe('light');
+  await page.waitForFunction(
+    () => document.querySelector('.button-primary').getAnimations().length === 0,
+    null,
+    { timeout: 10000 },
+  );
 
   const result = await page.evaluate(() => {
     const parse = color => color.match(/[\d.]+/g).map(Number);
@@ -1582,4 +1604,64 @@ test('the walking pets are placed by the stylesheet before any script runs', asy
     .toBeLessThan(1);
   expect(Math.abs(placement.pet2 - expected.pet2), `pet-2 rests at ${placement.pet2.toFixed(1)}px, not ${expected.pet2.toFixed(1)}px`)
     .toBeLessThan(1);
+});
+
+test('a case study is a URL, and Back closes it', async ({ page }) => {
+  const modal = page.locator('#case-study-modal');
+
+  await page.goto(baseURL);
+  await page.locator('.project').first().locator('.button-case-study').click();
+
+  // The address bar names the case, so a case study can be shared and linked
+  // to like any other page instead of living only in the tab that opened it.
+  await expect(page, 'opening must write the case into the URL').toHaveURL(/\?case=zadify/, { timeout: 10000 });
+  await expect(modal).toBeVisible({ timeout: 10000 });
+
+  // Back is the browser's own close control. With no entry pushed for the
+  // dialog it steps out of the site, and with no popstate listener it changes
+  // the URL while leaving the dialog open over it.
+  await page.goBack();
+  await expect(modal, 'Back must close the dialog').not.toBeVisible();
+  await expect(page, 'Back must take the case out of the URL').not.toHaveURL(/\?case=/);
+
+  await page.goForward();
+  await expect(modal, 'Forward must reopen the dialog').toBeVisible();
+  await expect(page).toHaveURL(/\?case=zadify/);
+
+  // Closing from inside the page has to undo the same entry, or the URL keeps
+  // a case the visitor has already dismissed.
+  await page.locator('.modal-close').click();
+  await expect(modal, 'the close button must close the dialog').not.toBeVisible();
+  await expect(page, 'the close button must clean the URL').not.toHaveURL(/\?case=/);
+});
+
+test('a shared case-study link opens its case, and Back stays on the page', async ({ page }) => {
+  const modal = page.locator('#case-study-modal');
+
+  await page.goto(`${baseURL}/?case=codechrome`);
+  await expect(modal, 'the shared link must open the case it names').toBeVisible({ timeout: 10000 });
+
+  // The link is the entry the visitor arrived on. It is rewritten so Back
+  // closes the dialog first; without that rewrite Back has nothing to step
+  // back to and leaves the site, so the visitor never reaches the page the
+  // link was shared from.
+  await page.goBack();
+  await expect(modal, 'Back from a shared link must still close the dialog').not.toBeVisible();
+  await expect(page).not.toHaveURL(/\?case=/);
+  expect(await page.title(), 'Back left the site instead of closing the dialog')
+    .toMatch(/Muhammad/);
+
+  await page.goForward();
+  await expect(modal, 'Forward must reopen the shared case').toBeVisible();
+});
+
+test('a case-study URL naming something that is not a project opens nothing', async ({ page }) => {
+  // Both keys fail for different reasons. `not-a-project` simply is not in
+  // the map; `constructor` exists on Object.prototype, so a lookup that trusts
+  // `CASE_STUDIES[key]` alone hands back a function and opens a dialog built
+  // from fields that were never there.
+  for (const key of ['not-a-project', 'constructor']) {
+    await page.goto(`${baseURL}/?case=${key}`);
+    await expect(page.locator('#case-study-modal'), `"${key}" must not open a dialog`).not.toBeVisible();
+  }
 });

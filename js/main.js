@@ -1230,9 +1230,27 @@ const preloadImage = src => new Promise(resolve => {
   probe.src = src;
 });
 
+// The open case study lives in the URL, so a case can be shared, linked to,
+// and dismissed with the browser's own Back button rather than only by
+// finding the close control again.
+const caseStudyInUrl = () => {
+  const key = new URLSearchParams(location.search).get('case');
+  return key && Object.prototype.hasOwnProperty.call(CASE_STUDIES, key) ? key : null;
+};
+
+const caseStudyUrl = key => `${location.pathname}?case=${key}${location.hash}`;
+const pageUrl = () => location.pathname + location.hash;
+
 function openCaseStudy(key, sourceImage) {
   const data = CASE_STUDIES[key];
   if (!data || !modal) return;
+
+  // Reached from the history — Back, Forward, or a shared link: the URL
+  // already names this case, and pushing a second entry for it would turn
+  // Back into a no-op that never closes the dialog.
+  if (caseStudyInUrl() !== key) {
+    history.pushState({ caseStudy: key }, '', caseStudyUrl(key));
+  }
 
   lastFocusedElement = document.activeElement;
 
@@ -1300,7 +1318,7 @@ function openCaseStudy(key, sourceImage) {
   });
 }
 
-function closeCaseStudy() {
+function dismissCaseStudy() {
   if (!modal) return;
   if (typeof modal.close === 'function') {
     modal.close();
@@ -1310,6 +1328,22 @@ function closeCaseStudy() {
   if (lastFocusedElement) {
     lastFocusedElement.focus();
   }
+}
+
+function closeCaseStudy() {
+  if (!modal) return;
+  if (history.state?.caseStudy) {
+    // One entry was pushed for this dialog, so let Back undo it. Closing here
+    // instead would leave `?case=` in the URL, and the next popstate would
+    // reopen what the visitor just dismissed.
+    history.back();
+    return;
+  }
+  // Landed on the shared link itself: this entry is the page rather than one
+  // pushed for the dialog, so drop the parameter in place — walking back from
+  // the only entry would take the visitor out of the site.
+  if (caseStudyInUrl()) history.replaceState(null, '', pageUrl());
+  dismissCaseStudy();
 }
 
 document.querySelectorAll('.button-case-study').forEach(btn => {
@@ -1350,6 +1384,28 @@ modal?.addEventListener('keydown', (e) => {
     first.focus();
   }
 });
+
+// Back and Forward drive the dialog directly: the URL is the state, so there
+// is no second copy of it to keep in step. Forward has no source card to morph
+// from, and a null image skips the morph rather than inventing one.
+window.addEventListener('popstate', () => {
+  const key = caseStudyInUrl();
+  if (key) {
+    openCaseStudy(key, null);
+  } else if (modal && (modal.open || modal.hasAttribute('open'))) {
+    dismissCaseStudy();
+  }
+});
+
+// A shared link opens the case it names. The entry that carried the link is
+// rewritten first and the dialog re-entered as its own entry, so Back closes
+// the dialog and lands on the page instead of leaving the site — without that
+// rewrite Back would step straight out, because the only entry is the link.
+const deepLinkedCase = caseStudyInUrl();
+if (deepLinkedCase) {
+  history.replaceState(null, '', pageUrl());
+  openCaseStudy(deepLinkedCase, null);
+}
 
 document.querySelector('#current-year').textContent = new Date().getFullYear();
 
