@@ -20,7 +20,7 @@
 <p align="center">
   <a href="https://rahmannch.github.io/porto3.0/"><img src="https://img.shields.io/badge/Live-Demo%20Website-00FFFF?style=for-the-badge&logo=vercel&logoColor=black" alt="Live Demo" /></a>
   &nbsp;
-  <a href="scripts/smoke.spec.js"><img src="https://img.shields.io/badge/E2E%20Tests-64%2F64%20Passing-38EF7D?style=for-the-badge&logo=playwright&logoColor=white" alt="Playwright Tests" /></a>
+  <a href="scripts/smoke.spec.js"><img src="https://img.shields.io/badge/E2E%20Tests-66%2F66%20Passing-38EF7D?style=for-the-badge&logo=playwright&logoColor=white" alt="Playwright Tests" /></a>
   &nbsp;
   <a href="#aksesibilitas"><img src="https://img.shields.io/badge/A11y-WCAG%202.2%20AA-7928CA?style=for-the-badge&logo=w3c&logoColor=white" alt="WCAG A11y" /></a>
   &nbsp;
@@ -288,7 +288,7 @@ porto3.0/
 │   └── readme/           # Tangkapan layar resolusi tinggi dokumentasi interaktif
 └── scripts/
     ├── serve.mjs         # Server pengembangan lokal statis
-    └── smoke.spec.js     # 64 pengujian otomatis Playwright menyeluruh
+    └── smoke.spec.js     # 66 pengujian otomatis Playwright menyeluruh
 ```
 
 ---
@@ -309,7 +309,7 @@ npm install
 npm run dev
 # Buka peramban pada http://127.0.0.1:48123
 
-# 3. Eksekusi 64 pengujian otomatis Playwright menyeluruh
+# 3. Eksekusi 66 pengujian otomatis Playwright menyeluruh
 npm run test:e2e
 ```
 

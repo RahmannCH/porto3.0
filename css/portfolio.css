@@ -1303,6 +1303,17 @@ html[data-theme="light"] .hero-glow.is-lit {
 /* These four are decoration, so under a reduced-motion preference they are
    removed outright rather than shortened. main.js declines to run them too. */
 @media (prefers-reduced-motion: reduce) {
+  /* The badge is the mascot's reply, so it stays — but it may not keep
+     bouncing. These three declare !important on selectors more specific
+     than the blanket rule in style.css, so they were the one thing still
+     looping after a click. Stopping them leaves the badge where it was
+     already designed to end: still, visible, and legible. */
+  .walking-mascot .reaction-badge,
+  .walking-mascot[data-reaction="wave"] .reaction-badge,
+  .walking-mascot[data-reaction="bounce"] .reaction-badge {
+    animation: none !important;
+  }
+
   ::view-transition-group(*),
   ::view-transition-old(*),
   ::view-transition-new(*) {

@@ -1742,3 +1742,91 @@ test('the page stores nothing but the theme and the sound preference', async ({ 
   await expect.poll(() => page.evaluate(() => Object.keys(localStorage).sort()))
     .toEqual(['rahman-portfolio-sound', 'rahman-portfolio-theme']);
 });
+
+test('a pet answers under reduced motion, but the answer does not keep moving', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(baseURL);
+
+  // The mascot is paused under this preference, but a click is a question
+  // and still deserves an answer: main.js used to check mascotPaused before
+  // it would speak, so the pet sat through the click without a word.
+  await page.locator('#pet-1').click({ force: true });
+  await page.waitForTimeout(250);
+
+  const badge = await page.evaluate(() => {
+    const el = document.querySelector('#pet-1 .reaction-badge');
+    const styles = getComputedStyle(el);
+    return { text: el.textContent.trim(), opacity: Number(styles.opacity) };
+  });
+  expect(badge.text, 'clicking the pet must still be answered').not.toBe('');
+  expect(badge.opacity, 'the answer must be visible, not merely present').toBeGreaterThan(0.9);
+
+  // The badge's own rule declares an infinite animation !important, which
+  // outranks the blanket neutering rule in style.css — so the reply is what
+  // would still be looping after everything else in the page had stopped.
+  const moving = await page.evaluate(() => document.getAnimations()
+    .filter(animation => animation.playState === 'running')
+    .map(animation => animation.effect?.getTiming?.())
+    .filter(timing => timing && (timing.iterations === Infinity || timing.duration >= 120)));
+  expect(moving, 'an answer under a reduced-motion preference must not keep moving').toEqual([]);
+});
+
+test('reduced motion stops the motion without stopping the page', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(baseURL);
+
+  // The blanket rule does more than shorten transitions: it also pins every
+  // reveal to its finished state, so the page arrives readable instead of
+  // waiting to be scrolled into place. The observer would fill the same
+  // content in eventually, which is why this has to be read before scrolling.
+  const belowFold = await page.evaluate(() => {
+    const title = document.querySelector('#contact-title');
+    const heading = title.closest('.reveal') || title;
+    return Number(getComputedStyle(heading).opacity);
+  });
+  expect(belowFold, 'content must be readable before it is scrolled to').toBeGreaterThan(0.9);
+
+  await page.evaluate(async () => {
+    const step = Math.max(200, window.innerHeight * 0.8);
+    for (let y = 0; y <= document.body.scrollHeight; y += step) {
+      window.scrollTo({ top: y, behavior: 'instant' });
+      await new Promise(resolve => setTimeout(resolve, 60));
+    }
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  });
+  await page.waitForTimeout(400);
+
+  // Shortening every transition to 0.01ms is only safe because the reveal
+  // rules also pin opacity back to 1. Without that half, the whole page
+  // would finish instantly at opacity: 0.
+  const hidden = await page.evaluate(() => [...document.querySelectorAll('main h1, main h2, main h3, main p, main li')]
+    .filter(element => {
+      const styles = getComputedStyle(element);
+      return styles.display !== 'none' && styles.visibility !== 'hidden' && Number(styles.opacity) < 0.98;
+    })
+    .map(element => `${element.tagName.toLowerCase()}: "${element.textContent.trim().slice(0, 40)}" @ ${getComputedStyle(element).opacity}`));
+  expect(hidden, 'stopping motion must not stop the reading').toEqual([]);
+
+  const moving = await page.evaluate(() => document.getAnimations()
+    .filter(animation => animation.playState === 'running')
+    .map(animation => animation.effect?.getTiming?.())
+    .filter(timing => timing && (timing.iterations === Infinity || timing.duration >= 120)));
+  expect(moving, 'no decoration may keep moving under a reduced-motion preference').toEqual([]);
+
+  // The tech strip is the one thing that never looked like motion to the
+  // blanket rule: its travel is a named animation, and a finished one sits
+  // exactly where it stopped — so the strip has to be declared still, not
+  // merely left behind by a shortened duration.
+  const stripAnimation = await page.evaluate(() => getComputedStyle(document.querySelector('.marquee-track')).animationName);
+  expect(stripAnimation, 'the tech strip must not be travelling').toBe('none');
+
+  const wholeItems = await page.evaluate(() => {
+    const rail = document.querySelector('.tech-marquee').getBoundingClientRect();
+    return [...document.querySelectorAll('.marquee-list:not([aria-hidden]) li')]
+      .filter(item => {
+        const box = item.getBoundingClientRect();
+        return box.width > 0 && box.left >= rail.left && box.right <= rail.right;
+      }).length;
+  });
+  expect(wholeItems, 'the tech strip must still show whole items, not a slice of one').toBeGreaterThanOrEqual(3);
+});

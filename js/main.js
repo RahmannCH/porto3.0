@@ -765,8 +765,15 @@ if (petEls.length === 2 && mascotEnv) {
     });
   };
 
+  // The pause stops the wandering and the chatter, never the answer. Ambient
+  // speech keeps its own guards — triggerConversation checks before it speaks,
+  // and the frame loop that schedules the rest never runs while paused — so
+  // what reaches this function once the loop is off is input, and input gets
+  // a reply. Under a reduced-motion preference that reply is a state change
+  // rather than a performance: the bounce that used to carry it is stopped
+  // in CSS, and what remains is the badge, the mood, and the words.
   const sayText = (p, text, mood) => {
-    if (mascotPaused || !p.bubble) return false;
+    if (!p.bubble) return false;
     // Allow overlapping independent user reactions, but standard cooldown still applies
     if (p.react > 0) return false;
 
@@ -818,7 +825,7 @@ if (petEls.length === 2 && mascotEnv) {
   };
 
   const say = (p, pool, mood) => {
-    if (mascotPaused || !p.bubble) return false;
+    if (!p.bubble) return false;
     if (p.react > 0) return false;
     return sayText(p, speakSingle(p, pool), mood);
   };
