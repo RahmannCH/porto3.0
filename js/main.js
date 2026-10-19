@@ -546,6 +546,9 @@ const mascotToggleBtn = document.querySelector('.mascot-toggle');
 const petEls = document.querySelectorAll('.walking-mascot');
 
 let mascotPaused = motionPreference.matches;
+// The animation loop lives inside init below, while the pause switch lives here at
+// module scope, so the two sides need one shared hinge to start the loop again.
+let mascotLoopWake = () => {};
 
 const updateMascotToggle = () => {
   mascotDock?.classList.toggle('is-paused', mascotPaused);
@@ -562,6 +565,7 @@ updateMascotToggle();
 mascotToggleBtn?.addEventListener('click', () => {
   mascotPaused = !mascotPaused;
   updateMascotToggle();
+  if (!mascotPaused) mascotLoopWake();
 });
 
 motionPreference.addEventListener('change', event => {
@@ -1010,18 +1014,30 @@ if (petEls.length === 2 && mascotEnv) {
   });
 
   let lastAt = 0;
+  let loopFrame = 0;
   const loop = now => {
+    loopFrame = 0;
+    if (mascotPaused) {
+      lastAt = 0;
+      return;
+    }
     const dt = lastAt ? Math.min((now - lastAt) / 1000, 0.05) : 0;
     lastAt = now;
-    if (!mascotPaused) update(dt);
-    requestAnimationFrame(loop);
+    update(dt);
+    loopFrame = requestAnimationFrame(loop);
   };
+  const wake = () => {
+    if (loopFrame || mascotPaused) return;
+    lastAt = 0;
+    loopFrame = requestAnimationFrame(loop);
+  };
+  mascotLoopWake = wake;
 
   measure();
   keepInside();
   pets.forEach(p => setMood(p, 'idle'));
   paint();
-  requestAnimationFrame(loop);
+  wake();
 }
 
 // Case Studies Data & Modal Logic

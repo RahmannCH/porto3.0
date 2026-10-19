@@ -795,6 +795,50 @@ test('pets do not startle from a distance and keep walking when untouched', asyn
   expect(moved).toBe(true);
 });
 
+test('pausing the mascot stops its frame loop instead of idling on it', async ({ page }) => {
+  // Count outstanding animation frames rather than reading a line number: the
+  // loops are identified by what they cost, and a shifted source line would make
+  // a line-based assertion point at the wrong frame a week from now.
+  await page.addInitScript(() => {
+    const raf = window.requestAnimationFrame.bind(window);
+    const caf = window.cancelAnimationFrame.bind(window);
+    const live = new Set();
+    window.requestAnimationFrame = cb => {
+      const id = raf(time => { live.delete(id); cb(time); });
+      live.add(id);
+      return id;
+    };
+    window.cancelAnimationFrame = id => {
+      live.delete(id);
+      caf(id);
+    };
+    window.__liveFrames = () => live.size;
+  });
+
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(baseURL);
+  await page.waitForTimeout(600);
+
+  // Toggle with the keyboard, never the pointer: a click parks the cursor in the
+  // hero, where the glow starts a loop of its own and would mask the one under
+  // test. Both readings are taken from the same keyboard path.
+  const toggle = page.locator('.mascot-toggle');
+  if (await toggle.getAttribute('aria-pressed') === 'true') {
+    await toggle.focus();
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(400);
+  }
+
+  const running = await page.evaluate(() => window.__liveFrames());
+  await toggle.focus();
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(400);
+  const paused = await page.evaluate(() => window.__liveFrames());
+
+  expect(paused, `pausing released ${running - paused} of ${running} running frame loops`)
+    .toBeLessThan(running);
+});
+
 test('light-theme text and primary button meet WCAG AA contrast', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(baseURL);
@@ -991,10 +1035,21 @@ test('the tech marquee answers the scroll and settles back to its resting pace',
   const rate = () => track.evaluate(el => el.getAnimations()[0]?.playbackRate ?? 1);
   expect(await rate()).toBe(1);
 
-  await page.evaluate(() => scrollBy({ top: 900, behavior: 'instant' }));
-  // Driven through the Web Animations API so the running animation is never
-  // restarted; a restarted marquee would jump rather than lean into the scroll.
-  await expect.poll(rate, { timeout: 3000 }).not.toBe(1);
+  // The lean is deliberately brief: the same scroll handler arms a 140ms timer
+  // that puts the rate back to 1, so one sample taken after a protocol round trip
+  // can land past the window and read as "the marquee ignored the scroll". Watch
+  // the frames inside the page instead — the observation has to survive the trip.
+  const seen = await page.evaluate(async () => {
+    const el = document.querySelector('.marquee-track');
+    const samples = [];
+    window.scrollBy({ top: 900, behavior: 'instant' });
+    for (let i = 0; i < 24; i++) {
+      samples.push(el.getAnimations()[0]?.playbackRate ?? 1);
+      await new Promise(resolve => requestAnimationFrame(resolve));
+    }
+    return samples;
+  });
+  expect(seen.some(value => value !== 1), 'the marquee never leaned into the scroll').toBe(true);
 
   await expect.poll(rate, { timeout: 4000 }).toBe(1);
 });
@@ -1156,28 +1211,41 @@ test('the case study cover travels from the card instead of popping in', async (
   });
 
   await page.locator('.project').first().locator('.button-case-study').click();
-  await page.waitForTimeout(1000);
 
-  const seen = await page.evaluate(() => [...new Set(window.__vt)]);
+  // The morph waits on a real image preload before it starts and on the
+  // transition to finish before it cleans up, so both ends of this are events,
+  // not durations. A fixed delay was a bet about how fast the machine is and it
+  // lost roughly one run in four: either the group had not appeared yet, or the
+  // transition was still in flight and had not released the name. Wait for the
+  // event, then assert with a message that still says what went wrong.
+  const covers = () => page.evaluate(() => [...new Set(window.__vt)]);
+  await page.waitForFunction(() => [...new Set(window.__vt)].some(name => name.includes('project-cover')), null, { timeout: 10000 }).catch(() => {});
+  const seen = await covers();
+
   // The named group is the only proof that the object travelled. When this
   // silently stopped happening, the dialog still opened and every other check
   // passed; the browser reported it as "Animation start failed" and pointed at
   // the dialog rather than at the duplicate view-transition-name.
   expect(seen.some(name => name.includes('project-cover')), 'the cover never got its own group').toBe(true);
 
-  const leftovers = await page.evaluate(() => ({
-    cover: document.getElementById('modal-cover').style.viewTransitionName,
-    cards: [...document.querySelectorAll('.project-image img')]
-      .map(el => el.style.viewTransitionName)
-      .filter(Boolean),
-    open: document.getElementById('case-study-modal').open,
-    src: document.getElementById('modal-cover').getAttribute('src'),
-  }));
-  expect(leftovers.open).toBe(true);
-  expect(leftovers.src).toContain('preview');
+  // The card releases its name inside the transition callback, so by the time
+  // the dialog is open it must already be gone from every card.
+  await expect.poll(() => page.evaluate(() => document.getElementById('case-study-modal').open), { timeout: 10000 }).toBe(true);
+  const cards = await page.evaluate(() => [...document.querySelectorAll('.project-image img')]
+    .map(el => el.style.viewTransitionName)
+    .filter(Boolean));
   // A name left on two elements at once cancels the next transition outright.
-  expect(leftovers.cover, 'the cover kept its view-transition-name').toBe('');
-  expect(leftovers.cards, 'a card kept its view-transition-name').toEqual([]);
+  expect(cards, 'a card kept its view-transition-name').toEqual([]);
+
+  // The cover releases its name only once the transition finishes, which is the
+  // same event the cleanup above runs on. Waiting for it rather than sampling a
+  // moment that has to line up with the image load is the whole fix here.
+  await page.waitForFunction(() => !document.getElementById('modal-cover').style.viewTransitionName, null, { timeout: 10000 }).catch(() => {});
+  const cover = await page.evaluate(() => document.getElementById('modal-cover').style.viewTransitionName);
+  expect(cover, 'the cover kept its view-transition-name').toBe('');
+
+  const src = await page.evaluate(() => document.getElementById('modal-cover').getAttribute('src'));
+  expect(src).toContain('preview');
 
   await page.keyboard.press('Escape');
   await expect(page.locator('#case-study-modal')).not.toHaveAttribute('open', '');
