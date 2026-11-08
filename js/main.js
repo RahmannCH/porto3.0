@@ -1671,14 +1671,14 @@ cliInput?.addEventListener('keydown', (e) => {
         pRes.innerHTML = 'Perintah: <strong>whoami</strong>, <strong>projects</strong>, <strong>skills</strong>, <strong>goto [home|about|projects|capabilities|journey|contact]</strong>, <strong>theme [dark|light|toggle]</strong>, <strong>contact</strong>, <strong>print</strong>, <strong>pet</strong>, <strong>privacy</strong>, <strong>clear</strong>, <strong>exit</strong>';
         break;
       case 'whoami':
-        pRes.textContent = 'Muhammad Nur Rahman — Mahasiswa S1 Ilmu Komputer ULM & Full-stack Developer.';
+        pRes.textContent = 'Muhammad Nur Rahman — Mahasiswa S1 Ilmu Komputer ULM & Full-stack Developer. Koordinator divisi, MC, Moderator, Presenter di berbagai kegiatan kampus.';
         break;
       case 'projects':
         pRes.innerHTML = '1. Zadify (Al-Quran Workspace & AI)<br>2. CodeChrome (Keyboard-first Browser Dashboard)<br>3. Game Farm 2.0 (Canvas 2D Engine)<br>4. VirtualPet TeKom (DFA Automata Simulator)';
         break;
       case 'skills':
       case 'capabilities':
-        pRes.innerHTML = '• Web: TypeScript, JavaScript, React, Next.js, PHP, UI/UX<br>• Systems: Jaringan Komputer, Infrastruktur, Keamanan Siber<br>• Media: HTML5 Canvas, 3D Web, Web Audio, Desain Grafis';
+        pRes.innerHTML = '• Web: TypeScript, JavaScript, React, Next.js, PHP, UI/UX<br>• Systems: Jaringan Komputer, Infrastruktur, Keamanan Siber<br>• Media: HTML5 Canvas, 3D Web, Web Audio, Desain Grafis<br>• Leadership: Koordinasi divisi, MC, Moderator, Presenter, Event kampus';
         break;
       case 'theme': {
         const target = args[0];
@@ -1711,7 +1711,7 @@ cliInput?.addEventListener('keydown', (e) => {
         break;
       }
       case 'contact':
-        pRes.textContent = 'Email: Rahmannch19@gmail.com | GitHub: github.com/RahmannCH | Instagram: @mangch._';
+        pRes.textContent = 'Email: Rahmannch19@gmail.com | GitHub: github.com/RahmannCH | LinkedIn: muhammad-nur-rahman-b57975384 | Portfolio: porto-rawman.vercel.app | Instagram: @mangch._';
         break;
       case 'goto': {
         // The same sections the header links point at, so the drawer can move
