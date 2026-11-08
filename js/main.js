@@ -1716,7 +1716,7 @@ cliInput?.addEventListener('keydown', (e) => {
       case 'goto': {
         // The same sections the header links point at, so the drawer can move
         // the page without knowing anything the navigation does not.
-        const targets = ['home', 'about', 'projects', 'capabilities', 'journey', 'contact'];
+        const targets = ['home', 'about', 'projects', 'capabilities', 'journey', 'activities', 'contact'];
         const wanted = (args[0] || '').toLowerCase();
         const target = targets.includes(wanted) ? wanted : closestOf(targets, wanted);
         if (!target) {
@@ -3065,4 +3065,15 @@ document.querySelectorAll('.button-case-study, .footer-cli-btn, .contact-links a
       if (toastNode.classList.contains('is-shown')) sound.play('copy');
     }).observe(toastNode, { attributes: true, attributeFilter: ['class'] });
   }
+}
+
+// Activity grid expand/collapse
+const activityToggle = document.getElementById('activity-toggle');
+const activityGrid = document.getElementById('activity-grid');
+if (activityToggle && activityGrid) {
+  activityToggle.addEventListener('click', () => {
+    const expanded = activityGrid.classList.toggle('is-expanded');
+    activityToggle.setAttribute('aria-expanded', String(expanded));
+    activityToggle.textContent = expanded ? 'Sembunyikan kegiatan tambahan' : 'Lihat semua kegiatan (13)';
+  });
 }
