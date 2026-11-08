@@ -1877,3 +1877,100 @@ test('the page keeps its helpers off the window object', async ({ page }) => {
     .filter(name => name in window));
   expect(leaked, 'module scope must not publish itself to window').toEqual([]);
 });
+test('a heading sits on its cap height instead of on the font', async ({ page }) => {
+  await page.goto(baseURL);
+
+  const read = sel => page.evaluate(selector => {
+    const element = document.querySelector(selector);
+    const styles = getComputedStyle(element);
+    const box = element.getBoundingClientRect();
+    const canvas = document.createElement('canvas').getContext('2d');
+    canvas.font = `${styles.fontStyle} ${styles.fontWeight} ${styles.fontSize} ${styles.fontFamily}`;
+    const descent = canvas.measureText('Hg').fontBoundingBoxDescent || 0;
+    // The hero and section-headings use multi-column or grid layouts: sibling
+    // elements within the heading container sit side-by-side, so the element
+    // that follows underneath is the next block in flow below the container.
+    const section = element.closest('section');
+    const container = element.closest('.section-heading') || element;
+    const follower = (container !== element ? container.nextElementSibling : element.nextElementSibling)
+      || (section ? [...section.children].find(child => child !== container && !child.contains(element)) : null);
+    const fr = follower?.getBoundingClientRect();
+    return {
+      trim: styles.textBoxTrim,
+      edge: styles.textBoxEdge,
+      h: Math.round(box.height),
+      follower: follower ? follower.className.slice(0, 24) || follower.tagName.toLowerCase() : null,
+      gapToFollower: fr ? Math.round(fr.top - box.bottom) : null,
+      descent: Math.round(descent * 10) / 10,
+    };
+  }, sel);
+
+  const hero = await read('.hero h1');
+  const sectionTitle = await read('.section-heading h2');
+
+  // The box has to be capped and based. Left to the font, it carries the
+  // ascent and descent instead, and every gap around it is set by metrics
+  // the stylesheet never chose.
+  expect(hero.trim, 'the hero title must be trimmed').toBe('trim-both');
+  expect(hero.edge, 'the hero title must run from cap to baseline').toBe('cap alphabetic');
+  expect(sectionTitle.trim, 'a section title must be trimmed').toBe('trim-both');
+  expect(sectionTitle.edge, 'a section title must run from cap to baseline').toBe('cap alphabetic');
+
+  // Reading the property proves the declaration landed; taking it away has
+  // to change the layout, or nothing here depends on it.
+  await page.addStyleTag({ content: '.hero h1, .section-heading h2 { text-box: none; }' });
+  await page.waitForTimeout(150);
+  const untrimmed = await page.evaluate(() => ({
+    hero: Math.round(document.querySelector('.hero h1').getBoundingClientRect().height),
+    sectionTitle: Math.round(document.querySelector('.section-heading h2').getBoundingClientRect().height),
+  }));
+  expect(hero.h, 'the trimmed hero box must be the shorter one').toBeLessThan(untrimmed.hero - 8);
+  expect(sectionTitle.h, 'the trimmed section title must be the shorter one').toBeLessThan(untrimmed.sectionTitle - 8);
+
+  // Trimmed to the baseline, a descender paints below the box. What follows
+  // the heading must still start below it rather than run into it — the
+  // margin is the only thing left between them.
+  expect(hero.gapToFollower, `nothing may sit under the hero title (${hero.follower})`).toBeGreaterThanOrEqual(0);
+  expect(sectionTitle.gapToFollower, `nothing may sit under a section title (${sectionTitle.follower})`).toBeGreaterThanOrEqual(0);
+});
+
+test('journey section documents verified milestones and editorial activity badges', async ({ page }) => {
+  await page.goto(baseURL);
+
+  // All 5 authentic career and academic milestones are documented in the timeline.
+  const timelineTitles = await page.locator('#journey .timeline-item h3').allTextContents();
+  expect(timelineTitles).toHaveLength(5);
+  expect(timelineTitles).toContain('S1 Ilmu Komputer');
+  expect(timelineTitles).toContain('Kepemimpinan & Organisasi Mahasiswa');
+  expect(timelineTitles).toContain('Public Speaking, MC & Edukasi Siber');
+  expect(timelineTitles).toContain('Pengalaman Industri & Magang Vokasi');
+  expect(timelineTitles).toContain('Teknik Jaringan Komputer & Telekomunikasi');
+
+  // The 6 stack cards are curated credential badge plates with role, organization, and impact.
+  const cards = page.locator('[data-stack-gallery] .stack-card');
+  await expect(cards).toHaveCount(6);
+
+  const cardActivities = await cards.evaluateAll(nodes => nodes.map(n => n.dataset.activity));
+  expect(cardActivities).toEqual([
+    'kpr-himakom',
+    'himakom-mengabdi',
+    'public-speaking-mc',
+    'bytecomp-humas',
+    'eksmud-bem-ulm',
+    'vokasi-it-support',
+  ]);
+
+  const badgeDetails = await cards.evaluateAll(nodes => nodes.map(n => ({
+    role: n.querySelector('.stack-badge-role')?.textContent?.trim() || '',
+    pill: n.querySelector('.stack-pill')?.textContent?.trim() || '',
+    desc: n.querySelector('.stack-badge-desc')?.textContent?.trim() || '',
+    org: n.querySelector('.stack-badge-org')?.textContent?.trim() || '',
+  })));
+
+  for (const badge of badgeDetails) {
+    expect(badge.role.length).toBeGreaterThan(0);
+    expect(badge.pill.length).toBeGreaterThan(0);
+    expect(badge.desc.length).toBeGreaterThan(0);
+    expect(badge.org.length).toBeGreaterThan(0);
+  }
+});

@@ -3047,8 +3047,11 @@ if (soundToggle) {
   // A small set of call sites, each naming a sound and nothing else. The module
   // is a no-op until it is switched on, so none of these cost anything by
   // default and none of them need to know whether sound exists.
-  document.querySelectorAll('.button, .back-top, .brand, .stack-nav, .project-image').forEach(el => {
+  document.querySelectorAll('.button, .back-top, .brand, .stack-nav, .project-image, .stack-card').forEach(el => {
     el.addEventListener('pointerenter', () => sound.play('tap'), { passive: true });
+  });
+  document.querySelectorAll('.stack-nav').forEach(el => {
+    el.addEventListener('click', () => sound.play('tap'));
   });
 document.querySelectorAll('.button-case-study, .footer-cli-btn, .contact-links a').forEach(el => {
     el.addEventListener('click', () => sound.play('open'));

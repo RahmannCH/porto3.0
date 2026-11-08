@@ -144,7 +144,37 @@
     font-size: 8pt;
   }
 
-  .stack-card[data-missing="true"] {
+  .stack-card[data-slot="0"] .stack-badge-plate {
+    position: static;
+    inset: auto;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 3mm 4mm;
+    margin-bottom: 2mm;
+    color: var(--ink);
+  }
+
+  .stack-card[data-slot="0"] .stack-badge-role {
+    font-size: 10.5pt;
+    font-weight: 700;
+  }
+
+  .stack-card[data-slot="0"] .stack-badge-desc {
+    font-size: 8.5pt;
+    color: #444;
+    display: block;
+    overflow: visible;
+  }
+
+  .stack-card[data-slot="0"] .stack-pill {
+    background: none;
+    border: 1px solid #777;
+    color: #222;
+    font-size: 7pt;
+  }
+
+  .stack-card[data-missing="true"] .stack-photo img {
     display: none !important;
   }
 

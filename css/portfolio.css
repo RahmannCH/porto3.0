@@ -240,47 +240,119 @@ Components added after the reference-driven pass, kept in their own file so
   opacity: 0;
 }
 
-/* When a photo has not been supplied yet the card says so on its face rather
-   than borrowing an unrelated image and captioning it as documentation. The
-   image still occupies the frame, so dropping the real file in is the only step
-   needed later.
-
-   A photo that has not arrived should read as space reserved for one rather
-   than as a broken frame, so the treatment borrows from the rest of the page:
-   a quiet accent hatch instead of a loud grey stripe, and a hairline inset
-   frame standing in for the crop. The label keeps the mono/uppercase voice
-   everything else on the site speaks in. */
-.stack-card[data-missing="true"] {
+/* Activity credential badges and documentation plate.
+   When a photograph has not been supplied yet, the card renders an editorial
+   credential badge with organization emblem, role title, and impact summary
+   rather than an uninformative placeholder. If a photograph is loaded, it
+   smoothly overlays while preserving caption and metadata. */
+.stack-badge-plate {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.25rem 1.25rem 3.8rem;
   background:
-    repeating-linear-gradient(135deg, color-mix(in srgb, var(--accent) 8%, transparent) 0 1px, transparent 1px 14px),
-    color-mix(in srgb, var(--surface-raised) 86%, var(--bg));
+    radial-gradient(circle at 90% 12%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 48%),
+    linear-gradient(155deg, color-mix(in srgb, var(--surface-raised) 92%, var(--bg)), var(--surface));
+  z-index: 1;
+  pointer-events: none;
+}
+
+.stack-badge-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.stack-pill {
+  font: 700 0.62rem/1 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, transparent);
+}
+
+.stack-badge-code {
+  font: 700 0.68rem/1 var(--mono);
+  color: var(--subtle);
+  letter-spacing: 0.06em;
+}
+
+.stack-badge-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: auto 0;
+}
+
+.stack-badge-role {
+  font-size: 1.22rem;
+  font-weight: 800;
+  font-family: var(--display, var(--sans));
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.stack-badge-desc {
+  margin: 0;
+  font-size: 0.81rem;
+  line-height: 1.48;
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.stack-badge-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid color-mix(in srgb, var(--line) 65%, transparent);
+  font-size: 0.72rem;
+}
+
+.stack-badge-org {
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 65%;
+}
+
+.stack-badge-impact {
+  color: var(--accent-strong);
+  font-weight: 600;
+  font-size: 0.68rem;
+  font-family: var(--mono);
+  white-space: nowrap;
+}
+
+.stack-card[data-missing="true"] {
+  background: color-mix(in srgb, var(--surface-raised) 92%, var(--bg));
 }
 
 .stack-card[data-missing="true"]::after {
   content: "";
   position: absolute;
-  inset: 0.7rem;
-  border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent);
-  border-radius: 10px;
+  inset: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
+  border-radius: 12px;
   pointer-events: none;
+  z-index: 2;
 }
 
 .stack-card[data-missing="true"] .stack-photo img {
   opacity: 0;
-}
-
-.stack-card[data-missing="true"] .stack-photo::before {
-  content: "Foto menyusul";
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 0 1.5rem;
-  color: var(--subtle);
-  font: 700 0.72rem/1.5 var(--mono);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  text-align: center;
 }
 
 .stack-caption {
@@ -293,6 +365,7 @@ Components added after the reference-driven pass, kept in their own file so
   background: linear-gradient(transparent, rgba(4, 6, 9, 0.88));
   color: #f4f6f8;
   pointer-events: none;
+  z-index: 3;
 }
 
 .stack-caption strong {
@@ -1725,4 +1798,23 @@ html[data-theme="light"] .project-modal {
    image with no source is a broken-image box. */
 .modal-cover:not([src]) {
   display: none;
+}
+
+/* ============================================================================
+   Display type, trimmed to its cap height
+   ----------------------------------------------------------------------------
+   A heading's box normally includes the font's own ascent and descent, so the
+   space around it changes with the typeface and the leading is whatever the
+   metrics happen to leave behind. Trimming both edges puts the box on the cap
+   and the baseline: the gap under the hero title and under every section
+   title is then the margin set here, and the space the font was lending is
+   returned. The rule is gated on support because browsers without it keep the
+   box they have — the layout must not depend on the trim being present.
+   ========================================================================== */
+
+@supports (text-box: trim-both cap alphabetic) {
+  .hero h1,
+  .section-heading h2 {
+    text-box: trim-both cap alphabetic;
+  }
 }
